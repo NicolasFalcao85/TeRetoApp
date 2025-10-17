@@ -1,238 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TeReto</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeReto — Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; }
-    .blur-locked { filter: blur(20px); transition: filter 0.3s ease-in-out; }
-    .unlocked { filter: blur(0px); }
-    .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .like-icon.liked { fill: #ec4899; color: #ec4899; }
-    .like-button:active { transform: scale(0.9); }
-    .image-preview { max-height: 200px; object-fit: cover; }
-    .comments-modal-body { height: calc(100vh - 12rem); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); }
-    .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .friends-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 600; }
-    .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; }
-    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99,102,241,0.75); }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial;
+    }
   </style>
 </head>
-<body class="bg-slate-100 h-screen">
 
-  <!-- SPINNER -->
-  <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
-    <div class="spinner"></div>
-  </div>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-6">
 
-  <!-- TOAST -->
-  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]" role="alert">
-    <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
-    <div id="toast-message" class="ml-3 text-sm font-normal"></div>
-  </div>
-
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen" class="flex flex-col items-center justify-center h-full bg-slate-100 p-4">
-    <div class="text-center">
-      <svg class="w-16 h-16 mx-auto" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="logoGradientLogin" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-        <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientLogin)" stroke-width="3"/>
-        <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientLogin)" stroke-width="3"/>
-      </svg>
-      <svg class="h-10 mx-auto mt-4" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="logoTextGradientLogin" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-        <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradientLogin)">TeReto</text>
-      </svg>
-      <p class="text-slate-500 mt-2 text-lg">Desafía a tus amigos, desbloquea el contenido.</p>
+  <!-- Pantalla de Login -->
+  <div id="login-screen" class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6">
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-bold text-slate-800">TeReto</h1>
+      <p class="text-slate-500 mt-1">Accedé con tu cuenta de Google</p>
     </div>
-    <div class="mt-12 w-full max-w-xs">
-      <button id="login-button" class="flex items-center justify-center w-full bg-white py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition duration-300 border">
-        <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 3.01-2.3 5.48-4.96 7.26l7.98 6.19c4.68-4.32 7.4-10.45 7.4-17.41z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.98-6.19c-2.11 1.45-4.81 2.3-7.91 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
-        <span class="font-semibold text-slate-700">Continuar con Google</span>
-      </button>
-      <p id="login-error" class="hidden mt-3 text-sm text-red-600"></p>
-    </div>
+    <button id="login-button"
+      class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 rounded-xl py-3 font-semibold flex items-center justify-center gap-3">
+      <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" class="w-5 h-5" />
+      Continuar con Google
+    </button>
+    <p id="login-error" class="hidden mt-3 text-sm text-red-600"></p>
   </div>
 
-  <!-- APP SCREEN -->
-  <div id="app-screen" class="hidden h-full flex flex-col">
-    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-      <div id="feed-view">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
-          <div class="flex items-center space-x-2">
-            <!-- Logo -->
-            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-              <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-            </svg>
-            <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient)">TeReto</text>
-            </svg>
-          </div>
-          <div class="flex items-center gap-3">
-            <img id="profile-pic" src="" alt="Foto de perfil" class="w-8 h-8 rounded-full border" />
-            <button id="logout-button" class="text-slate-500 hover:text-indigo-500">Salir</button>
-          </div>
-        </header>
-        <div id="feed-container" class="p-2 space-y-4"></div>
-      </div>
-
-      <!-- (resto de vistas y modales idénticos a tu versión; omitidos por espacio) -->
-      <!-- Para mantener focus en Auth, el feed funciona con datos mock como antes -->
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
-      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-        <span class="text-xs font-semibold">Inicio</span>
-      </button>
-      <!-- ... tus otros botones ... -->
-    </nav>
-  </div>
-
-  <!-- Templates mínimos para que el feed mock no rompa -->
-  <template id="post-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
-      <div class="p-4 flex items-center space-x-3">
-        <img class="w-10 h-10 rounded-full author-img" src="" alt="Author">
-        <div><p class="font-semibold text-slate-800 author-name"></p><p class="text-xs text-slate-500 post-time"></p></div>
-      </div>
-      <div class="relative cursor-pointer group challenge-container">
-        <img class="w-full h-96 object-cover blur-locked content-img" src="" alt="Contenido del reto">
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
-          <div class="text-5xl mb-2 lock-icon">🔒</div>
-          <h3 class="font-bold text-lg">Reto Bloqueado</h3>
-          <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
+  <!-- Pantalla de App -->
+  <div id="app-screen" class="hidden w-full max-w-lg bg-white rounded-2xl shadow-xl p-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img id="profile-pic" class="w-10 h-10 rounded-full border" src="" alt="Foto de perfil" />
+        <div>
+          <p id="user-name" class="font-semibold text-slate-800">—</p>
+          <p id="user-email" class="text-sm text-slate-500">—</p>
         </div>
       </div>
-      <div class="p-4">
-        <div class="flex items-center justify-between mt-1 text-slate-500">
-          <div class="flex space-x-4">
-            <button class="like-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-              <span class="likes-count">0</span>
-            </button>
-            <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-              <span class="comments-count">0</span>
-            </button>
-          </div>
-          <span class="text-xs post-time-secondary"></span>
-        </div>
-      </div>
+      <button id="logout-button" class="text-sm bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg">
+        Cerrar sesión
+      </button>
     </div>
-  </template>
+    <div class="mt-6 text-slate-600">
+      <p>Sesión iniciada correctamente. Bienvenido a <b>TeReto</b>.</p>
+    </div>
+  </div>
 
+  <!-- Firebase -->
   <script type="module">
-    // --- Firebase SDK (v11 desde CDN) ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // 🔐 CONFIG DE TU PROYECTO NUEVO
-    // Project name (GCP): project-914605096619
+    // 🔥 Configuración Firebase (tereto-prod)
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      // CORREGIDO: appspot.com (no firebasestorage.app)
       storageBucket: "tereto-prod.appspot.com",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
-      // measurementId no es necesario para login
     };
 
-    // --- Inicializar Firebase ---
-    const app  = initializeApp(firebaseConfig);
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // --- DOM refs ---
-    const loginScreen = document.getElementById('login-screen');
-    const appScreen   = document.getElementById('app-screen');
-    const loginBtn    = document.getElementById('login-button');
-    const logoutBtn   = document.getElementById('logout-button');
-    const errEl       = document.getElementById('login-error');
-    const spinner     = document.getElementById('loading-spinner');
-    const feedContainer = document.getElementById('feed-container');
-    const postTemplate = document.getElementById('post-template');
-    const profilePic  = document.getElementById('profile-pic');
+    // Referencias UI
+    const loginBtn = document.getElementById("login-button");
+    const logoutBtn = document.getElementById("logout-button");
+    const loginScreen = document.getElementById("login-screen");
+    const appScreen = document.getElementById("app-screen");
+    const errEl = document.getElementById("login-error");
+    const nameEl = document.getElementById("user-name");
+    const emailEl = document.getElementById("user-email");
+    const photoEl = document.getElementById("profile-pic");
 
-    function showError(msg){ if(!errEl) return; errEl.textContent = msg; errEl.classList.remove('hidden'); }
-    function clearError(){ if(!errEl) return; errEl.classList.add('hidden'); errEl.textContent=''; }
+    // Funciones auxiliares
+    function showError(msg) {
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
+    function clearError() {
+      errEl.classList.add("hidden");
+      errEl.textContent = "";
+    }
 
-    // --- Login ---
-    loginBtn.addEventListener('click', async () => {
+    // Login con Google
+    loginBtn.addEventListener("click", async () => {
       clearError();
       try {
-        spinner.classList.remove('hidden');
         await signInWithPopup(auth, provider);
-      } catch (e) {
-        console.error(e);
-        showError(e.message || 'No se pudo iniciar sesión.');
-      } finally {
-        spinner.classList.add('hidden');
+      } catch (error) {
+        console.error("Error de login:", error.code, error.message);
+        showError("Error: " + error.code);
       }
     });
 
-    // --- Logout ---
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => signOut(auth));
-    }
+    // Logout
+    logoutBtn.addEventListener("click", () => signOut(auth));
 
-    // --- Estado de sesión ---
+    // Escucha de sesión
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Mostrar app
-        loginScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
-        if (profilePic) profilePic.src = user.photoURL || 'https://placehold.co/80x80';
-
-        // Render feed mock mínimo (como en tu versión)
-        renderMockFeed(user);
+        // Mostrar datos
+        nameEl.textContent = user.displayName || "Usuario";
+        emailEl.textContent = user.email || "";
+        photoEl.src = user.photoURL || "https://placehold.co/80x80";
+        loginScreen.classList.add("hidden");
+        appScreen.classList.remove("hidden");
       } else {
-        // Mostrar login
-        appScreen.classList.add('hidden');
-        loginScreen.classList.remove('hidden');
+        appScreen.classList.add("hidden");
+        loginScreen.classList.remove("hidden");
       }
     });
-
-    // --- Mock feed (igual a tu lógica simplificada) ---
-    function renderMockFeed(user){
-      const mockUser = {
-        uid: user.uid,
-        displayName: user.displayName || 'Usuario',
-        photoURL: user.photoURL || 'https://placehold.co/100x100'
-      };
-
-      const challengesData = [
-        { id:'c1', authorName: mockUser.displayName, authorImg: mockUser.photoURL, createdAt: new Date(), contentUrl:'https://placehold.co/800x500/333/FFF?text=Contenido', likes:0, likedBy:[], comments:[], type:'trivia', question:'¿En qué año llegó el hombre a la luna?', correctAnswer:'1969', wrongAnswers:['1965','1972','1980'] }
-      ];
-
-      feedContainer.innerHTML = '';
-      challengesData.forEach(postData => {
-        const el = postTemplate.content.cloneNode(true);
-        el.querySelector('.post-card').dataset.challengeId = postData.id;
-        el.querySelector('.author-img').src = postData.authorImg;
-        el.querySelector('.author-name').textContent = postData.authorName;
-        el.querySelector('.post-time').textContent = postData.createdAt.toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
-        el.querySelector('.content-img').src = postData.contentUrl;
-        el.querySelector('.likes-count').textContent = postData.likes;
-        el.querySelector('.comments-count').textContent = postData.comments.length;
-        feedContainer.appendChild(el);
-      });
-    }
   </script>
+
 </body>
 </html>
