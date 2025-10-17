@@ -5,20 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeReto</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .blur-locked { filter: blur(20px); transition: filter .3s ease-in-out; }
-    .unlocked { filter: blur(0px); }
+    .unlocked { filter: blur(0); }
     .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all .5s cubic-bezier(.68,-.55,.27,1.55); }
     .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0,0,0,.1); width: 36px; height: 36px; border-radius: 50%; border-left-color:#6366f1; animation: spin 1s ease infinite;}
-    @keyframes spin { 0% {transform:rotate(0)} 100% {transform:rotate(360deg)}}
-    .btn-primary{background-image:linear-gradient(to right,#6366f1,#8b5cf6);transition:all .3s ease}
-    .btn-primary:hover{box-shadow:0 4px 15px 0 rgba(99,102,241,.75)}
-    .friends-tab.active{border-bottom-color:#6366f1;color:#6366f1;font-weight:600}
+    .spinner { border: 4px solid rgba(0,0,0,.1); width: 36px; height: 36px; border-radius: 50%; border-left-color:#6366f1; animation: spin 1s ease infinite; }
+    @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+    .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
+    .btn-primary { background-image: linear-gradient(to right,#6366f1,#8b5cf6); transition: all .3s ease; }
+    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99,102,241,.75); }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -29,79 +29,66 @@
   </div>
 
   <!-- TOAST -->
-  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]" role="alert">
+  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]">
     <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
   <!-- LOGIN SCREEN -->
-  <div id="login-screen" class="h-full flex flex-col items-center justify-center p-6">
+  <div id="login-screen" class="flex flex-col items-center justify-center h-full bg-slate-100 p-6">
     <div class="text-center">
       <svg class="w-16 h-16 mx-auto" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="logoGradientLogin" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-        <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientLogin)" stroke-width="3"/>
-        <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientLogin)" stroke-width="3"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+        <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#g1)" stroke-width="3"/>
+        <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#g1)" stroke-width="3"/>
       </svg>
       <svg class="h-10 mx-auto mt-4" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="logoTextGradientLogin" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-        <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradientLogin)">TeReto</text>
+        <defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+        <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#g2)">TeReto</text>
       </svg>
-      <p class="text-slate-500 mt-2 text-lg">Desafía a tus amigos, desbloquea el contenido.</p>
+      <p class="text-slate-500 mt-2 text-lg">Desafía a tus amigos, desbloqueá el contenido.</p>
     </div>
-    <div class="mt-8">
-      <button id="login-button" class="flex items-center bg-white py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition duration-300">
-        <svg class="w-6 h-6 mr-4" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 3.01-2.3 5.48-4.96 7.26l7.98 6.19c4.68-4.32 7.4-10.45 7.4-17.41z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.98-6.19c-2.11 1.45-4.81 2.3-7.91 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>
+    <div class="mt-10">
+      <button id="login-button" class="flex items-center bg-white py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition">
+        <svg class="w-6 h-6 mr-4" viewBox="0 0 48 48">
+          <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 3.01-2.3 5.48-4.96 7.26l7.98 6.19c4.68-4.32 7.4-10.45 7.4-17.41z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.98-6.19c-2.11 1.45-4.81 2.3-7.91 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
         <span class="font-semibold text-slate-700">Continuar con Google</span>
       </button>
     </div>
   </div>
 
-  <!-- APP SCREEN -->
+  <!-- APP -->
   <div id="app-screen" class="hidden h-full flex flex-col">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
       <div id="feed-view">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
           <div class="flex items-center space-x-2">
             <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-              <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+              <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+              <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#lg)" stroke-width="3"/>
+              <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#lg)" stroke-width="3"/>
             </svg>
             <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient)">TeReto</text>
+              <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#lg2)">TeReto</text>
             </svg>
           </div>
-          <button id="logout-button" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
+          <div class="flex items-center space-x-3">
+            <img id="nav-avatar" class="w-8 h-8 rounded-full hidden" src="" alt="">
+            <button id="logout-button" class="text-slate-500 hover:text-red-500 hidden">Salir</button>
+          </div>
         </header>
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
-
-      <!-- (resto de vistas — create, friends, profile — podés mantener las tuyas; omito por brevedad del HTML) -->
-      <div id="profile-view" class="hidden">
-        <div class="p-4 bg-white shadow-lg">
-          <div class="flex flex-col items-center">
-            <img id="profile-pic" src="" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
-            <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
-            <p id="profile-email" class="text-slate-500"></p>
-          </div>
-        </div>
-      </div>
+      <!-- (el resto de tus vistas/plantillas siguen iguales si las necesitás) -->
     </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
-      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-        <span class="text-xs font-semibold">Inicio</span>
-      </button>
-      <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0012 11z" clip-rule="evenodd"></path></svg>
-        <span class="text-xs font-semibold">Perfil</span>
-      </button>
-    </nav>
   </div>
 
-  <!-- TEMPLATES MUY BÁSICOS PARA FEED -->
+  <!-- Templates min -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -111,21 +98,40 @@
           <p class="text-xs text-slate-500 post-time"></p>
         </div>
       </div>
-      <div class="relative">
-        <img class="w-full h-72 object-cover content-img" src="https://placehold.co/800x400/EEE/AAA?text=Contenido" alt="">
+      <div class="relative cursor-pointer group challenge-container">
+        <img class="w-full h-72 object-cover blur-locked content-img" src="" alt="">
+        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
+          <div class="text-4xl mb-2 lock-icon">🔒</div>
+          <h3 class="font-bold text-lg">Reto Bloqueado</h3>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between mt-1 text-slate-500">
+          <div class="flex space-x-4">
+            <button class="like-button flex items-center space-x-1 cursor-pointer">
+              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+              <span class="likes-count">0</span>
+            </button>
+          </div>
+          <span class="text-xs post-time-secondary"></span>
+        </div>
       </div>
     </div>
   </template>
 
   <!-- APP SCRIPT -->
   <script type="module">
-    // Firebase SDKs
+    // ===== Firebase SDK (v11) =====
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // ---- Firebase Config (con tu API key nueva) ----
+    // === TU CONFIG DEL PROYECTO tereto-6a980 (todo del mismo proyecto) ===
     const firebaseConfig = {
-      apiKey: "AIzaSyDQxzZwRxCqd8q75qivjcO99sF06ts3c08",
+      apiKey: "AIzaSyA7cpwmvU9lcVQzayxmdBlawD3UNM6HJXk4",
       authDomain: "tereto-6a980.firebaseapp.com",
       projectId: "tereto-6a980",
       storageBucket: "tereto-6a980.appspot.com",
@@ -134,115 +140,122 @@
       measurementId: "G-6L6LK4YMDL"
     };
 
-    // ---- Init ----
+    // Init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // ---- DOM ----
-    const $ = (id) => document.getElementById(id);
-    const loginScreen = $("login-screen");
-    const appScreen = $("app-screen");
-    const loginButton = $("login-button");
-    const logoutButton = $("logout-button");
-    const profilePic = $("profile-pic");
-    const profileName = $("profile-name");
-    const profileEmail = $("profile-email");
-    const feedContainer = $("feed-container");
-    const postTpl = $("post-template");
-    const loadingSpinner = $("loading-spinner");
-    const toastEl = $("toast");
-    const toastMsg = $("toast-message");
-    const toastIcon = $("toast-icon");
-    const navButtons = document.querySelectorAll(".nav-button");
-    const views = { "feed-view": document.getElementById("feed-view"), "profile-view": document.getElementById("profile-view") };
+    // UI refs
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen   = document.getElementById('app-screen');
+    const loginBtn    = document.getElementById('login-button');
+    const logoutBtn   = document.getElementById('logout-button');
+    const navAvatar   = document.getElementById('nav-avatar');
+    const feedContainer = document.getElementById('feed-container');
+    const postTemplate = document.getElementById('post-template');
 
-    // ---- Utils ----
-    let toastTimeout;
-    function showToast(msg, type='success'){
+    const toastEl = document.getElementById('toast');
+    const toastIcon = document.getElementById('toast-icon');
+    const toastMsg = document.getElementById('toast-message');
+    function toast(msg, type='success'){
       toastMsg.textContent = msg;
       toastIcon.innerHTML = type==='success'
-        ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`
-        : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
+        ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'
+        : '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
       toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type==='success'?'text-green-500 bg-green-100':'text-red-500 bg-red-100'}`;
       toastEl.classList.add('show');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(()=>toastEl.classList.remove('show'), 2800);
+      setTimeout(()=>toastEl.classList.remove('show'),3000);
     }
 
-    function switchView(viewName){
-      Object.values(views).forEach(v => v.classList.add('hidden'));
-      if(views[viewName]) views[viewName].classList.remove('hidden');
-      navButtons.forEach(btn=>{
-        btn.classList.toggle('text-indigo-500', btn.dataset.view===viewName);
-        btn.classList.toggle('text-slate-500', btn.dataset.view!==viewName);
+    // Auth state
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // crear/actualizar doc usuario
+        const uref = doc(db, "users", user.uid);
+        const usnap = await getDoc(uref);
+        if (!usnap.exists()) {
+          await setDoc(uref, {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            createdAt: serverTimestamp()
+          });
+        }
+        // UI
+        navAvatar.src = user.photoURL || '';
+        navAvatar.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+        loginScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+
+        // cargar feed
+        loadFeed();
+      } else {
+        // UI logged out
+        loginScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
+        navAvatar.classList.add('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+    });
+
+    // Actions
+    loginBtn?.addEventListener('click', async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        console.error(e);
+        toast(parseError(e), 'error');
+      }
+    });
+
+    logoutBtn?.addEventListener('click', async () => {
+      await signOut(auth);
+      toast('Sesión cerrada');
+    });
+
+    // Feed (simple de ejemplo con Firestore)
+    function loadFeed(){
+      const q = query(collection(db, "challenges"), orderBy("createdAt","desc"));
+      onSnapshot(q, (snap)=>{
+        feedContainer.innerHTML = '';
+        if (snap.empty){
+          feedContainer.innerHTML = '<p class="text-center text-slate-500 mt-6">Sin retos todavía. Creá el primero ✨</p>';
+          return;
+        }
+        snap.forEach(d=>{
+          renderPost({ id:d.id, ...d.data() });
+        });
       });
     }
 
-    function renderFeed(user){
-      feedContainer.innerHTML = "";
-      const n = 3;
-      for(let i=0;i<n;i++){
-        const node = document.importNode(postTpl.content,true);
-        node.querySelector('.author-img').src = user?.photoURL || "https://placehold.co/80x80/AAA/FFF?text=U";
-        node.querySelector('.author-name').textContent = user?.displayName || "Usuario";
-        node.querySelector('.post-time').textContent = new Date().toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
-        feedContainer.appendChild(node);
-      }
+    function renderPost(post){
+      const node = document.importNode(postTemplate.content, true);
+      node.querySelector('.author-img').src = post.authorImg || '';
+      node.querySelector('.author-name').textContent = post.authorName || 'Anónimo';
+      const ts = post.createdAt?.seconds ? new Date(post.createdAt.seconds*1000) : new Date();
+      node.querySelector('.post-time').textContent = ts.toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
+      node.querySelector('.post-time-secondary').textContent = node.querySelector('.post-time').textContent;
+      node.querySelector('.content-img').src = post.contentUrl || 'https://placehold.co/800x500?text=Contenido';
+      node.querySelector('.likes-count').textContent = (post.likes?.length || 0);
+      feedContainer.appendChild(node);
     }
 
-    function updateProfileUI(user){
-      profilePic.src = user.photoURL || "https://placehold.co/96x96/AAA/FFF?text=U";
-      profileName.textContent = user.displayName || "Usuario";
-      profileEmail.textContent = user.email || "";
+    // Helpers
+    function parseError(err){
+      const msg = String(err?.message || err);
+      // Tip para el caso que reportaste
+      if (msg.includes('identitytoolkit')) {
+        return 'Habilitá "Identity Toolkit API" en Google Cloud (proyecto tereto-6a980) y esperá 2-3 minutos.';
+      }
+      if (msg.includes('operation-not-allowed')) {
+        return 'Activá el proveedor Google en Firebase → Authentication.';
+      }
+      return msg.replace('Firebase: Error (','').replace(').','');
     }
-
-    // ---- Auth listeners ----
-    onAuthStateChanged(auth, (user)=>{
-      // Siempre mostrar spinner unos ms para evitar parpadeos
-      loadingSpinner.classList.remove('hidden');
-      if(user){
-        // logged in
-        loginScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
-        updateProfileUI(user);
-        renderFeed(user);
-        switchView('feed-view');
-      }else{
-        // logged out
-        appScreen.classList.add('hidden');
-        loginScreen.classList.remove('hidden');
-      }
-      setTimeout(()=>loadingSpinner.classList.add('hidden'), 200);
-    });
-
-    // ---- Events ----
-    loginButton.addEventListener('click', async ()=>{
-      try{
-        loadingSpinner.classList.remove('hidden');
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        showToast("¡Sesión iniciada!");
-      }catch(e){
-        console.error("Login error:", e);
-        showToast(e?.message || "Error al iniciar sesión", "error");
-      }finally{
-        loadingSpinner.classList.add('hidden');
-      }
-    });
-
-    logoutButton.addEventListener('click', async ()=>{
-      try{
-        await signOut(auth);
-        showToast("Sesión cerrada");
-      }catch(e){
-        console.error("Logout error:", e);
-        showToast("No se pudo cerrar sesión", "error");
-      }
-    });
-
-    document.querySelectorAll('.nav-button').forEach(btn=>{
-      btn.addEventListener('click', ()=>switchView(btn.dataset.view));
-    });
   </script>
 </body>
 </html>
