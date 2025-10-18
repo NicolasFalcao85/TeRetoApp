@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeReto</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,13 +19,13 @@
     .like-button:active { transform: scale(0.9); }
     .image-preview { max-height: 200px; object-fit: cover; }
     .comments-modal-body { height: calc(100vh - 12rem); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);}
+    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);}
     .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
+    .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
     .friends-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 600; }
     .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; }
-    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99, 102, 241, 0.75); }
+    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99,102,241,0.75); }
     .tip-chip { font-size: 10px; padding: 2px 8px; border-radius: 9999px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); }
   </style>
 </head>
@@ -42,7 +42,7 @@
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
@@ -65,7 +65,7 @@
     </div>
   </div>
 
-  <!-- APP SCREEN -->
+  <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
       <!-- FEED -->
@@ -107,7 +107,7 @@
                 <span class="text-sm font-semibold">Subir Archivo</span>
                 <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
               </label>
-              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
+              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover/bg-slate-50 text-slate-500 hover:text-indigo-500">
                 <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 <span class="text-sm font-semibold">Usar Cámara</span>
               </button>
@@ -207,7 +207,7 @@
       </div>
     </main>
 
-    <!-- NAV BAR -->
+    <!-- NAV -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
       <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
@@ -259,7 +259,7 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </header>
-    <div id="comments-modal-body" class="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
+    <div id="comments-modal-body" class="comments-modal-body flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
     <footer class="p-4 border-t bg-white">
       <form id="comment-form" class="flex items-center space-x-2">
         <img id="comment-user-img" src="" class="w-8 h-8 rounded-full">
@@ -320,7 +320,6 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card">
       <div class="p-4">
         <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
-        <p class="font-semibold text-slate-800 italic my-2">"<span class="original-challenge-question"></span>"</p>
         <p class="text-sm text-slate-600 mb-4"><strong class="submitter-name"></strong> ha enviado una prueba:</p>
         <img class="w-full h-auto rounded-lg submission-img" src="" alt="Prueba del reto">
         <div class="flex space-x-3 mt-4">
@@ -351,12 +350,19 @@
     </div>
   </template>
 
-  <!-- Firebase SDK ES Modules + App -->
+  <!-- Firebase + App -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+      setPersistence, browserLocalPersistence, signInWithRedirect
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, setDoc, doc,
+      serverTimestamp, query, orderBy, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ==== CONFIG FIREBASE (PROD) ====
+    // ==== Firebase config (PROD) ====
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -366,20 +372,21 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
 
-    // Init Firebase
+    // ==== Init ====
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
+    const db = getFirestore(app);
 
-    // ==== UI HELPERS ====
+    // ==== UI helpers ====
     const $ = (id) => document.getElementById(id);
     const loginScreen = $("login-screen");
     const appScreen = $("app-screen");
     const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
     const loadingSpinner = $("loading-spinner");
-
-    function showToast(message, type = 'success') {
+    function showToast(message, type='success') {
       toastMessage.textContent = message;
       toastIcon.innerHTML = type === 'success'
         ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`
@@ -389,11 +396,16 @@
       setTimeout(() => toastEl.classList.remove('show'), 2800);
     }
 
-    // ==== SIGN IN / SIGN OUT ====
+    // ==== Auth buttons ====
     $("google-btn")?.addEventListener("click", async () => {
       try {
         loadingSpinner.classList.remove("hidden");
-        await signInWithPopup(auth, provider);
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (e) {
+          if (e?.code === "auth/popup-blocked") await signInWithRedirect(auth, provider);
+          else throw e;
+        }
       } catch (err) {
         console.error(err);
         showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
@@ -401,258 +413,216 @@
         loadingSpinner.classList.add("hidden");
       }
     });
-
     $("signout-btn")?.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        showToast("Sesión cerrada.");
-      } catch (err) {
-        console.error(err);
-        showToast("No se pudo cerrar sesión", "error");
-      }
+      try { await signOut(auth); showToast("Sesión cerrada."); }
+      catch (err) { console.error(err); showToast("No se pudo cerrar sesión","error"); }
     });
 
-    // ====== App State ======
+    // ==== State ====
     let currentUser = null;
     let mockUser = null;
     let allUsers = {};
     let friends = ['user456'];
     let friendRequests = ['user789'];
-    let challengesData = [];
-    let solvedByUser = new Set(); // IDs de retos resueltos por ESTE usuario
 
-    function solvedKeyFor(uid) { return `tereto_solved_${uid}`; }
-    function loadSolvedFor(uid) {
-      try { return new Set(JSON.parse(localStorage.getItem(solvedKeyFor(uid)) || '[]')); }
-      catch { return new Set(); }
-    }
-    function saveSolvedFor(uid, set) {
-      try { localStorage.setItem(solvedKeyFor(uid), JSON.stringify(Array.from(set))); } catch {}
-    }
+    let challengesData = [];   // UI feed
+    let feedUnsub = null;
 
-    function seedDataFor(user) {
+    let solvedByUser = new Set();
+    const solvedKeyFor = (uid) => `tereto_solved_${uid}`;
+    function loadSolvedFor(uid){ try { return new Set(JSON.parse(localStorage.getItem(solvedKeyFor(uid))||'[]')); } catch { return new Set(); } }
+    function saveSolvedFor(uid,set){ try { localStorage.setItem(solvedKeyFor(uid), JSON.stringify([...set])); } catch {} }
+
+    function seedUsersFor(user){
       mockUser = {
         uid: user.uid,
         displayName: user.displayName || "Usuario",
         email: user.email || "",
-        photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0] || 'U'}`
+        photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0]||'U'}`
       };
-
       allUsers = {
         [mockUser.uid]: mockUser,
-        'user456': { uid: 'user456', displayName: 'Ana', photoURL: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
-        'user789': { uid: 'user789', displayName: 'Carlos', photoURL: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
-        'userABC': { uid: 'userABC', displayName: 'Beatriz', photoURL: 'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
+        'user456': { uid:'user456', displayName:'Ana', photoURL:'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
+        'user789': { uid:'user789', displayName:'Carlos', photoURL:'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
+        'userABC': { uid:'userABC', displayName:'Beatriz', photoURL:'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
       };
-
-      challengesData = [
-        {
-          id: 'challenge4',
-          authorId: mockUser.uid, authorName: mockUser.displayName, authorImg: mockUser.photoURL,
-          type: 'photo', question: 'Haz una pose de superhéroe.',
-          createdAt: new Date(Date.now() - 1000*60*20),
-          contentUrl: 'https://placehold.co/600x400/0000FF/FFFFFF?text=SUPER',
-          likes: 1, likedBy: [],
-          submission: { userId: 'user456', userName: 'Ana', submissionUrl: 'https://placehold.co/600x400/FFFF00/000000?text=POSE', status: 'pending' },
-          comments: [{ userId: 'user789', userName: 'Carlos', userImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C', text: '¡A ver esa pose!', createdAt: new Date(Date.now() - 1000*60*15) }]
-        },
-        {
-          id: 'challenge3',
-          authorId: 'user789', authorName: 'Carlos', authorImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C',
-          type: 'photo', question: 'Sácate una foto con un sombrero gracioso.',
-          createdAt: new Date(Date.now() - 1000*60*60),
-          contentUrl: 'https://placehold.co/600x400/777777/FFFFFF?text=SOMBRERO',
-          likes: 5, likedBy: [], comments: []
-        },
-        {
-          id: 'challenge1',
-          authorId: 'user456', authorName: 'Ana', authorImg: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A',
-          type: 'trivia', question: '¿En qué año llegó el hombre a la luna?',
-          correctAnswer: '1969', wrongAnswers: ['1965','1972','1980'],
-          createdAt: new Date(Date.now() - 1000*60*90),
-          contentUrl: 'https://placehold.co/600x400/333333/FFFFFF?text=LUNA',
-          likes: 15, likedBy: ['user789'],
-          comments: [
-            { userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text: '¡Fácil!', createdAt: new Date(Date.now() - 1000*60*88) },
-            { userId: 'user789', userName: 'Carlos', userImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C', text: 'Me hiciste dudar...', createdAt: new Date(Date.now() - 1000*60*87) }
-          ]
-        }
-      ];
     }
 
-    // ====== Helpers de desbloqueo por usuario ======
-    function shouldUnlockForUser(ch) {
-      if (!mockUser) return false;
-      if (ch.authorId === mockUser.uid) return true; // el autor siempre ve desbloqueado
-      if (solvedByUser.has(ch.id)) return true; // resuelto por trivia o validación
-      if (ch.submission?.status === 'approved' && ch.submission.userId === mockUser.uid) return true; // aprobado para este usuario
-      return false;
-    }
-
-    function unlockPostElement(postEl) {
-      postEl.querySelector('.content-img')?.classList.remove('blur-locked');
-      postEl.querySelector('.lock-overlay')?.classList.add('hidden');
-    }
-
-    // ====== Render ======
+    // ==== Render ====
     const feedContainer = $("feed-container");
     const postTemplate = $("post-template");
     const validationTemplate = $("validation-template");
     const commentTemplate = $("comment-template");
+    const userListItemTemplate = $("user-list-item-template");
     const friendsTabContent = $("friends-tab-content");
     const validationsContainer = $("validations-container");
 
-    function renderPost(ch) {
+    function shouldUnlockForUser(ch){
+      if (!mockUser) return false;
+      if (ch.authorId === mockUser.uid) return true;
+      if (solvedByUser.has(ch.id)) return true;
+      if (ch.submission?.status === 'approved' && ch.submission.userId === mockUser.uid) return true;
+      return false;
+    }
+    function unlockPostElement(postEl){
+      postEl.querySelector('.content-img')?.classList.remove('blur-locked');
+      postEl.querySelector('.lock-overlay')?.classList.add('hidden');
+    }
+
+    function renderPost(ch){
       const frag = document.importNode(postTemplate.content, true);
       const card = frag.querySelector('.post-card');
       card.dataset.challengeId = ch.id;
 
       frag.querySelector('.author-img').src = ch.authorImg;
       frag.querySelector('.author-name').textContent = ch.authorName;
-      frag.querySelector('.post-time').textContent = ch.createdAt.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
-      frag.querySelector('.content-img').src = ch.contentUrl;
-      frag.querySelector('.likes-count').textContent = ch.likes;
-      frag.querySelector('.comments-count').textContent = ch.comments.length;
+
+      let dt = new Date();
+      if (ch.createdAt?.toDate) dt = ch.createdAt.toDate();
+      else if (ch.createdAt instanceof Date) dt = ch.createdAt;
+
+      frag.querySelector('.post-time').textContent = dt.toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
+      frag.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      frag.querySelector('.likes-count').textContent = ch.likes ?? 0;
+      frag.querySelector('.comments-count').textContent = ch.comments?.length ?? ch.commentsCount ?? 0;
       if (ch.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
 
-      // Estado de bloqueo inicial
       const img = frag.querySelector('.content-img');
       const overlay = frag.querySelector('.lock-overlay');
-      img.classList.add('blur-locked');
-      overlay.classList.remove('hidden');
-      if (shouldUnlockForUser(ch)) {
-        img.classList.remove('blur-locked');
-        overlay.classList.add('hidden');
-      }
+      img.classList.add('blur-locked'); overlay.classList.remove('hidden');
+      if (shouldUnlockForUser(ch)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
 
       feedContainer.append(frag);
     }
 
-    function loadFeed() {
+    function loadFeedUI(){
       $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
       feedContainer.innerHTML = '';
-      challengesData.sort((a,b) => b.createdAt - a.createdAt).forEach(renderPost);
+      challengesData.forEach(renderPost);
     }
 
-    // ====== Perfil / Validaciones ======
-    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email"), createdCount = $("created-count");
+    function startFeedSubscription(){
+      if (feedUnsub) feedUnsub();
+      const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
+      feedUnsub = onSnapshot(q, (snap) => {
+        challengesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        loadFeedUI();
+      }, (err) => {
+        console.error("Feed snapshot error:", err);
+        showToast("No se pudo cargar el feed","error");
+      });
+    }
+    function stopFeedSubscription(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
 
-    function updateProfileUI() {
+    // ==== Perfil / Validaciones (mock) ====
+    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email"), createdCount = $("created-count");
+    function updateProfileUI(){
       if (!mockUser) return;
       profilePic.src = mockUser.photoURL;
       profileName.textContent = mockUser.displayName;
       profileEmail.textContent = mockUser.email;
-      createdCount.textContent = challengesData.filter(c => c.authorId === mockUser.uid).length;
+      createdCount.textContent = challengesData.filter(c=>c.authorId===mockUser.uid).length;
       loadPendingValidations();
     }
-
-    function loadPendingValidations() {
+    function loadPendingValidations(){
       validationsContainer.innerHTML = '';
-      const pending = challengesData.filter(c => c.authorId === mockUser.uid && c.submission?.status === 'pending');
-      if (pending.length === 0) return;
+      const pending = challengesData.filter(c => c.authorId===mockUser.uid && c.submission?.status==='pending');
+      if (pending.length===0) return;
       const header = document.createElement('h3');
       header.className = 'text-xl font-bold text-slate-800 mb-4';
       header.textContent = 'Validaciones Pendientes';
       validationsContainer.appendChild(header);
-      pending.forEach(ch => {
+      pending.forEach(ch=>{
         const el = document.importNode(validationTemplate.content, true);
         el.querySelector('.validation-card').dataset.challengeId = ch.id;
-        el.querySelector('.original-challenge-question').textContent = ch.question;
         el.querySelector('.submitter-name').textContent = ch.submission.userName;
         el.querySelector('.submission-img').src = ch.submission.submissionUrl;
         validationsContainer.appendChild(el);
       });
     }
-
-    function handleValidation(challengeId, isApproved) {
+    function handleValidation(challengeId, isApproved){
       const ch = challengesData.find(c => c.id === challengeId);
       if (!ch) return;
       ch.submission.status = isApproved ? 'approved' : 'rejected';
-
-      // Si aprobás, marcar como resuelto para el submitter (no para vos)
-      if (isApproved && ch.submission?.userId) {
+      if (isApproved && ch.submission?.userId){
         const submitterKey = solvedKeyFor(ch.submission.userId);
         const prev = new Set(JSON.parse(localStorage.getItem(submitterKey) || '[]'));
         prev.add(ch.id);
-        localStorage.setItem(submitterKey, JSON.stringify(Array.from(prev)));
+        localStorage.setItem(submitterKey, JSON.stringify([...prev]));
       }
-
       showToast(`Reto ${isApproved ? 'aprobado' : 'rechazado'}.`);
       loadPendingValidations();
     }
 
-    // ====== Comentarios ======
-    const commentForm = $("comment-form"),
-          commentInput = $("comment-input"),
-          commentUserImg = $("comment-user-img"),
-          commentsModal = $("comments-modal"),
+    // ==== Comentarios (mock) ====
+    const commentForm = $("comment-form"), commentInput = $("comment-input"),
+          commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
           commentsModalBody = $("comments-modal-body");
-
-    function openCommentsModal(challengeId) {
-      const ch = challengesData.find(c => c.id === challengeId);
-      if (!ch) return;
-      commentUserImg.src = mockUser.photoURL;
-      commentForm.dataset.challengeId = challengeId;
-      renderComments(ch);
+    function openCommentsModal(chId){
+      const ch = challengesData.find(c => c.id===chId); if (!ch) return;
+      commentUserImg.src = mockUser.photoURL; commentForm.dataset.challengeId = chId; renderComments(ch);
       commentsModal.classList.remove('hidden');
     }
-
-    function renderComments(ch) {
+    function renderComments(ch){
       commentsModalBody.innerHTML = '';
-      ch.comments.sort((a,b) => a.createdAt - b.createdAt).forEach(cm => {
+      (ch.comments || []).sort((a,b)=> (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0)).forEach(cm=>{
         const el = document.importNode(commentTemplate.content, true);
         el.querySelector('.comment-author-img').src = cm.userImg;
         el.querySelector('.comment-author-name').textContent = cm.userName;
         el.querySelector('.comment-text').textContent = cm.text;
-        el.querySelector('.comment-time').textContent = cm.createdAt.toLocaleString('es-AR', { timeStyle: 'short' });
+        const date = cm.createdAt?.toDate?.() || new Date();
+        el.querySelector('.comment-time').textContent = date.toLocaleString('es-AR',{ timeStyle:'short' });
         commentsModalBody.appendChild(el);
       });
     }
+    $("comment-form")?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const id = e.target.dataset.challengeId;
+      const ch = challengesData.find(c=>c.id===id);
+      const text = commentInput.value.trim();
+      if (!ch || !text) return;
+      ch.comments = ch.comments || [];
+      ch.comments.push({ userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text, createdAt: new Date() });
+      commentInput.value=''; renderComments(ch);
+      const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${id}"]`);
+      if (cardEl) cardEl.querySelector('.comments-count').textContent = ch.comments.length;
+    });
 
-    // ====== Crear / Cámara (sin Storage) ======
-    const cameraModal = $("camera-modal"),
-          cameraStreamEl = $("camera-stream"),
-          cameraCanvas = $("camera-canvas");
-
+    // ==== Cámara / Crear (sin Storage) ====
+    const cameraModal = $("camera-modal"), cameraStreamEl = $("camera-stream"), cameraCanvas = $("camera-canvas");
     const createViewElements = {
-      fileUpload: $("file-upload"),
-      fileNameDisplay: $("file-name"),
-      gotoStep2Btn: $("goto-step-2"),
-      imagePreviewContainer: $("image-preview-container"),
-      imagePreview: $("image-preview"),
-      selectTriviaBtn: $("select-trivia-btn"),
-      selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
-      triviaForm: $("trivia-form"),
-      photoChallengeForm: $("photo-challenge-form")
+      fileUpload: $("file-upload"), fileNameDisplay: $("file-name"), gotoStep2Btn: $("goto-step-2"),
+      imagePreviewContainer: $("image-preview-container"), imagePreview: $("image-preview"),
+      selectTriviaBtn: $("select-trivia-btn"), selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
+      triviaForm: $("trivia-form"), photoChallengeForm: $("photo-challenge-form")
     };
-
     let cameraStream = null, currentPhotoChallengeId = null;
 
-    async function openCamera(challengeId = null) {
+    async function openCamera(challengeId=null){
       currentPhotoChallengeId = challengeId;
-      try {
-        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      try{
+        if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
         cameraStreamEl.srcObject = cameraStream;
         cameraModal.classList.remove('hidden');
-      } catch (err) {
-        console.error("Error al acceder a la cámara:", err);
-        showToast("No se pudo acceder a la cámara. Revisa los permisos.", 'error');
+      } catch(err){
+        console.error("Cam error:", err);
+        showToast("No se pudo acceder a la cámara. Revisa permisos.", "error");
       }
     }
-    function closeCamera() {
-      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    function closeCamera(){
+      if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
       cameraStream = null;
       cameraModal.classList.add('hidden');
     }
-    function capturePhoto() {
+    function capturePhoto(){
       const video = cameraStreamEl, canvas = cameraCanvas;
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/png');
-      if (currentPhotoChallengeId) {
-        const ch = challengesData.find(c => c.id === currentPhotoChallengeId);
-        if (ch) {
+      if (currentPhotoChallengeId){
+        const ch = challengesData.find(c=>c.id===currentPhotoChallengeId);
+        if (ch){
           ch.submission = { userId: mockUser.uid, userName: mockUser.displayName, submissionUrl: dataUrl, status: 'pending' };
           showToast("Prueba enviada para validación.");
         }
@@ -667,7 +637,7 @@
       closeCamera();
     }
 
-    function resetCreateFlow() {
+    function resetCreateFlow(){
       createViewElements.triviaForm.reset();
       createViewElements.photoChallengeForm.reset();
       createViewElements.fileUpload.value = '';
@@ -677,93 +647,88 @@
       createViewElements.imagePreviewContainer.classList.add('hidden');
       showCreateStep('create-step-1');
     }
-    function showCreateStep(step) {
+    function showCreateStep(step){
       const steps = {
         'create-step-1': $("create-step-1"),
         'create-step-2': $("create-step-2"),
         'create-step-3-trivia': $("create-step-3-trivia"),
         'create-step-3-photo': $("create-step-3-photo")
       };
-      Object.values(steps).forEach(s => s.classList.add('hidden'));
+      Object.values(steps).forEach(s=>s.classList.add('hidden'));
       steps[step].classList.remove('hidden');
     }
 
-    function publishChallenge(challengeDetails) {
-      const newChallenge = {
-        id: `challenge_${Date.now()}`,
-        authorId: mockUser.uid,
-        authorName: mockUser.displayName,
-        authorImg: mockUser.photoURL,
-        createdAt: new Date(),
-        contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
-        likes: 0, likedBy: [], comments: [],
-        ...challengeDetails
-      };
-      challengesData.unshift(newChallenge);
-      loadFeed();
-      showToast('¡Reto creado con éxito!');
-      switchView('feed-view');
+    // ==== Publicar reto (Firestore) ====
+    async function publishChallenge(challengeDetails){
+      if (!mockUser) return;
+      try{
+        await addDoc(collection(db, "challenges"), {
+          authorId: mockUser.uid,
+          authorName: mockUser.displayName,
+          authorImg: mockUser.photoURL,
+          createdAt: serverTimestamp(),
+          contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
+          likes: 0,
+          commentsCount: 0,
+          ...challengeDetails
+        });
+        showToast("¡Reto publicado!");
+        switchView('feed-view'); // onSnapshot refresca
+      } catch(e){
+        console.error("addDoc challenge error:", e);
+        showToast("No se pudo publicar el reto","error");
+      }
     }
 
-    // ====== Trivia ======
+    // ==== Trivia (desbloqueo local) ====
     const triviaModal = $("trivia-modal");
-    function openTriviaModal(challenge, postElement) {
-      $("trivia-modal-question").textContent = challenge.question;
+    function openTriviaModal(ch, postElement){
+      $("trivia-modal-question").textContent = ch.question;
       const answersContainer = $("trivia-modal-answers");
       answersContainer.innerHTML = '';
-      const options = [...challenge.wrongAnswers, challenge.correctAnswer]
-        .map(s => String(s)); // coerción a string para comparación segura
-      options.sort(() => Math.random() - 0.5).forEach(answer => {
+      const options = [...(ch.wrongAnswers||[]), (ch.correctAnswer ?? '')].map(String).sort(()=>Math.random()-0.5);
+      options.forEach(answer=>{
         const btn = document.createElement('button');
         btn.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
         btn.textContent = answer;
-        btn.addEventListener('click', () => checkAnswer(answer === String(challenge.correctAnswer), postElement, challenge.id));
+        btn.addEventListener('click', ()=>checkAnswer(answer === String(ch.correctAnswer), postElement, ch.id));
         answersContainer.appendChild(btn);
       });
       triviaModal.classList.remove('hidden');
     }
-
-    function checkAnswer(isCorrect, postElement, challengeId) {
-      if (isCorrect) {
+    function checkAnswer(isCorrect, postElement, challengeId){
+      if (isCorrect){
         triviaModal.classList.add('hidden');
-        // Marcar como resuelto para ESTE usuario
         solvedByUser.add(challengeId);
         saveSolvedFor(mockUser.uid, solvedByUser);
-        // Desbloquear visualmente el card (el que se tocó)
         unlockPostElement(postElement);
         showToast("¡Correcto! Desbloqueado 👌");
       } else {
         $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Inténtalo de nuevo!';
-        setTimeout(() => { $("trivia-feedback").textContent = ''; }, 1500);
+        setTimeout(()=>{$("trivia-feedback").textContent='';},1500);
       }
     }
 
-    // ====== Friends ======
+    // ==== Friends (mock) ====
     const friendsTabButtons = document.querySelectorAll('.friends-tab');
-    function renderFriendsTab(tab) {
+    function renderFriendsTab(tab){
       friendsTabContent.innerHTML = '';
-      friendsTabButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-        btn.classList.toggle('text-slate-500', btn.dataset.tab !== tab);
+      friendsTabButtons.forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.tab===tab);
+        btn.classList.toggle('text-slate-500', btn.dataset.tab!==tab);
       });
-      if (tab === 'my-friends') {
-        if (friends.length === 0) {
-          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`;
-          return;
-        }
-        friends.forEach(friendId => {
+      if (tab==='my-friends'){
+        if (friends.length===0){ friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`; return; }
+        friends.forEach(friendId=>{
           const user = allUsers[friendId];
           const item = userListItemTemplate.content.cloneNode(true);
           item.querySelector('.user-img').src = user.photoURL;
           item.querySelector('.user-name').textContent = user.displayName;
           friendsTabContent.appendChild(item);
         });
-      } else if (tab === 'requests') {
-        if (friendRequests.length === 0) {
-          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No tienes solicitudes pendientes.</p>`;
-          return;
-        }
-        friendRequests.forEach(userId => {
+      } else {
+        if (friendRequests.length===0){ friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No tienes solicitudes pendientes.</p>`; return; }
+        friendRequests.forEach(userId=>{
           const user = allUsers[userId];
           const item = userListItemTemplate.content.cloneNode(true);
           item.querySelector('.user-img').src = user.photoURL;
@@ -776,77 +741,63 @@
         });
       }
     }
-
-    function handleFriendRequest(userId, accepted) {
-      friendRequests = friendRequests.filter(id => id !== userId);
-      if (accepted) { friends.push(userId); showToast("Solicitud de amistad aceptada."); }
+    function handleFriendRequest(userId, accepted){
+      friendRequests = friendRequests.filter(id=>id!==userId);
+      if (accepted){ friends.push(userId); showToast("Solicitud de amistad aceptada."); }
       else { showToast("Solicitud rechazada."); }
       renderFriendsTab('requests');
     }
 
-    // ====== Navegación ======
+    // ==== Navegación ====
     const views = {
       'feed-view': $("feed-view"),
       'friends-view': $("friends-view"),
       'create-view': $("create-view"),
       'profile-view': $("profile-view")
     };
-
-    function switchView(viewName) {
-      Object.values(views).forEach(v => v.classList.add('hidden'));
+    function switchView(viewName){
+      Object.values(views).forEach(v=>v.classList.add('hidden'));
       if (views[viewName]) views[viewName].classList.remove('hidden');
-
-      document.querySelectorAll('.nav-button').forEach(btn => {
-        btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
-        btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
+      document.querySelectorAll('.nav-button').forEach(btn=>{
+        btn.classList.toggle('text-indigo-500', btn.dataset.view===viewName);
+        btn.classList.toggle('text-slate-500', btn.dataset.view!==viewName);
       });
-
-      if (viewName === 'profile-view') updateProfileUI();
-      if (viewName === 'create-view') resetCreateFlow();
-      if (viewName === 'friends-view') renderFriendsTab('my-friends');
+      if (viewName==='profile-view') updateProfileUI();
+      if (viewName==='create-view') resetCreateFlow();
+      if (viewName==='friends-view') renderFriendsTab('my-friends');
     }
 
-    // ====== Listeners Globales ======
-    document.addEventListener('click', (e) => {
-      // Validaciones
+    // ==== Listeners globales ====
+    document.addEventListener('click', (e)=>{
       const card = e.target.closest('.validation-card');
       if (card && (e.target.closest('.approve-btn') || e.target.closest('.reject-btn'))) {
         handleValidation(card.dataset.challengeId, !!e.target.closest('.approve-btn'));
         return;
       }
-
-      // Tip visto
-      if (e.target.closest('.challenge-container')) {
-        localStorage.setItem("tereto_tip_seen", "1");
+      if (e.target.closest('.challenge-container')){
+        localStorage.setItem("tereto_tip_seen","1");
         $("feed-tip")?.classList.add("hidden");
       }
-
-      // Feed: like / comment / abrir reto
       const postCard = e.target.closest('.post-card');
-      if (postCard && postCard.dataset.challengeId) {
+      if (postCard && postCard.dataset.challengeId){
         const challengeId = postCard.dataset.challengeId;
-        const ch = challengesData.find(c => c.id === challengeId);
+        const ch = challengesData.find(c=>c.id===challengeId);
         if (!ch) return;
 
-        if (e.target.closest('.like-button')) {
-          const hasLiked = ch.likedBy.includes(mockUser.uid);
-          ch.likes += hasLiked ? -1 : 1;
-          ch.likedBy = hasLiked ? ch.likedBy.filter(uid => uid !== mockUser.uid) : ch.likedBy.concat(mockUser.uid);
+        if (e.target.closest('.like-button')){
+          const hasLiked = (ch.likedBy || []).includes(mockUser.uid);
+          ch.likes = (ch.likes || 0) + (hasLiked ? -1 : 1);
+          ch.likedBy = hasLiked ? ch.likedBy.filter(uid=>uid!==mockUser.uid) : [...(ch.likedBy||[]), mockUser.uid];
           postCard.querySelector('.likes-count').textContent = ch.likes;
           postCard.querySelector('.like-icon').classList.toggle('liked', !hasLiked);
           return;
         }
+        if (e.target.closest('.comment-button')) { openCommentsModal(challengeId); return; }
 
-        if (e.target.closest('.comment-button')) {
-          openCommentsModal(challengeId);
-          return;
-        }
-
-        if (e.target.closest('.challenge-container')) {
-          // Si ya está desbloqueado, no abrir modales
+        if (e.target.closest('.challenge-container')){
           if (shouldUnlockForUser(ch)) return;
-          if (ch.type === 'trivia') openTriviaModal(ch, postCard);
-          else if (ch.type === 'photo') {
+          if (ch.type==='trivia') openTriviaModal(ch, postCard);
+          else if (ch.type==='photo'){
             $("photo-challenge-description").textContent = ch.question;
             $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
             $("photo-challenge-modal").classList.remove('hidden');
@@ -854,83 +805,91 @@
         }
       }
     });
+    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', ()=>switchView(btn.dataset.view)));
+    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=>renderFriendsTab(btn.dataset.tab)));
 
-    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
-    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', () => renderFriendsTab(btn.dataset.tab)));
-
-    $("comment-form")?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const challengeId = e.target.dataset.challengeId;
-      const ch = challengesData.find(c => c.id === challengeId);
-      const text = commentInput.value.trim();
-      if (!ch || !text) return;
-      ch.comments.push({ userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text, createdAt: new Date() });
-      commentInput.value = '';
-      renderComments(ch);
-      const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
-      if (cardEl) cardEl.querySelector('.comments-count').textContent = ch.comments.length;
-    });
-
-    $("open-camera-btn")?.addEventListener('click', () => openCamera(null));
+    $("open-camera-btn")?.addEventListener('click', ()=>openCamera(null));
     $("capture-btn")?.addEventListener('click', capturePhoto);
     $("cancel-camera-btn")?.addEventListener('click', closeCamera);
-    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
-    $("close-photo-challenge-modal")?.addEventListener('click', () => $("photo-challenge-modal").classList.add('hidden'));
-    $("close-comments-modal")?.addEventListener('click', () => $("comments-modal").classList.add('hidden'));
-    $("submit-photo-challenge-btn")?.addEventListener('click', () => {
+
+    $("close-trivia-modal")?.addEventListener('click', ()=>$("trivia-modal").classList.add('hidden'));
+    $("close-photo-challenge-modal")?.addEventListener('click', ()=>$("photo-challenge-modal").classList.add('hidden'));
+    $("close-comments-modal")?.addEventListener('click', ()=>$("comments-modal").classList.add('hidden'));
+    $("submit-photo-challenge-btn")?.addEventListener('click', ()=>{
       const challengeId = $("submit-photo-challenge-btn").dataset.challengeId;
       openCamera(challengeId);
       $("photo-challenge-modal").classList.add('hidden');
     });
 
-    createViewElements.fileUpload?.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        const file = e.target.files[0], reader = new FileReader();
-        createViewElements.fileNameDisplay.textContent = file.name;
-        createViewElements.gotoStep2Btn.disabled = false;
-        reader.onload = (event) => {
-          createViewElements.gotoStep2Btn.dataset.fileUrl = event.target.result;
-          createViewElements.imagePreview.src = event.target.result;
-          createViewElements.imagePreviewContainer.classList.remove('hidden');
+    // Crear flujo
+    const createViewElements = {
+      fileUpload: $("file-upload"), fileNameDisplay: $("file-name"), gotoStep2Btn: $("goto-step-2"),
+      imagePreviewContainer: $("image-preview-container"), imagePreview: $("image-preview"),
+      selectTriviaBtn: $("select-trivia-btn"), selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
+      triviaForm: $("trivia-form"), photoChallengeForm: $("photo-challenge-form")
+    };
+    $("file-upload")?.addEventListener('change', (e)=>{
+      if (e.target.files.length>0){
+        const file = e.target.files[0]; const reader = new FileReader();
+        $("file-name").textContent = file.name;
+        $("goto-step-2").disabled = false;
+        reader.onload = (ev)=>{
+          $("goto-step-2").dataset.fileUrl = ev.target.result;
+          $("image-preview").src = ev.target.result;
+          $("image-preview-container").classList.remove('hidden');
         };
         reader.readAsDataURL(file);
       } else {
-        createViewElements.fileNameDisplay.textContent = '';
-        createViewElements.gotoStep2Btn.disabled = true;
-        createViewElements.imagePreviewContainer.classList.add('hidden');
+        $("file-name").textContent = '';
+        $("goto-step-2").disabled = true;
+        $("image-preview-container").classList.add('hidden');
       }
     });
-    createViewElements.gotoStep2Btn?.addEventListener('click', () => showCreateStep('create-step-2'));
-    createViewElements.selectTriviaBtn?.addEventListener('click', () => showCreateStep('create-step-3-trivia'));
-    createViewElements.selectPhotoChallengeBtn?.addEventListener('click', () => showCreateStep('create-step-3-photo'));
-    createViewElements.triviaForm?.addEventListener('submit', (e) => {
+    $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
+    $("select-trivia-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-trivia'));
+    $("select-photo-challenge-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-photo'));
+    $("trivia-form")?.addEventListener('submit', (e)=>{
       e.preventDefault();
       publishChallenge({
-        type: 'trivia',
-        question: $("trivia-question").value,
-        correctAnswer: $("correct-answer").value,
-        wrongAnswers: [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ]
+        type:'trivia',
+        question:$("trivia-question").value,
+        correctAnswer:$("correct-answer").value,
+        wrongAnswers:[ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ]
       });
     });
-    createViewElements.photoChallengeForm?.addEventListener('submit', (e) => {
+    $("photo-challenge-form")?.addEventListener('submit', (e)=>{
       e.preventDefault();
-      publishChallenge({ type: 'photo', question: $("photo-challenge-task").value });
+      publishChallenge({ type:'photo', question:$("photo-challenge-task").value });
     });
 
-    // ====== Auth state ======
-    onAuthStateChanged(auth, (user) => {
+    // ==== users upsert ====
+    async function upsertUserProfile(user){
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: user.displayName || null,
+          email: user.email || null,
+          photoURL: user.photoURL || null,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      } catch(e){ console.error("users setDoc error:", e); }
+    }
+
+    // ==== Auth state ====
+    onAuthStateChanged(auth, async (user)=>{
       currentUser = user || null;
-      if (currentUser) {
-        // cargar resueltos del usuario
+      if (currentUser){
         solvedByUser = loadSolvedFor(currentUser.uid);
-        // preparar datos y UI
-        seedDataFor(currentUser);
+        seedUsersFor(currentUser);
+        await upsertUserProfile(currentUser);
+
         loginScreen.classList.add("hidden");
         appScreen.classList.remove("hidden");
+
+        startFeedSubscription();
         updateProfileUI();
-        loadFeed();
         switchView('feed-view');
       } else {
+        stopFeedSubscription();
         appScreen.classList.add("hidden");
         loginScreen.classList.remove("hidden");
       }
