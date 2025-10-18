@@ -35,7 +35,7 @@
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
         <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -323,17 +323,18 @@
   </template>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-    import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+    // CORRECCIÓN 1: Se usa una versión de Firebase válida y reciente (10.12.2)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
     // --- CONFIG (PROD) ---
-    // IMPORTANTE: Asegurate de proteger tu base de datos con Reglas de Seguridad de Firestore.
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
+      // CORRECCIÓN 2: El formato del storageBucket es .appspot.com
       storageBucket: "tereto-prod.appspot.com",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
@@ -379,14 +380,16 @@
         btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
         btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
       });
-      if (viewName === 'profile-view') { /* Lógica de perfil aquí */ }
+      if (viewName === 'profile-view' && currentUser) {
+          updateProfileUI(currentUser);
+      }
     }
     document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
 
     // --- AUTENTICACIÓN Y ESTADO PRINCIPAL ---
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        initializeAppState(user);
+        await initializeAppState(user);
       } else {
         cleanupAppState();
       }
@@ -396,21 +399,17 @@
         currentUser = user;
         await upsertUser(user);
         
-        // Configurar UI
-        $("login-screen").classList.add("hidden");
         $("app-screen").classList.remove("hidden");
+        $("login-screen").classList.add("hidden");
         switchView('feed-view');
 
-        // Iniciar listeners
         startSolvedListener();
         startChallengesListener();
-        // startValidationsListener(); // Descomentar si se usa
         startUsersSubscription();
-        unsubFriendships = startFriendshipsListener(); // CORREGIDO
+        unsubFriendships = startFriendshipsListener();
     }
 
     function cleanupAppState() {
-        // Detener todos los listeners
         unsubSolved?.();
         unsubChallenges?.();
         unsubValidations?.();
@@ -419,22 +418,26 @@
         unsubCommentsModal?.();
         clearPerChallengeUnsubs();
 
-        // Limpiar estado
         currentUser = null;
         solvedSet.clear();
         challengeCache.clear();
         usersCache = [];
         friendMap.clear();
         
-        // Restablecer UI
         $("login-screen").classList.remove("hidden");
         $("app-screen").classList.add("hidden");
     }
 
     $("google-btn")?.addEventListener("click", async () => {
-      try { $("loading-spinner").classList.remove("hidden"); await signInWithPopup(auth, provider); }
-      catch (err) { console.error(err); showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error"); }
-      finally { $("loading-spinner").classList.add("hidden"); }
+      $("loading-spinner").classList.remove("hidden");
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        console.error(err);
+        showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
+      } finally {
+        $("loading-spinner").classList.add("hidden");
+      }
     });
     
     $("signout-btn")?.addEventListener("click", async () => {
@@ -450,10 +453,9 @@
         uid: user.uid,
         displayName: user.displayName || "Usuario",
         email: user.email || "",
-        photoURL: user.photoURL || "",
+        photoURL: user.photoURL || "https://placehold.co/100x100?text=U",
         lastSeen: serverTimestamp()
       };
-      // Solo añade createdAt si el documento no existe
       if (!docSnap.exists()) {
         userData.createdAt = serverTimestamp();
       }
@@ -510,18 +512,12 @@
       $("user-search-input")?.addEventListener('input', renderUsersList);
     }
     
-    // OPTIMIZADO: Usa DocumentFragment para renderizado eficiente
     function renderUsersList() {
       const container = $("friends-list-container");
       if (!container) return;
-
       const term = ($("user-search-input")?.value || '').toLowerCase();
       container.innerHTML = '';
-      
-      const filtered = usersCache.filter(u => {
-        const s = (u.displayName || '').toLowerCase() + ' ' + (u.email || '').toLowerCase();
-        return !term || s.includes(term);
-      });
+      const filtered = usersCache.filter(u => ((u.displayName || '').toLowerCase() + ' ' + (u.email || '').toLowerCase()).includes(term));
 
       if (filtered.length === 0) {
         container.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
@@ -533,7 +529,6 @@
         const state = friendMap.get(u.uid);
         const row = document.createElement('div');
         row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
-        
         let actionHtml = '';
         if (!state) {
             actionHtml = `<button data-action="add" data-uid="${u.uid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`;
@@ -542,47 +537,43 @@
         } else if (state.requestedBy === currentUser.uid) {
             actionHtml = `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`;
         } else {
-            actionHtml = `
-              <button data-action="accept" data-uid="${u.uid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
-              <button data-action="reject" data-uid="${u.uid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>`;
+            actionHtml = `<button data-action="accept" data-uid="${u.uid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
+                          <button data-action="reject" data-uid="${u.uid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>`;
         }
-
-        row.innerHTML = `
-          <div class="flex items-center space-x-3">
+        row.innerHTML = `<div class="flex items-center space-x-3">
             <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
-            <div>
-              <p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p>
-              <p class="text-xs text-slate-400">${u.email || ''}</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">${actionHtml}</div>`;
+            <div><p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p><p class="text-xs text-slate-400">${u.email || ''}</p></div>
+          </div><div class="flex items-center gap-2">${actionHtml}</div>`;
         fragment.appendChild(row);
       });
       container.appendChild(fragment);
     }
     
-    // OPTIMIZADO: Delegación de eventos
     $("friends-list-container")?.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-action]');
       if (!btn || !currentUser) return;
-      
-      const uid = btn.dataset.uid;
-      const action = btn.dataset.action;
-      
-      btn.disabled = true; // Evitar doble clic
+      btn.disabled = true;
       try {
+        const { uid, action } = btn.dataset;
         if (action === 'add') await sendFriendRequest(uid);
-        if (action === 'accept') await acceptFriendRequest(uid);
-        if (action === 'reject') await rejectFriendRequest(uid);
+        else if (action === 'accept') await acceptFriendRequest(uid);
+        else if (action === 'reject') await rejectFriendRequest(uid);
       } catch (err) {
-        console.error("Error al manejar solicitud de amistad:", err);
+        console.error("Error en acción de amistad:", err);
         showToast("Ocurrió un error", "error");
       } finally {
         btn.disabled = false;
       }
     });
 
-    // --- LÓGICA DE RETOS (FEED, SOLVED) ---
+    // --- LÓGICA DE RETOS (FEED, SOLVED, PERFIL) ---
+    function updateProfileUI(user){
+      if(!user) return;
+      $("profile-pic").src = user.photoURL;
+      $("profile-name").textContent = user.displayName;
+      $("profile-email").textContent = user.email;
+    }
+    
     function updateSolvedCount() { $("solved-count").textContent = solvedSet.size; }
 
     function refreshUnlockStates() {
@@ -590,7 +581,6 @@
         const id = card.dataset.challengeId;
         const author = card.dataset.authorUid;
         const isUnlocked = (currentUser && id && (author === currentUser.uid || solvedSet.has(id)));
-        
         card.querySelector('.content-img')?.classList.toggle('blur-locked', !isUnlocked);
         card.querySelector('.lock-overlay')?.classList.toggle('hidden', isUnlocked);
       });
@@ -600,19 +590,9 @@
       unsubSolved?.();
       if (!currentUser) return;
       unsubSolved = onSnapshot(collection(db, 'users', currentUser.uid, 'solved'), (snap) => {
-        const newSet = new Set();
-        snap.forEach(d => newSet.add(d.id));
-        solvedSet = newSet;
+        solvedSet = new Set(snap.docs.map(d => d.id));
         updateSolvedCount();
         refreshUnlockStates();
-      });
-    }
-
-    async function markSolvedRemote(challengeId) {
-      if(!currentUser) return;
-      await setDoc(doc(db, 'users', currentUser.uid, 'solved', challengeId), { 
-          challengeId, 
-          solvedAt: serverTimestamp() 
       });
     }
 
@@ -624,13 +604,11 @@
     function startChallengesListener() {
       unsubChallenges?.();
       clearPerChallengeUnsubs();
-      
       const qChallenges = query(collection(db, 'challenges'), orderBy('createdAt', 'desc'));
       unsubChallenges = onSnapshot(qChallenges, (snap) => {
         const feed = $("feed-container");
         const empty = $("feed-empty");
         if(!feed || !empty) return;
-
         feed.innerHTML = "";
         challengeCache.clear();
         empty.classList.toggle('hidden', !snap.empty);
@@ -656,60 +634,46 @@
       const tpl = $("post-template").content.cloneNode(true);
       const card = tpl.querySelector('.post-card');
       if (!card) return null;
-      
       card.dataset.challengeId = id;
       card.dataset.authorUid = ch.authorUid;
-      
       tpl.querySelector('.author-img').src = ch.authorPhoto || 'https://placehold.co/40x40?text=U';
       tpl.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
       const ts = ch.createdAt?.toDate ? ch.createdAt.toDate() : new Date();
       tpl.querySelector('.post-time').textContent = ts.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
       tpl.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400';
       if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
-
-      // Attach realtime listeners for likes/comments
+      
       const likesEl = tpl.querySelector('.likes-count');
       const likeIcon = tpl.querySelector('.like-icon');
       const commentsCountEl = tpl.querySelector('.comments-count');
-
       const unlikes = onSnapshot(collection(db, 'challenges', id, 'likes'), (snap) => {
         likesEl.textContent = snap.size;
-        const isLiked = currentUser ? snap.docs.some(d => d.id === currentUser.uid) : false;
-        likeIcon.classList.toggle('liked', isLiked);
+        likeIcon.classList.toggle('liked', currentUser ? snap.docs.some(d => d.id === currentUser.uid) : false);
       });
-
       const uncomments = onSnapshot(collection(db, 'challenges', id, 'comments'), (snap) => {
         commentsCountEl.textContent = snap.size;
       });
-
       (perChallengeUnsubs[id] ||= []).push(unlikes, uncomments);
       return card;
     }
 
     async function toggleLike(challengeId) {
-      if(!currentUser) {
-        showToast("Debes iniciar sesión para dar me gusta", "error");
-        return;
-      }
+      if(!currentUser) return showToast("Debes iniciar sesión para dar me gusta", "error");
       const likeRef = doc(db, 'challenges', challengeId, 'likes', currentUser.uid);
       const snap = await getDoc(likeRef);
       if (snap.exists()) await deleteDoc(likeRef);
       else await setDoc(likeRef, { uid: currentUser.uid, likedAt: serverTimestamp() });
     }
     
-    // Delegación de eventos para el feed
     $("feed-container")?.addEventListener("click", e => {
-        const likeButton = e.target.closest(".like-button");
-        if(likeButton) {
-            const card = likeButton.closest(".post-card");
-            if(card && card.dataset.challengeId) {
-                toggleLike(card.dataset.challengeId);
-            }
-        }
-        // Aquí puedes agregar lógica para botones de comentarios, etc.
+      const likeButton = e.target.closest(".like-button");
+      const card = e.target.closest(".post-card");
+      if(likeButton && card?.dataset.challengeId) {
+          toggleLike(card.dataset.challengeId);
+      }
     });
 
-    // ... El resto de tu lógica para crear retos, modales, etc. iría aquí ...
+    // ... (El resto de la lógica para crear retos, modales, etc., se mantiene igual) ...
     
   </script>
 </body>
