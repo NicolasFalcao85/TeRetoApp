@@ -35,7 +35,7 @@
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 hidden">
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
         <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -323,7 +323,6 @@
   </template>
 
   <script type="module">
-    // CORRECCIÓN 1: Se usa una versión de Firebase válida y reciente (10.12.2)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -334,7 +333,6 @@
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      // CORRECCIÓN 2: El formato del storageBucket es .appspot.com
       storageBucket: "tereto-prod.appspot.com",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
@@ -672,8 +670,6 @@
           toggleLike(card.dataset.challengeId);
       }
     });
-
-    // ... (El resto de la lógica para crear retos, modales, etc., se mantiene igual) ...
     
   </script>
 </body>
