@@ -107,7 +107,7 @@
                 <span class="text-sm font-semibold">Subir Archivo</span>
                 <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
               </label>
-              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover/bg-slate-50 text-slate-500 hover:text-indigo-500">
+              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
                 <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 <span class="text-sm font-semibold">Usar Cámara</span>
               </button>
@@ -501,6 +501,7 @@
       challengesData.forEach(renderPost);
     }
 
+    // ==== Firestore Feed ====
     function startFeedSubscription(){
       if (feedUnsub) feedUnsub();
       const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
@@ -589,13 +590,22 @@
     });
 
     // ==== Cámara / Crear (sin Storage) ====
-    const cameraModal = $("camera-modal"), cameraStreamEl = $("camera-stream"), cameraCanvas = $("camera-canvas");
+    const cameraModal = $("camera-modal"),
+          cameraStreamEl = $("camera-stream"),
+          cameraCanvas = $("camera-canvas");
+
     const createViewElements = {
-      fileUpload: $("file-upload"), fileNameDisplay: $("file-name"), gotoStep2Btn: $("goto-step-2"),
-      imagePreviewContainer: $("image-preview-container"), imagePreview: $("image-preview"),
-      selectTriviaBtn: $("select-trivia-btn"), selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
-      triviaForm: $("trivia-form"), photoChallengeForm: $("photo-challenge-form")
+      fileUpload: $("file-upload"),
+      fileNameDisplay: $("file-name"),
+      gotoStep2Btn: $("goto-step-2"),
+      imagePreviewContainer: $("image-preview-container"),
+      imagePreview: $("image-preview"),
+      selectTriviaBtn: $("select-trivia-btn"),
+      selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
+      triviaForm: $("trivia-form"),
+      photoChallengeForm: $("photo-challenge-form")
     };
+
     let cameraStream = null, currentPhotoChallengeId = null;
 
     async function openCamera(challengeId=null){
@@ -808,26 +818,7 @@
     document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', ()=>switchView(btn.dataset.view)));
     document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=>renderFriendsTab(btn.dataset.tab)));
 
-    $("open-camera-btn")?.addEventListener('click', ()=>openCamera(null));
-    $("capture-btn")?.addEventListener('click', capturePhoto);
-    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
-
-    $("close-trivia-modal")?.addEventListener('click', ()=>$("trivia-modal").classList.add('hidden'));
-    $("close-photo-challenge-modal")?.addEventListener('click', ()=>$("photo-challenge-modal").classList.add('hidden'));
-    $("close-comments-modal")?.addEventListener('click', ()=>$("comments-modal").classList.add('hidden'));
-    $("submit-photo-challenge-btn")?.addEventListener('click', ()=>{
-      const challengeId = $("submit-photo-challenge-btn").dataset.challengeId;
-      openCamera(challengeId);
-      $("photo-challenge-modal").classList.add('hidden');
-    });
-
-    // Crear flujo
-    const createViewElements = {
-      fileUpload: $("file-upload"), fileNameDisplay: $("file-name"), gotoStep2Btn: $("goto-step-2"),
-      imagePreviewContainer: $("image-preview-container"), imagePreview: $("image-preview"),
-      selectTriviaBtn: $("select-trivia-btn"), selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
-      triviaForm: $("trivia-form"), photoChallengeForm: $("photo-challenge-form")
-    };
+    // Crear flujo (file input y formularios)
     $("file-upload")?.addEventListener('change', (e)=>{
       if (e.target.files.length>0){
         const file = e.target.files[0]; const reader = new FileReader();
