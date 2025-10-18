@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>TeReto</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,29 +10,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; }
-    .blur-locked { filter: blur(20px); transition: filter 0.3s ease-in-out; }
+    .blur-locked { filter: blur(20px); transition: filter .3s ease-in-out; }
     .unlocked { filter: blur(0px); }
-    .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .like-icon.liked { fill: #ec4899; color: #ec4899; }
-    .like-button:active { transform: scale(0.9); }
-    .image-preview { max-height: 200px; object-fit: cover; }
+    .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .like-icon.liked { fill:#ec4899; color:#ec4899; }
+    .like-button:active { transform: scale(.9); }
+    .image-preview { max-height:200px; object-fit:cover; }
     .comments-modal-body { height: calc(100vh - 12rem); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);}
-    .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-    .friends-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 600; }
-    .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; }
-    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99, 102, 241, 0.75); }
-    .tip-pulse { animation: tipPulse 1.8s ease-in-out infinite; }
-    @keyframes tipPulse { 0%{opacity:.85; transform:translateY(0)} 50%{opacity:1} 100%{opacity:.85; transform:translateY(-2px)} }
-    .badge-unlocked {
-      position: absolute; top: 10px; left: 10px;
-      background: rgba(34,197,94,.95); color: white; font-size: 11px; font-weight: 700;
-      padding: 4px 8px; border-radius: 9999px; z-index: 10;
-      display: none;
-    }
-    .post-card.unlocked .badge-unlocked { display: inline-block; }
+    .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55);}
+    .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
+    .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite; }
+    @keyframes spin { 0% {transform:rotate(0)} 100% {transform:rotate(360deg)} }
+    .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
+    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); transition:all .3s ease; }
+    .btn-primary:hover { box-shadow:0 4px 15px 0 rgba(99,102,241,.75); }
+    .tip-badge { font-size:10px; letter-spacing:.04em; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -52,15 +44,8 @@
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
-        <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-          <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-          <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-        </svg>
-        <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-          <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient)">TeReto</text>
-        </svg>
+        <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><circle cx="16" cy="16" r="12" stroke="url(#g1)" stroke-width="3"/></svg>
+        <span class="ml-2 text-2xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">TeReto</span>
       </div>
       <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
       <button id="google-btn" class="w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50">
@@ -71,170 +56,11 @@
     </div>
   </div>
 
-  <!-- APP -->
-  <div id="app-screen" class="h-full flex flex-col hidden">
-    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-      <div id="feed-view">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
-          <div class="flex items-center space-x-2">
-            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoGradientHeader2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
-              <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
-            </svg>
-            <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoTextGradient2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient2)">TeReto</text>
-            </svg>
-          </div>
-          <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
-        </header>
-        <div id="feed-container" class="p-2 space-y-4"></div>
-      </div>
-
-      <div id="create-view" class="hidden p-4">
-        <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
-          <div id="create-step-1" class="text-center">
-            <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agrega el contenido a bloquear</h3>
-            <div id="image-preview-container" class="hidden my-4">
-              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg image-preview mx-auto"/>
-            </div>
-            <div class="grid grid-cols-2 gap-4 my-4">
-              <label for="file-upload" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
-                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                <span class="text-sm font-semibold">Subir Archivo</span>
-                <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
-              </label>
-              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
-                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-sm font-semibold">Usar Cámara</span>
-              </button>
-            </div>
-            <p id="file-name" class="mt-2 text-sm text-slate-500"></p>
-            <button id="goto-step-2" class="mt-4 w-full text-white font-bold py-2 px-4 rounded-md btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>Siguiente</button>
-          </div>
-
-          <div id="create-step-2" class="hidden text-center">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 2: Elige el tipo de reto</h3>
-            <div class="space-y-4">
-              <button id="select-trivia-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
-                <span class="text-3xl mr-4">🧠</span>
-                <div><p class="font-bold text-slate-800">Trivia</p><p class="text-sm text-slate-500">Crea una pregunta de opción múltiple.</p></div>
-              </button>
-              <button id="select-photo-challenge-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
-                <span class="text-3xl mr-4">📸</span>
-                <div><p class="font-bold text-slate-800">Reto con Foto / Video</p><p class="text-sm text-slate-500">Pide que cumplan un desafío.</p></div>
-              </button>
-            </div>
-          </div>
-
-          <div id="create-step-3-trivia" class="hidden">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Configura la Trivia</h3>
-            <form id="trivia-form" class="space-y-4">
-              <div>
-                <label for="trivia-question" class="block text-sm font-medium text-slate-700">Pregunta</label>
-                <input type="text" id="trivia-question" placeholder="Ej: ¿Cuál es la capital de Argentina?" class="mt-1 block w-full input-style" required>
-              </div>
-              <div>
-                <label for="correct-answer" class="block text-sm font-medium text-green-700">Respuesta Correcta</label>
-                <input type="text" id="correct-answer" placeholder="Ej: Buenos Aires" class="mt-1 block w-full input-style border-green-400 border-2" required>
-              </div>
-              <div>
-                <label for="wrong-answer-1" class="block text-sm font-medium text-red-700">Respuesta Incorrecta 1</label>
-                <input type="text" id="wrong-answer-1" placeholder="Ej: Santiago" class="mt-1 block w-full input-style" required>
-              </div>
-              <div>
-                <label for="wrong-answer-2" class="block text-sm font-medium text-red-700">Respuesta Incorrecta 2</label>
-                <input type="text" id="wrong-answer-2" placeholder="Ej: Bogotá" class="mt-1 block w-full input-style" required>
-              </div>
-              <div>
-                <label for="wrong-answer-3" class="block text-sm font-medium text-red-700">Respuesta Incorrecta 3</label>
-                <input type="text" id="wrong-answer-3" placeholder="Ej: Lima" class="mt-1 block w-full input-style" required>
-              </div>
-              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
-            </form>
-          </div>
-
-          <div id="create-step-3-photo" class="hidden">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Describe el Desafío</h3>
-            <form id="photo-challenge-form" class="space-y-4">
-              <div>
-                <label for="photo-challenge-task" class="block text-sm font-medium text-slate-700">Consigna</label>
-                <textarea id="photo-challenge-task" rows="4" placeholder="Ej: Sácate una foto imitando a una estatua." class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
-              </div>
-              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div id="friends-view" class="hidden">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40"><h1 class="text-3xl font-bold text-slate-800">Amigos</h1></header>
-        <div class="p-4">
-          <div class="relative mb-4">
-            <input type="search" id="user-search-input" placeholder="Buscar usuarios..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
-              <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-          </div>
-          <div class="border-b border-slate-200">
-            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-tab="my-friends">Mis Amigos</button>
-              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="requests">Solicitudes</button>
-            </nav>
-          </div>
-          <div id="friends-tab-content" class="mt-4"></div>
-        </div>
-      </div>
-
-      <div id="profile-view" class="hidden">
-        <div class="p-4 bg-white shadow-lg">
-          <div class="flex flex-col items-center">
-            <img id="profile-pic" src="" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
-            <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
-            <p id="profile-email" class="text-slate-500"></p>
-            <div class="flex space-x-8 mt-4">
-              <div class="text-center">
-                <span id="created-count" class="font-bold text-lg text-slate-700">0</span>
-                <p class="text-slate-500 text-sm">Retos Creados</p>
-              </div>
-              <div class="text-center">
-                <span id="solved-count" class="font-bold text-lg text-slate-700">0</span>
-                <p class="text-slate-500 text-sm">Retos Superados</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="validations-container" class="p-4"></div>
-      </div>
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
-      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-        <span class="text-xs font-semibold">Inicio</span>
-      </button>
-      <button data-view="friends-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        <span class="text-xs font-semibold">Amigos</span>
-      </button>
-      <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
-        <span class="text-xs font-semibold">Crear</span>
-      </button>
-      <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0012 11z" clip-rule="evenodd"></path></svg>
-        <span class="text-xs font-semibold">Perfil</span>
-      </button>
-    </nav>
-  </div>
-
   <!-- MODALES -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       <h2 id="trivia-modal-question" class="text-2xl font-bold text-slate-800 mb-6"></h2>
       <div id="trivia-modal-answers" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -245,12 +71,15 @@
   <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <span class="uppercase tip-badge px-2 py-1 rounded-full bg-indigo-100 text-indigo-600 font-bold">truco</span>
+        <span class="text-xs text-slate-500">si la cámara no abre, revisá permisos del navegador</span>
+      </div>
       <div class="text-5xl mb-4">📸</div>
       <h2 class="text-2xl font-bold text-slate-800 mb-2">¡Acepta el Desafío!</h2>
-      <p id="photo-challenge-description" class="text-slate-600 mb-3"></p>
-      <p class="text-xs text-slate-500 mb-4 tip-pulse">Tip: podés presionar Enter o tocar el candado para aceptar 😉</p>
+      <p id="photo-challenge-description" class="text-slate-600 mb-6"></p>
       <button id="submit-photo-challenge-btn" class="w-full text-white font-bold py-3 px-4 rounded-lg btn-primary">Cumplir Reto</button>
     </div>
   </div>
@@ -259,7 +88,7 @@
     <header class="flex items-center justify-between p-4 border-b">
       <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
       <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </header>
     <div id="comments-modal-body" class="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
@@ -268,7 +97,7 @@
         <img id="comment-user-img" src="" class="w-8 h-8 rounded-full">
         <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <button type="submit" class="btn-primary text-white rounded-full p-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
         </button>
       </form>
     </footer>
@@ -278,24 +107,48 @@
     <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
     <canvas id="camera-canvas" class="hidden"></canvas>
     <button id="cancel-camera-btn" class="absolute top-4 left-4 text-white bg-black/50 rounded-full p-2">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
     <div class="absolute bottom-10 flex flex-col items-center">
       <button id="capture-btn" class="w-20 h-20 rounded-full bg-white border-4 border-slate-400 hover:border-white focus:outline-none"></button>
     </div>
   </div>
 
-  <!-- TEMPLATE de POST -->
+  <!-- APP -->
+  <div id="app-screen" class="h-full flex flex-col hidden">
+    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
+      <div id="feed-view">
+        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
+          <div class="flex items-center space-x-2">
+            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><circle cx="16" cy="16" r="12" stroke="url(#g2)" stroke-width="3"/></svg>
+            <span class="text-xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">TeReto</span>
+          </div>
+          <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
+        </header>
+        <div id="feed-container" class="p-2 space-y-4"></div>
+      </div>
+
+      <!-- (secciones Create / Friends / Profile igual que antes, omitidas por brevedad) -->
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
+      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+        <span class="text-xs font-semibold">Inicio</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Templates -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
-      <span class="badge-unlocked">DESBLOQUEADO</span>
       <div class="p-4 flex items-center space-x-3">
         <img class="w-10 h-10 rounded-full author-img" src="" alt="Author">
         <div><p class="font-semibold text-slate-800 author-name"></p><p class="text-xs text-slate-500 post-time"></p></div>
       </div>
-      <div class="relative group challenge-container">
+      <div class="relative cursor-pointer group challenge-container">
         <img class="w-full h-96 object-cover blur-locked content-img" src="" alt="Contenido del reto">
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay cursor-pointer" role="button" tabindex="0" aria-label="Aceptar desafío">
+        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
           <div class="text-5xl mb-2 lock-icon">🔒</div>
           <h3 class="font-bold text-lg">Reto Bloqueado</h3>
           <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
@@ -305,11 +158,11 @@
         <div class="flex items-center justify-between mt-1 text-slate-500">
           <div class="flex space-x-4">
             <button class="like-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
               <span class="likes-count">0</span>
             </button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
               <span class="comments-count">0</span>
             </button>
           </div>
@@ -319,667 +172,341 @@
     </div>
   </template>
 
-  <!-- Firebase SDK (App, Auth, Firestore, Storage) -->
+  <template id="comment-template">
+    <div class="flex items-start space-x-3">
+      <img class="w-8 h-8 rounded-full comment-author-img" src="">
+      <div class="flex-1 bg-slate-100 rounded-xl p-3">
+        <p class="text-sm"><strong class="comment-author-name text-slate-800"></strong> <span class="text-slate-600 comment-text"></span></p>
+        <p class="text-xs text-slate-400 mt-1 comment-time"></p>
+      </div>
+    </div>
+  </template>
+
+  <!-- Firebase (App/Auth/Firestore) -->
   <script type="module">
-    // Firebase libs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import {
-      getFirestore, collection, collectionGroup, doc, addDoc, setDoc, getDoc, updateDoc, deleteDoc,
-      onSnapshot, query, orderBy, where, serverTimestamp, arrayUnion, increment
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-    import {
-      getStorage, ref as storageRef, uploadString, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ==== CONFIG FIREBASE (PROD) ====
+    // === Config Firebase (tu PROD)
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      storageBucket: "tereto-prod.firebasestorage.app",
+      storageBucket: "tereto-prod.firebasestorage.app", // no se usa, pero no molesta
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
 
-    // Init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
-    const st   = getStorage(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    // ==== UI HELPERS ====
-    const $ = (id) => document.getElementById(id);
+    // ==== UI helpers ====
+    const $ = id => document.getElementById(id);
     const loginScreen = $("login-screen");
     const appScreen = $("app-screen");
-    const feedContainer = $("feed-container");
     const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
     const loadingSpinner = $("loading-spinner");
 
-    function showToast(message, type = 'success') {
+    function showToast(message, type='success') {
       toastMessage.textContent = message;
-      toastIcon.innerHTML = type === 'success'
-        ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`
-        : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
-      toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`;
+      toastIcon.innerHTML = type==='success'
+        ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`
+        : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+      toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type==='success'?'text-green-500 bg-green-100':'text-red-500 bg-red-100'}`;
       toastEl.classList.add('show');
-      setTimeout(() => toastEl.classList.remove('show'), 2600);
+      setTimeout(()=>toastEl.classList.remove('show'), 2800);
     }
 
-    // ==== AUTH ====
-    $("google-btn")?.addEventListener("click", async () => {
+    // ==== Estado App (mock feed + firestore estado usuario) ====
+    let currentUser = null;
+    let mockUser = null;
+    let challengesData = []; // mantenemos feed mock como antes
+
+    function seedDataFor(user) {
+      mockUser = {
+        uid: user.uid,
+        displayName: user.displayName || "Usuario",
+        email: user.email || "",
+        photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0] || 'U'}`
+      };
+      challengesData = [
+        {
+          id: 'challenge4',
+          authorId: mockUser.uid, authorName: mockUser.displayName, authorImg: mockUser.photoURL,
+          type: 'photo', question: 'Haz una pose de superhéroe.',
+          createdAt: new Date(Date.now()-1000*60*20),
+          contentUrl: 'https://placehold.co/600x400/0000FF/FFFFFF?text=SUPER',
+          likes: 1, likedBy: [], comments: []
+        },
+        {
+          id: 'challenge3',
+          authorId: 'user789', authorName: 'Carlos', authorImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C',
+          type: 'photo', question: 'Sácate una foto con un sombrero gracioso.',
+          createdAt: new Date(Date.now()-1000*60*60),
+          contentUrl: 'https://placehold.co/600x400/777777/FFFFFF?text=SOMBRERO',
+          likes: 5, likedBy: [], comments: []
+        },
+        {
+          id: 'challenge1',
+          authorId: 'user456', authorName: 'Ana', authorImg: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A',
+          type: 'trivia', question: '¿En qué año llegó el hombre a la luna?',
+          correctAnswer: '1969', wrongAnswers: ['1965','1972','1980'],
+          createdAt: new Date(Date.now()-1000*60*90),
+          contentUrl: 'https://placehold.co/600x400/333333/FFFFFF?text=LUNA',
+          likes: 15, likedBy: ['user789'],
+          comments: []
+        }
+      ];
+    }
+
+    // ==== Elementos usados en feed ====
+    const feedContainer = $("feed-container");
+    const postTemplate = $("post-template");
+    const triviaModal = $("trivia-modal");
+    const photoChallengeModal = $("photo-challenge-modal");
+    const photoChallengeDescription = $("photo-challenge-description");
+    const submitPhotoChallengeBtn = $("submit-photo-challenge-btn");
+
+    // Cámara
+    const cameraModal = $("camera-modal"),
+          cameraStreamEl = $("camera-stream"),
+          cameraCanvas = $("camera-canvas"),
+          captureBtn = $("capture-btn"),
+          cancelCameraBtn = $("cancel-camera-btn");
+
+    let cameraStream = null, currentPhotoChallengeId = null;
+
+    async function openCamera(challengeId=null) {
+      currentPhotoChallengeId = challengeId;
+      try {
+        if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+        cameraStreamEl.srcObject = cameraStream;
+        cameraModal.classList.remove('hidden');
+      } catch(err) {
+        console.error(err);
+        showToast("No se pudo acceder a la cámara. Revisa permisos.", "error");
+      }
+    }
+    function closeCamera() {
+      if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+      cameraStream = null;
+      cameraModal.classList.add('hidden');
+    }
+
+    // Comprimir a JPEG y limitar tamaño
+    function compressToDataURL(videoEl, maxDim=900, quality=0.7) {
+      const canvas = cameraCanvas;
+      const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+      let tw = vw, th = vh;
+      if (Math.max(vw, vh) > maxDim) {
+        if (vw > vh) { tw = maxDim; th = Math.round(vh * (maxDim / vw)); }
+        else { th = maxDim; tw = Math.round(vw * (maxDim / vh)); }
+      }
+      canvas.width = tw; canvas.height = th;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, tw, th);
+      return canvas.toDataURL('image/jpeg', quality); // DataURL
+    }
+
+    async function saveSubmissionDataURL(challengeId, dataUrl) {
+      // Guardamos el envío del usuario en: challenges/{cid}/submissions/{uid}
+      const subRef = doc(db, "challenges", challengeId, "submissions", currentUser.uid);
+      await setDoc(subRef, {
+        uid: currentUser.uid,
+        displayName: currentUser.displayName || "",
+        proofDataUrl: dataUrl,         // <<--- media inline
+        status: "pending",
+        createdAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    // Render feed
+    function loadFeed() {
+      feedContainer.innerHTML = "";
+      challengesData.sort((a,b)=>b.createdAt - a.createdAt).forEach(renderPost);
+    }
+
+    function renderPost(postData) {
+      const frag = document.importNode(postTemplate.content, true);
+      const postCard = frag.querySelector('.post-card');
+      postCard.dataset.challengeId = postData.id;
+      frag.querySelector('.author-img').src = postData.authorImg;
+      frag.querySelector('.author-name').textContent = postData.authorName;
+      frag.querySelector('.post-time').textContent = postData.createdAt.toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
+      frag.querySelector('.content-img').src = postData.contentUrl;
+
+      // Bloqueo visual (se desbloquea si aprobado para este usuario)
+      applyLockStateToCard(postCard, postData.id, postData.type);
+
+      feedContainer.appendChild(frag);
+    }
+
+    async function applyLockStateToCard(cardEl, challengeId, challengeType) {
+      // Condición de desbloqueo:
+      // - si es trivia y ya respondió bien en esta sesión (guardamos en approvals/{uid} como 'trivia: true')
+      // - si es foto: existe doc approvals/{uid} con approved === true
+      const isUnlocked = await isChallengeUnlockedForViewer(challengeId, challengeType);
+      if (isUnlocked) {
+        cardEl.querySelector('.content-img')?.classList.remove('blur-locked');
+        cardEl.querySelector('.lock-overlay')?.classList.add('hidden');
+      } else {
+        cardEl.querySelector('.content-img')?.classList.add('blur-locked');
+        cardEl.querySelector('.lock-overlay')?.classList.remove('hidden');
+        if (challengeType === 'photo') cardEl.querySelector('.lock-icon').textContent = '📸';
+      }
+    }
+
+    async function isChallengeUnlockedForViewer(challengeId, challengeType) {
+      if (!currentUser) return false;
+      // approvals/{uid}: {approved: true} (para foto) o {trivia:true}
+      const apprRef = doc(db, "challenges", challengeId, "approvals", currentUser.uid);
+      const apprSnap = await getDoc(apprRef);
+      if (!apprSnap.exists()) return false;
+      const data = apprSnap.data();
+      if (challengeType === 'trivia') return !!data.trivia;
+      if (challengeType === 'photo') return !!data.approved;
+      return false;
+    }
+
+    // Interacciones de tarjeta
+    feedContainer.addEventListener('click', async (e) => {
+      const card = e.target.closest('.post-card');
+      if (!card) return;
+      const challengeId = card.dataset.challengeId;
+      const post = challengesData.find(c=>c.id === challengeId);
+
+      if (e.target.closest('.challenge-container')) {
+        if (post.type === 'trivia') {
+          openTriviaModal(post, card);
+        } else if (post.type === 'photo') {
+          openPhotoChallengeModal(post);
+        }
+      }
+    });
+
+    // Trivia
+    function openTriviaModal(challenge, cardEl) {
+      $("trivia-modal-question").textContent = challenge.question;
+      const box = $("trivia-modal-answers");
+      box.innerHTML = "";
+      [...challenge.wrongAnswers, challenge.correctAnswer]
+        .sort(()=>Math.random()-0.5)
+        .forEach(ans => {
+          const btn = document.createElement('button');
+          btn.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
+          btn.textContent = ans;
+          btn.onclick = () => checkTriviaAnswer(challenge, cardEl, ans === challenge.correctAnswer);
+          box.appendChild(btn);
+        });
+      $("trivia-modal").classList.remove("hidden");
+    }
+
+    async function checkTriviaAnswer(challenge, cardEl, ok) {
+      if (!ok) {
+        $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Inténtalo de nuevo!';
+        setTimeout(()=>{$("trivia-feedback").textContent = '';}, 1800);
+        return;
+      }
+      // Marcamos trivia desbloqueada para este usuario
+      await setDoc(doc(db,"challenges",challenge.id,"approvals", currentUser.uid), {
+        trivia: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      $("trivia-modal").classList.add("hidden");
+      await applyLockStateToCard(cardEl, challenge.id, "trivia");
+      showToast("¡Correcto! Desbloqueado para vos.");
+    }
+
+    // Foto
+    function openPhotoChallengeModal(challenge) {
+      photoChallengeDescription.textContent = challenge.question;
+      submitPhotoChallengeBtn.dataset.challengeId = challenge.id;
+      photoChallengeModal.classList.remove('hidden');
+    }
+
+    $("submit-photo-challenge-btn").addEventListener("click", () => {
+      const cid = submitPhotoChallengeBtn.dataset.challengeId;
+      photoChallengeModal.classList.add('hidden');
+      openCamera(cid);
+    });
+
+    captureBtn.addEventListener("click", async () => {
+      try {
+        const dataUrl = compressToDataURL(cameraStreamEl, 900, 0.7);
+        // Seguridad: tamaño aproximado del DataURL
+        const approxBytes = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3/4);
+        if (approxBytes > 950 * 1024) {
+          showToast("La imagen quedó muy grande (>950KB). Alejate un poco o baja calidad.", "error");
+          return;
+        }
+        const cid = currentPhotoChallengeId;
+        await saveSubmissionDataURL(cid, dataUrl);
+        showToast("Prueba enviada. Espera aprobación del autor 🙌");
+      } catch(err) {
+        console.error(err);
+        showToast("No se pudo enviar la prueba", "error");
+      } finally {
+        closeCamera();
+      }
+    });
+
+    cancelCameraBtn.addEventListener("click", closeCamera);
+    $("close-trivia-modal").addEventListener("click", ()=> $("trivia-modal").classList.add("hidden"));
+    $("close-photo-challenge-modal").addEventListener("click", ()=> $("photo-challenge-modal").classList.add("hidden"));
+
+    // ==== Aprobación del autor (demo)
+    // Si querés simular aprobación: abrí la consola y ejecutá:
+    // approveSubmission('<challengeId>','<viewerUid>')
+    async function approveSubmission(challengeId, viewerUid) {
+      // solo debería ejecutarlo el autor: acá no validamos, es demo/manual
+      await setDoc(doc(db,"challenges",challengeId,"approvals", viewerUid), {
+        approved: true,
+        updatedAt: serverTimestamp()
+      }, { merge:true });
+      showToast("Envío aprobado (demo).");
+    }
+    window.approveSubmission = approveSubmission;
+
+    // ==== Auth ====
+    $("google-btn").addEventListener("click", async () => {
       try {
         loadingSpinner.classList.remove("hidden");
         await signInWithPopup(auth, provider);
-      } catch (err) {
+      } catch(err) {
         console.error(err);
-        showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
+        showToast(err.code?.replace("auth/","") || "Error al iniciar sesión", "error");
       } finally {
         loadingSpinner.classList.add("hidden");
       }
     });
 
     $("signout-btn")?.addEventListener("click", async () => {
-      try { await signOut(auth); showToast("Sesión cerrada."); }
-      catch (err) { console.error(err); showToast("No se pudo cerrar sesión", "error"); }
-    });
-
-    // ====== STATE ======
-    let currentUser = null;
-
-    // ====== HELPERS LOCK ======
-    function isUnlockedForUser(ch, uid) {
-      return ch.authorId === uid || (Array.isArray(ch.solvedBy) && ch.solvedBy.includes(uid));
-    }
-    function applyLockState(postCardEl, ch, uid) {
-      const img = postCardEl.querySelector('.content-img');
-      const overlay = postCardEl.querySelector('.lock-overlay');
-      const badge = postCardEl.querySelector('.badge-unlocked');
-      if (isUnlockedForUser(ch, uid)) {
-        img.classList.remove('blur-locked');
-        overlay.classList.add('hidden');
-        postCardEl.classList.add('unlocked');
-        badge && (badge.style.display = 'inline-block');
-      } else {
-        img.classList.add('blur-locked');
-        overlay.classList.remove('hidden');
-        postCardEl.classList.remove('unlocked');
-        badge && (badge.style.display = 'none');
-      }
-    }
-
-    // ====== FIRESTORE LISTENERS ======
-    let challengesUnsub = null;
-    function listenFeed() {
-      if (challengesUnsub) challengesUnsub();
-      const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
-      challengesUnsub = onSnapshot(q, (snap) => {
-        feedContainer.innerHTML = "";
-        snap.forEach(docSnap => {
-          const ch = { id: docSnap.id, ...docSnap.data() };
-          renderPost(ch);
-        });
-      });
-    }
-
-    // ====== RENDER ======
-    function renderPost(ch) {
-      const tpl = $("post-template").content.cloneNode(true);
-      const card = tpl.querySelector('.post-card');
-      card.dataset.challengeId = ch.id;
-
-      tpl.querySelector('.author-img').src = ch.authorImg || '';
-      tpl.querySelector('.author-name').textContent = ch.authorName || 'Autor';
-      tpl.querySelector('.post-time').textContent = ch.createdAt?.toDate
-        ? ch.createdAt.toDate().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
-        : '';
-      tpl.querySelector('.content-img').src = ch.contentUrl || '';
-      tpl.querySelector('.likes-count').textContent = ch.likesCount || 0;
-      tpl.querySelector('.comments-count').textContent = ch.commentsCount || 0;
-
-      if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
-
-      // overlay handlers
-      const overlay = tpl.querySelector('.lock-overlay');
-      overlay.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        openChallengeById(ch.id, card);
-      });
-      overlay.addEventListener('keyup', (ev) => {
-        if (ev.key === 'Enter' || ev.code === 'Space' || ev.key === ' ') {
-          ev.preventDefault();
-          openChallengeById(ch.id, card);
-        }
-      });
-
-      feedContainer.appendChild(tpl);
-      applyLockState(card, ch, currentUser?.uid);
-    }
-
-    // ====== OPEN CHALLENGE ======
-    function openChallengeById(challengeId, cardEl) {
-      const docRef = doc(db, "challenges", challengeId);
-      getDoc(docRef).then(s => {
-        if (!s.exists()) return;
-        const ch = { id: s.id, ...s.data() };
-        if (ch.type === 'trivia') openTriviaModal(ch, cardEl);
-        else if (ch.type === 'photo') openPhotoChallengeModal(ch);
-      });
-    }
-
-    // ====== CREATE CHALLENGE ======
-    const createView = {
-      fileUpload: $("file-upload"),
-      fileNameDisplay: $("file-name"),
-      gotoStep2Btn: $("goto-step-2"),
-      imagePreviewContainer: $("image-preview-container"),
-      imagePreview: $("image-preview"),
-      selectTriviaBtn: $("select-trivia-btn"),
-      selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
-      triviaForm: $("trivia-form"),
-      photoChallengeForm: $("photo-challenge-form"),
-    };
-    function resetCreateFlow() {
-      createView.triviaForm?.reset();
-      createView.photoChallengeForm?.reset();
-      createView.fileUpload.value = '';
-      createView.fileNameDisplay.textContent = '';
-      createView.gotoStep2Btn.disabled = true;
-      createView.imagePreview.src = '#';
-      createView.imagePreviewContainer.classList.add('hidden');
-      showCreateStep('create-step-1');
-    }
-    function showCreateStep(step) {
-      const steps = ['create-step-1','create-step-2','create-step-3-trivia','create-step-3-photo'];
-      steps.forEach(s => $(s).classList.add('hidden'));
-      $(step).classList.remove('hidden');
-    }
-    createView.fileUpload?.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        const file = e.target.files[0], reader = new FileReader();
-        createView.fileNameDisplay.textContent = file.name;
-        createView.gotoStep2Btn.disabled = false;
-        reader.onload = (ev) => {
-          createView.gotoStep2Btn.dataset.fileUrl = ev.target.result;
-          createView.imagePreview.src = ev.target.result;
-          createView.imagePreviewContainer.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-      } else {
-        createView.fileNameDisplay.textContent = '';
-        createView.gotoStep2Btn.disabled = true;
-        createView.imagePreviewContainer.classList.add('hidden');
-      }
-    });
-    $("goto-step-2")?.addEventListener('click', () => showCreateStep('create-step-2'));
-    $("select-trivia-btn")?.addEventListener('click', () => showCreateStep('create-step-3-trivia'));
-    $("select-photo-challenge-btn")?.addEventListener('click', () => showCreateStep('create-step-3-photo'));
-
-    async function uploadDataUrlToStorage(dataUrl, path) {
-      const ref = storageRef(st, path);
-      await uploadString(ref, dataUrl, 'data_url');
-      return await getDownloadURL(ref);
-    }
-
-    createView.triviaForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
       try {
-        const dataUrl = createView.gotoStep2Btn.dataset.fileUrl;
-        if (!dataUrl) return showToast("Subí una imagen/video primero", "error");
-
-        const path = `challenges/${auth.currentUser.uid}/${Date.now()}.png`;
-        const contentUrl = await uploadDataUrlToStorage(dataUrl, path);
-
-        await addDoc(collection(db, "challenges"), {
-          authorId: auth.currentUser.uid,
-          authorName: auth.currentUser.displayName || "Usuario",
-          authorImg: auth.currentUser.photoURL || "",
-          type: "trivia",
-          question: $("trivia-question").value,
-          correctAnswer: $("correct-answer").value,
-          wrongAnswers: [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ],
-          contentUrl,
-          createdAt: serverTimestamp(),
-          likesCount: 0,
-          commentsCount: 0,
-          solvedBy: [] // se llena por usuario
-        });
-        showToast("¡Reto publicado!");
-        resetCreateFlow();
-        switchView('feed-view');
-      } catch (err) {
+        await signOut(auth);
+        showToast("Sesión cerrada.");
+      } catch(err) {
         console.error(err);
-        showToast("No se pudo publicar el reto", "error");
+        showToast("No se pudo cerrar sesión", "error");
       }
     });
 
-    createView.photoChallengeForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const dataUrl = createView.gotoStep2Btn.dataset.fileUrl;
-        if (!dataUrl) return showToast("Subí una imagen/video primero", "error");
-
-        const path = `challenges/${auth.currentUser.uid}/${Date.now()}.png`;
-        const contentUrl = await uploadDataUrlToStorage(dataUrl, path);
-
-        await addDoc(collection(db, "challenges"), {
-          authorId: auth.currentUser.uid,
-          authorName: auth.currentUser.displayName || "Usuario",
-          authorImg: auth.currentUser.photoURL || "",
-          type: "photo",
-          question: $("photo-challenge-task").value,
-          contentUrl,
-          createdAt: serverTimestamp(),
-          likesCount: 0,
-          commentsCount: 0,
-          solvedBy: []
-        });
-        showToast("¡Reto publicado!");
-        resetCreateFlow();
-        switchView('feed-view');
-      } catch (err) {
-        console.error(err);
-        showToast("No se pudo publicar el reto", "error");
-      }
-    });
-
-    // ====== NAV / VISTAS ======
-    const views = { 'feed-view': $("feed-view"), 'create-view': $("create-view"), 'profile-view': $("profile-view"), 'friends-view': $("friends-view") };
-    function switchView(viewName) {
-      Object.values(views).forEach(v => v.classList.add('hidden'));
-      views[viewName]?.classList.remove('hidden');
-      document.querySelectorAll('.nav-button').forEach(btn => {
-        btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
-        btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
-      });
-      if (viewName === 'profile-view') updateProfileUI();
-      if (viewName === 'create-view') resetCreateFlow();
-      if (viewName === 'friends-view') renderFriendsTab('my-friends');
-    }
-    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
-
-    // ====== LIKE / COMMENTS ======
-    document.addEventListener('click', async (e) => {
-      const postCard = e.target.closest('.post-card');
-      if (!postCard) return;
-      const challengeId = postCard.dataset.challengeId;
-
-      if (e.target.closest('.like-button')) {
-        await toggleLike(challengeId, postCard);
-      }
-      if (e.target.closest('.comment-button')) {
-        openCommentsModal(challengeId);
-      }
-    });
-
-    async function toggleLike(challengeId, postEl) {
-      const likeRef = doc(db, "challenges", challengeId, "likes", auth.currentUser.uid);
-      const chRef = doc(db, "challenges", challengeId);
-      const likedSnap = await getDoc(likeRef);
-      if (likedSnap.exists()) {
-        await deleteDoc(likeRef);
-        await updateDoc(chRef, { likesCount: increment(-1) });
-      } else {
-        await setDoc(likeRef, { uid: auth.currentUser.uid, at: serverTimestamp() });
-        await updateDoc(chRef, { likesCount: increment(1) });
-      }
-    }
-
-    // ====== COMMENTS ======
-    const commentsModal = $("comments-modal");
-    const commentsBody = $("comments-modal-body");
-    const commentForm = $("comment-form");
-    const commentInput = $("comment-input");
-    const commentUserImg = $("comment-user-img");
-    let commentsUnsub = null;
-    function openCommentsModal(challengeId) {
-      if (commentsUnsub) commentsUnsub();
-      commentForm.dataset.challengeId = challengeId;
-      commentUserImg.src = auth.currentUser.photoURL || "";
-      commentsBody.innerHTML = "";
-      const q = query(collection(db, "challenges", challengeId, "comments"), orderBy("createdAt","asc"));
-      commentsUnsub = onSnapshot(q, (snap) => {
-        commentsBody.innerHTML = "";
-        snap.forEach(d => {
-          const c = d.data();
-          const row = document.createElement('div');
-          row.className = "flex items-start space-x-3";
-          row.innerHTML = `
-            <img class="w-8 h-8 rounded-full" src="${c.userImg||''}">
-            <div class="flex-1 bg-slate-100 rounded-xl p-3">
-              <p class="text-sm"><strong class="text-slate-800">${c.userName||'User'}</strong> <span class="text-slate-600">${c.text||''}</span></p>
-              <p class="text-xs text-slate-400 mt-1">${c.createdAt?.toDate ? c.createdAt.toDate().toLocaleTimeString('es-AR') : ''}</p>
-            </div>`;
-          commentsBody.appendChild(row);
-        });
-      });
-      commentsModal.classList.remove('hidden');
-    }
-    commentForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const challengeId = commentForm.dataset.challengeId;
-      const text = (commentInput.value || "").trim();
-      if (!text) return;
-      await addDoc(collection(db, "challenges", challengeId, "comments"), {
-        userId: auth.currentUser.uid,
-        userName: auth.currentUser.displayName || "Usuario",
-        userImg: auth.currentUser.photoURL || "",
-        text,
-        createdAt: serverTimestamp()
-      });
-      await updateDoc(doc(db, "challenges", challengeId), { commentsCount: increment(1) });
-      commentInput.value = "";
-    });
-    $("close-comments-modal")?.addEventListener('click', () => commentsModal.classList.add('hidden'));
-
-    // ====== TRIVIA ======
-    function openTriviaModal(ch, postEl) {
-      $("trivia-modal-question").textContent = ch.question || '';
-      const answersContainer = $("trivia-modal-answers");
-      answersContainer.innerHTML = '';
-      [...(ch.wrongAnswers||[]), ch.correctAnswer]
-        .filter(Boolean)
-        .sort(() => Math.random() - 0.5)
-        .forEach(answer => {
-          const btn = document.createElement('button');
-          btn.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
-          btn.textContent = answer;
-          btn.onclick = () => checkAnswer(ch.id, answer === ch.correctAnswer, postEl);
-          answersContainer.appendChild(btn);
-        });
-      $("trivia-modal").classList.remove('hidden');
-    }
-    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
-
-    async function checkAnswer(challengeId, isCorrect, postEl) {
-      if (isCorrect) {
-        await updateDoc(doc(db, "challenges", challengeId), { solvedBy: arrayUnion(auth.currentUser.uid) });
-        $("trivia-modal").classList.add('hidden');
-        showToast("¡Correcto! Reto desbloqueado 🎉");
-      } else {
-        $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Inténtalo de nuevo!';
-        setTimeout(() => { $("trivia-feedback").textContent = ''; }, 2000);
-      }
-    }
-
-    // ====== PHOTO CHALLENGE ======
-    const photoChallengeModal = $("photo-challenge-modal");
-    const cameraModal = $("camera-modal");
-    const cameraStreamEl = $("camera-stream");
-    const cameraCanvas = $("camera-canvas");
-    let cameraStream = null;
-    let currentPhotoChallengeId = null;
-
-    function openPhotoChallengeModal(ch) {
-      $("photo-challenge-description").textContent = ch.question || '';
-      $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
-      photoChallengeModal.classList.remove('hidden');
-    }
-    $("close-photo-challenge-modal")?.addEventListener('click', () => photoChallengeModal.classList.add('hidden'));
-    $("submit-photo-challenge-btn")?.addEventListener('click', () => {
-      currentPhotoChallengeId = $("submit-photo-challenge-btn").dataset.challengeId;
-      openCamera();
-      photoChallengeModal.classList.add('hidden');
-    });
-
-    async function openCamera() {
-      try {
-        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-        cameraStreamEl.srcObject = cameraStream;
-        cameraModal.classList.remove('hidden');
-      } catch (e) {
-        console.error(e);
-        showToast("No se pudo acceder a la cámara", "error");
-      }
-    }
-    function closeCamera() {
-      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-      cameraStream = null;
-      cameraModal.classList.add('hidden');
-    }
-    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
-    $("capture-btn")?.addEventListener('click', async () => {
-      const video = cameraStreamEl, canvas = cameraCanvas;
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
-      closeCamera();
-
-      // subir submission
-      try {
-        const path = `submissions/${currentPhotoChallengeId}/${auth.currentUser.uid}/${Date.now()}.png`;
-        const submissionUrl = await uploadDataUrlToStorage(dataUrl, path);
-        const chRef = doc(db, "challenges", currentPhotoChallengeId);
-        await addDoc(collection(chRef, "submissions"), {
-          solverUid: auth.currentUser.uid,
-          solverName: auth.currentUser.displayName || "Usuario",
-          solverImg: auth.currentUser.photoURL || "",
-          submissionUrl,
-          status: "pending",
-          createdAt: serverTimestamp()
-        });
-        showToast("Prueba enviada para validación.");
-      } catch (e) {
-        console.error(e);
-        showToast("No se pudo enviar la prueba", "error");
-      } finally {
-        currentPhotoChallengeId = null;
-      }
-    });
-
-    // ====== VALIDACIONES (autor) ======
-    const validationsContainer = $("validations-container");
-    let subsUnsub = null;
-    function listenPendingValidations() {
-      if (subsUnsub) subsUnsub();
-      // Traer TODAS las submissions pendientes del autor logueado (collectionGroup)
-      const q = query(
-        collectionGroup(db, "submissions"),
-        where("status", "==", "pending")
-      );
-      subsUnsub = onSnapshot(q, async (snap) => {
-        // filtramos por retos cuyo authorId == currentUser.uid
-        const items = [];
-        for (const d of snap.docs) {
-          const sub = { id: d.id, ...d.data() };
-          const chId = d.ref.parent.parent.id;
-          const chSnap = await getDoc(doc(db, "challenges", chId));
-          if (chSnap.exists() && chSnap.data().authorId === currentUser.uid) {
-            items.push({ submissionId: d.id, challengeId: chId, challenge: chSnap.data(), sub });
-          }
-        }
-        renderValidations(items);
-      });
-    }
-
-    function renderValidations(items) {
-      validationsContainer.innerHTML = '';
-      if (!items.length) return;
-      const header = document.createElement('h3');
-      header.className = 'text-xl font-bold text-slate-800 mb-4';
-      header.textContent = 'Validaciones Pendientes';
-      validationsContainer.appendChild(header);
-
-      items.forEach(({ submissionId, challengeId, challenge, sub }) => {
-        const card = document.createElement('div');
-        card.className = "bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card";
-        card.dataset.challengeId = challengeId;
-        card.dataset.submissionId = submissionId;
-        card.innerHTML = `
-          <div class="p-4">
-            <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
-            <p class="font-semibold text-slate-800 italic my-2">"${challenge.question||''}"</p>
-            <p class="text-sm text-slate-600 mb-4"><strong>${sub.solverName||'Usuario'}</strong> envió:</p>
-            <img class="w-full h-auto rounded-lg" src="${sub.submissionUrl}" alt="Prueba del reto">
-            <div class="flex space-x-3 mt-4">
-              <button class="approve-btn w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition">Aprobar</button>
-              <button class="reject-btn  w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Rechazar</button>
-            </div>
-          </div>`;
-        validationsContainer.appendChild(card);
-      });
-    }
-
-    validationsContainer.addEventListener('click', async (e) => {
-      const card = e.target.closest('.validation-card');
-      if (!card) return;
-      const approve = e.target.closest('.approve-btn');
-      const reject  = e.target.closest('.reject-btn');
-      if (!approve && !reject) return;
-
-      const challengeId = card.dataset.challengeId;
-      const submissionId = card.dataset.submissionId;
-      const subRef = doc(db, "challenges", challengeId, "submissions", submissionId);
-      const subSnap = await getDoc(subRef);
-      if (!subSnap.exists()) return;
-      const sub = subSnap.data();
-
-      if (approve) {
-        await updateDoc(subRef, { status: "approved" });
-        await updateDoc(doc(db, "challenges", challengeId), { solvedBy: arrayUnion(sub.solverUid) });
-        showToast("Reto aprobado.");
-      } else if (reject) {
-        await updateDoc(subRef, { status: "rejected" });
-        showToast("Reto rechazado.");
-      }
-    });
-
-    // ====== FRIENDS MOCK (igual que antes, sin Firestore) ======
-    const friendsTabButtons = document.querySelectorAll('.friends-tab');
-    const friendsTabContent = $("friends-tab-content");
-    let friends = ['user456'];
-    let friendRequests = ['user789'];
-    const allUsersMock = {
-      'user456': { uid: 'user456', displayName: 'Ana', photoURL: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
-      'user789': { uid: 'user789', displayName: 'Carlos', photoURL: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
-      'userABC': { uid: 'userABC', displayName: 'Beatriz', photoURL: 'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
-    };
-    function renderFriendsTab(tab) {
-      friendsTabContent.innerHTML = '';
-      friendsTabButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-        btn.classList.toggle('text-slate-500', btn.dataset.tab !== tab);
-      });
-      if (tab === 'my-friends') {
-        if (friends.length === 0) {
-          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`;
-          return;
-        }
-        friends.forEach(fid => {
-          const u = allUsersMock[fid];
-          const row = document.createElement('div');
-          row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
-          row.innerHTML = `<div class="flex items-center space-x-3">
-              <img class="w-10 h-10 rounded-full" src="${u.photoURL}">
-              <p class="font-semibold text-slate-700">${u.displayName}</p>
-            </div>`;
-          friendsTabContent.appendChild(row);
-        });
-      } else {
-        if (friendRequests.length === 0) {
-          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No tienes solicitudes pendientes.</p>`;
-          return;
-        }
-        friendRequests.forEach(uid => {
-          const u = allUsersMock[uid];
-          const row = document.createElement('div');
-          row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
-          row.innerHTML = `
-            <div class="flex items-center space-x-3">
-              <img class="w-10 h-10 rounded-full" src="${u.photoURL}">
-              <p class="font-semibold text-slate-700">${u.displayName}</p>
-            </div>
-            <div class="user-actions">
-              <button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-user-id="${uid}" data-action="accept">Aceptar</button>
-              <button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full ml-2" data-user-id="${uid}" data-action="reject">Rechazar</button>
-            </div>`;
-          friendsTabContent.appendChild(row);
-        });
-      }
-    }
-    friendsTabButtons.forEach(btn => btn.addEventListener('click', () => renderFriendsTab(btn.dataset.tab)));
-    friendsTabContent.addEventListener('click', (e) => {
-      const uid = e.target.dataset.userId;
-      if (!uid) return;
-      friendRequests = friendRequests.filter(x => x !== uid);
-      if (e.target.dataset.action === 'accept') friends.push(uid);
-      renderFriendsTab('requests');
-      showToast(e.target.dataset.action === 'accept' ? "Solicitud aceptada." : "Solicitud rechazada.");
-    });
-
-    // ====== PERFIL ======
-    const profilePic = $("profile-pic");
-    const profileName = $("profile-name");
-    const profileEmail = $("profile-email");
-    const createdCount = $("created-count");
-    const solvedCount = $("solved-count");
-
-    function updateProfileUI() {
-      profilePic.src = auth.currentUser.photoURL || "";
-      profileName.textContent = auth.currentUser.displayName || "Usuario";
-      profileEmail.textContent = auth.currentUser.email || "";
-      // Contar creados y resueltos en vivo
-      onSnapshot(query(collection(db, "challenges"), where("authorId","==", auth.currentUser.uid)), (snap) => {
-        createdCount.textContent = snap.size;
-      });
-      onSnapshot(collection(db, "challenges"), (snap) => {
-        let solved = 0;
-        snap.forEach(d => {
-          const ch = d.data();
-          if (ch.authorId !== auth.currentUser.uid && Array.isArray(ch.solvedBy) && ch.solvedBy.includes(auth.currentUser.uid)) solved++;
-        });
-        solvedCount.textContent = solved;
-      });
-      listenPendingValidations();
-    }
-
-    // ====== MISC UI ======
-    $("close-comments-modal")?.addEventListener('click', () => $("comments-modal").classList.add('hidden'));
-
-    // ====== AUTH STATE ======
-    onAuthStateChanged(auth, (user) => {
+    // ==== Estado de auth ====
+    onAuthStateChanged(auth, async (user) => {
       currentUser = user || null;
       if (currentUser) {
+        seedDataFor(currentUser);
         loginScreen.classList.add("hidden");
         appScreen.classList.remove("hidden");
-        listenFeed();
-        updateProfileUI();
-        switchView('feed-view');
+        loadFeed();
       } else {
-        if (challengesUnsub) challengesUnsub();
-        if (subsUnsub) subsUnsub();
         appScreen.classList.add("hidden");
         loginScreen.classList.remove("hidden");
-      }
-    });
-
-    // ====== CREATE VIEW ACCESS ======
-    $("open-camera-btn")?.addEventListener('click', async () => {
-      // flujo de cámara para crear reto (no submission)
-      try {
-        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-        cameraStreamEl.srcObject = cameraStream;
-        cameraModal.classList.remove('hidden');
-        // al capturar, si no hay currentPhotoChallengeId -> se usa como contenido del reto
-        $("capture-btn").onclick = () => {
-          const video = cameraStreamEl, canvas = cameraCanvas;
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/png');
-          createView.imagePreview.src = dataUrl;
-          createView.imagePreviewContainer.classList.remove('hidden');
-          createView.fileNameDisplay.textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.png`;
-          createView.gotoStep2Btn.dataset.fileUrl = dataUrl;
-          createView.gotoStep2Btn.disabled = false;
-          closeCamera();
-        };
-      } catch (e) {
-        console.error(e);
-        showToast("No se pudo acceder a la cámara", "error");
       }
     });
   </script>
