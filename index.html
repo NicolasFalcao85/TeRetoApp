@@ -12,28 +12,32 @@
     body { font-family: 'Poppins', sans-serif; }
     .blur-locked { filter: blur(20px); transition: filter 0.3s ease-in-out; }
     .unlocked { filter: blur(0px); }
-    .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .like-icon.liked { fill: #ec4899; color: #ec4899; }
     .like-button:active { transform: scale(0.9); }
     .image-preview { max-height: 200px; object-fit: cover; }
     .comments-modal-body { height: calc(100vh - 12rem); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);}
+    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);}
     .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
+    .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
     .friends-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 600; }
     .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; }
     .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99, 102, 241, 0.75); }
-    /* Tip sutil en overlay */
     .tip-pulse { animation: tipPulse 1.8s ease-in-out infinite; }
     @keyframes tipPulse { 0%{opacity:.85; transform:translateY(0)} 50%{opacity:1} 100%{opacity:.85; transform:translateY(-2px)} }
+    .badge-unlocked {
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(34,197,94,.95); color: white; font-size: 11px; font-weight: 700;
+      padding: 4px 8px; border-radius: 9999px; z-index: 10;
+      display: none;
+    }
+    .post-card.unlocked .badge-unlocked { display: inline-block; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
 
-  <!-- SPINNER DE CARGA -->
+  <!-- SPINNER -->
   <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
     <div class="spinner"></div>
   </div>
@@ -44,7 +48,7 @@
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
@@ -67,7 +71,7 @@
     </div>
   </div>
 
-  <!-- APP SCREEN -->
+  <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
       <div id="feed-view">
@@ -227,8 +231,8 @@
   </div>
 
   <!-- MODALES -->
-  <div id="trivia-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
+  <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
@@ -238,15 +242,15 @@
     </div>
   </div>
 
-  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
+  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
       <div class="text-5xl mb-4">📸</div>
       <h2 class="text-2xl font-bold text-slate-800 mb-2">¡Acepta el Desafío!</h2>
-      <p id="photo-challenge-description" class="text-slate-600 mb-6"></p>
-      <p class="text-xs text-slate-500 mb-3 tip-pulse">Tip: también podés presionar Enter o tocar el candado para aceptar 😉</p>
+      <p id="photo-challenge-description" class="text-slate-600 mb-3"></p>
+      <p class="text-xs text-slate-500 mb-4 tip-pulse">Tip: podés presionar Enter o tocar el candado para aceptar 😉</p>
       <button id="submit-photo-challenge-btn" class="w-full text-white font-bold py-3 px-4 rounded-lg btn-primary">Cumplir Reto</button>
     </div>
   </div>
@@ -281,16 +285,17 @@
     </div>
   </div>
 
-  <!-- Templates -->
+  <!-- TEMPLATE de POST -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
+      <span class="badge-unlocked">DESBLOQUEADO</span>
       <div class="p-4 flex items-center space-x-3">
         <img class="w-10 h-10 rounded-full author-img" src="" alt="Author">
         <div><p class="font-semibold text-slate-800 author-name"></p><p class="text-xs text-slate-500 post-time"></p></div>
       </div>
       <div class="relative group challenge-container">
         <img class="w-full h-96 object-cover blur-locked content-img" src="" alt="Contenido del reto">
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay cursor-pointer">
+        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay cursor-pointer" role="button" tabindex="0" aria-label="Aceptar desafío">
           <div class="text-5xl mb-2 lock-icon">🔒</div>
           <h3 class="font-bold text-lg">Reto Bloqueado</h3>
           <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
@@ -314,45 +319,18 @@
     </div>
   </template>
 
-  <template id="validation-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card">
-      <div class="p-4">
-        <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
-        <p class="font-semibold text-slate-800 italic my-2">"<span class="original-challenge-question"></span>"</p>
-        <p class="text-sm text-slate-600 mb-4"><strong class="submitter-name"></strong> ha enviado una prueba:</p>
-        <img class="w-full h-auto rounded-lg submission-img" src="" alt="Prueba del reto">
-        <div class="flex space-x-3 mt-4">
-          <button class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition approve-btn">Aprobar</button>
-          <button class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition reject-btn">Rechazar</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <template id="comment-template">
-    <div class="flex items-start space-x-3">
-      <img class="w-8 h-8 rounded-full comment-author-img" src="">
-      <div class="flex-1 bg-slate-100 rounded-xl p-3">
-        <p class="text-sm"><strong class="comment-author-name text-slate-800"></strong> <span class="text-slate-600 comment-text"></span></p>
-        <p class="text-xs text-slate-400 mt-1 comment-time"></p>
-      </div>
-    </div>
-  </template>
-
-  <template id="user-list-item-template">
-    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100">
-      <div class="flex items-center space-x-3">
-        <img class="w-10 h-10 rounded-full user-img" src="">
-        <p class="font-semibold user-name text-slate-700"></p>
-      </div>
-      <div class="user-actions"></div>
-    </div>
-  </template>
-
-  <!-- Firebase SDK ES Modules -->
+  <!-- Firebase SDK (App, Auth, Firestore, Storage) -->
   <script type="module">
+    // Firebase libs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getFirestore, collection, collectionGroup, doc, addDoc, setDoc, getDoc, updateDoc, deleteDoc,
+      onSnapshot, query, orderBy, where, serverTimestamp, arrayUnion, increment
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import {
+      getStorage, ref as storageRef, uploadString, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
     // ==== CONFIG FIREBASE (PROD) ====
     const firebaseConfig = {
@@ -364,9 +342,11 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
 
-    // Init Firebase
+    // Init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const st   = getStorage(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
@@ -374,6 +354,7 @@
     const $ = (id) => document.getElementById(id);
     const loginScreen = $("login-screen");
     const appScreen = $("app-screen");
+    const feedContainer = $("feed-container");
     const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
     const loadingSpinner = $("loading-spinner");
 
@@ -384,10 +365,10 @@
         : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
       toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`;
       toastEl.classList.add('show');
-      setTimeout(() => toastEl.classList.remove('show'), 2800);
+      setTimeout(() => toastEl.classList.remove('show'), 2600);
     }
 
-    // ==== SIGN IN / SIGN OUT ====
+    // ==== AUTH ====
     $("google-btn")?.addEventListener("click", async () => {
       try {
         loadingSpinner.classList.remove("hidden");
@@ -401,51 +382,95 @@
     });
 
     $("signout-btn")?.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        showToast("Sesión cerrada.");
-      } catch (err) {
-        console.error(err);
-        showToast("No se pudo cerrar sesión", "error");
-      }
+      try { await signOut(auth); showToast("Sesión cerrada."); }
+      catch (err) { console.error(err); showToast("No se pudo cerrar sesión", "error"); }
     });
 
-    // ====== APP LOGIC ======
+    // ====== STATE ======
     let currentUser = null;
 
-    const cameraModal = $("camera-modal"),
-          cameraStreamEl = $("camera-stream"),
-          cameraCanvas = $("camera-canvas"),
-          openCameraBtn = $("open-camera-btn"),
-          captureBtn = $("capture-btn"),
-          cancelCameraBtn = $("cancel-camera-btn"),
-          triviaModal = $("trivia-modal"),
-          photoChallengeModal = $("photo-challenge-modal"),
-          commentsModal = $("comments-modal"),
-          closeTriviaModalBtn = $("close-trivia-modal"),
-          closePhotoChallengeModalBtn = $("close-photo-challenge-modal"),
-          closeCommentsModalBtn = $("close-comments-modal"),
-          photoChallengeDescription = $("photo-challenge-description"),
-          feedContainer = $("feed-container"),
-          validationsContainer = $("validations-container"),
-          postTemplate = $("post-template"),
-          validationTemplate = $("validation-template"),
-          commentTemplate = $("comment-template"),
-          userListItemTemplate = $("user-list-item-template"),
-          profilePic = $("profile-pic"),
-          profileName = $("profile-name"),
-          profileEmail = $("profile-email"),
-          createdCount = $("created-count"),
-          commentForm = $("comment-form"),
-          commentInput = $("comment-input"),
-          commentUserImg = $("comment-user-img"),
-          commentsModalBody = $("comments-modal-body");
+    // ====== HELPERS LOCK ======
+    function isUnlockedForUser(ch, uid) {
+      return ch.authorId === uid || (Array.isArray(ch.solvedBy) && ch.solvedBy.includes(uid));
+    }
+    function applyLockState(postCardEl, ch, uid) {
+      const img = postCardEl.querySelector('.content-img');
+      const overlay = postCardEl.querySelector('.lock-overlay');
+      const badge = postCardEl.querySelector('.badge-unlocked');
+      if (isUnlockedForUser(ch, uid)) {
+        img.classList.remove('blur-locked');
+        overlay.classList.add('hidden');
+        postCardEl.classList.add('unlocked');
+        badge && (badge.style.display = 'inline-block');
+      } else {
+        img.classList.add('blur-locked');
+        overlay.classList.remove('hidden');
+        postCardEl.classList.remove('unlocked');
+        badge && (badge.style.display = 'none');
+      }
+    }
 
-    const navButtons = document.querySelectorAll('.nav-button');
-    const friendsTabButtons = document.querySelectorAll('.friends-tab');
-    const friendsTabContent = $("friends-tab-content");
+    // ====== FIRESTORE LISTENERS ======
+    let challengesUnsub = null;
+    function listenFeed() {
+      if (challengesUnsub) challengesUnsub();
+      const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
+      challengesUnsub = onSnapshot(q, (snap) => {
+        feedContainer.innerHTML = "";
+        snap.forEach(docSnap => {
+          const ch = { id: docSnap.id, ...docSnap.data() };
+          renderPost(ch);
+        });
+      });
+    }
 
-    const createViewElements = {
+    // ====== RENDER ======
+    function renderPost(ch) {
+      const tpl = $("post-template").content.cloneNode(true);
+      const card = tpl.querySelector('.post-card');
+      card.dataset.challengeId = ch.id;
+
+      tpl.querySelector('.author-img').src = ch.authorImg || '';
+      tpl.querySelector('.author-name').textContent = ch.authorName || 'Autor';
+      tpl.querySelector('.post-time').textContent = ch.createdAt?.toDate
+        ? ch.createdAt.toDate().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+        : '';
+      tpl.querySelector('.content-img').src = ch.contentUrl || '';
+      tpl.querySelector('.likes-count').textContent = ch.likesCount || 0;
+      tpl.querySelector('.comments-count').textContent = ch.commentsCount || 0;
+
+      if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
+
+      // overlay handlers
+      const overlay = tpl.querySelector('.lock-overlay');
+      overlay.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        openChallengeById(ch.id, card);
+      });
+      overlay.addEventListener('keyup', (ev) => {
+        if (ev.key === 'Enter' || ev.code === 'Space' || ev.key === ' ') {
+          ev.preventDefault();
+          openChallengeById(ch.id, card);
+        }
+      });
+
+      feedContainer.appendChild(tpl);
+      applyLockState(card, ch, currentUser?.uid);
+    }
+
+    // ====== OPEN CHALLENGE ======
+    function openChallengeById(challengeId, cardEl) {
+      const docRef = doc(db, "challenges", challengeId);
+      getDoc(docRef).then(s => {
+        if (!s.exists()) return;
+        const ch = { id: s.id, ...s.data() };
+        if (ch.type === 'trivia') openTriviaModal(ch, cardEl);
+        else if (ch.type === 'photo') openPhotoChallengeModal(ch);
+      });
+    }
+
+    // ====== CREATE CHALLENGE ======
+    const createView = {
       fileUpload: $("file-upload"),
       fileNameDisplay: $("file-name"),
       gotoStep2Btn: $("goto-step-2"),
@@ -454,80 +479,117 @@
       selectTriviaBtn: $("select-trivia-btn"),
       selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
       triviaForm: $("trivia-form"),
-      photoChallengeForm: $("photo-challenge-form")
+      photoChallengeForm: $("photo-challenge-form"),
     };
+    function resetCreateFlow() {
+      createView.triviaForm?.reset();
+      createView.photoChallengeForm?.reset();
+      createView.fileUpload.value = '';
+      createView.fileNameDisplay.textContent = '';
+      createView.gotoStep2Btn.disabled = true;
+      createView.imagePreview.src = '#';
+      createView.imagePreviewContainer.classList.add('hidden');
+      showCreateStep('create-step-1');
+    }
+    function showCreateStep(step) {
+      const steps = ['create-step-1','create-step-2','create-step-3-trivia','create-step-3-photo'];
+      steps.forEach(s => $(s).classList.add('hidden'));
+      $(step).classList.remove('hidden');
+    }
+    createView.fileUpload?.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0], reader = new FileReader();
+        createView.fileNameDisplay.textContent = file.name;
+        createView.gotoStep2Btn.disabled = false;
+        reader.onload = (ev) => {
+          createView.gotoStep2Btn.dataset.fileUrl = ev.target.result;
+          createView.imagePreview.src = ev.target.result;
+          createView.imagePreviewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        createView.fileNameDisplay.textContent = '';
+        createView.gotoStep2Btn.disabled = true;
+        createView.imagePreviewContainer.classList.add('hidden');
+      }
+    });
+    $("goto-step-2")?.addEventListener('click', () => showCreateStep('create-step-2'));
+    $("select-trivia-btn")?.addEventListener('click', () => showCreateStep('create-step-3-trivia'));
+    $("select-photo-challenge-btn")?.addEventListener('click', () => showCreateStep('create-step-3-photo'));
 
-    const views = {
-      'feed-view': $("feed-view"),
-      'create-view': $("create-view"),
-      'profile-view': $("profile-view"),
-      'friends-view': $("friends-view")
-    };
-
-    // Estado mock + cámara
-    let cameraStream = null, currentPhotoChallengeId = null;
-
-    // Data mock (se personaliza con el usuario logueado)
-    let mockUser = null;
-    let allUsers = {};
-    let friends = ['user456'];
-    let friendRequests = ['user789'];
-    let challengesData = [];
-
-    function seedDataFor(user) {
-      mockUser = {
-        uid: user.uid,
-        displayName: user.displayName || "Usuario",
-        email: user.email || "",
-        photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0] || 'U'}`
-      };
-
-      allUsers = {
-        [mockUser.uid]: mockUser,
-        'user456': { uid: 'user456', displayName: 'Ana', photoURL: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
-        'user789': { uid: 'user789', displayName: 'Carlos', photoURL: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
-        'userABC': { uid: 'userABC', displayName: 'Beatriz', photoURL: 'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
-      };
-
-      challengesData = [
-        {
-          id: 'challenge4',
-          authorId: mockUser.uid, authorName: mockUser.displayName, authorImg: mockUser.photoURL,
-          type: 'photo', question: 'Haz una pose de superhéroe.',
-          createdAt: new Date(Date.now() - 1000*60*20),
-          contentUrl: 'https://placehold.co/600x400/0000FF/FFFFFF?text=SUPER',
-          likes: 1, likedBy: [],
-          submission: { userId: 'user456', userName: 'Ana', submissionUrl: 'https://placehold.co/600x400/FFFF00/000000?text=POSE', status: 'pending' },
-          comments: [{ userId: 'user789', userName: 'Carlos', userImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C', text: '¡A ver esa pose!', createdAt: new Date(Date.now() - 1000*60*15) }]
-        },
-        {
-          id: 'challenge3',
-          authorId: 'user789', authorName: 'Carlos', authorImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C',
-          type: 'photo', question: 'Sácate una foto con un sombrero gracioso.',
-          createdAt: new Date(Date.now() - 1000*60*60),
-          contentUrl: 'https://placehold.co/600x400/777777/FFFFFF?text=SOMBRERO',
-          likes: 5, likedBy: [], comments: []
-        },
-        {
-          id: 'challenge1',
-          authorId: 'user456', authorName: 'Ana', authorImg: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A',
-          type: 'trivia', question: '¿En qué año llegó el hombre a la luna?',
-          correctAnswer: '1969', wrongAnswers: ['1965','1972','1980'],
-          createdAt: new Date(Date.now() - 1000*60*90),
-          contentUrl: 'https://placehold.co/600x400/333333/FFFFFF?text=LUNA',
-          likes: 15, likedBy: ['user789'],
-          comments: [
-            { userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text: '¡Fácil!', createdAt: new Date(Date.now() - 1000*60*88) },
-            { userId: 'user789', userName: 'Carlos', userImg: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C', text: 'Me hiciste dudar...', createdAt: new Date(Date.now() - 1000*60*87) }
-          ]
-        }
-      ];
+    async function uploadDataUrlToStorage(dataUrl, path) {
+      const ref = storageRef(st, path);
+      await uploadString(ref, dataUrl, 'data_url');
+      return await getDownloadURL(ref);
     }
 
-    // ====== Funciones de la App ======
+    createView.triviaForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const dataUrl = createView.gotoStep2Btn.dataset.fileUrl;
+        if (!dataUrl) return showToast("Subí una imagen/video primero", "error");
+
+        const path = `challenges/${auth.currentUser.uid}/${Date.now()}.png`;
+        const contentUrl = await uploadDataUrlToStorage(dataUrl, path);
+
+        await addDoc(collection(db, "challenges"), {
+          authorId: auth.currentUser.uid,
+          authorName: auth.currentUser.displayName || "Usuario",
+          authorImg: auth.currentUser.photoURL || "",
+          type: "trivia",
+          question: $("trivia-question").value,
+          correctAnswer: $("correct-answer").value,
+          wrongAnswers: [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ],
+          contentUrl,
+          createdAt: serverTimestamp(),
+          likesCount: 0,
+          commentsCount: 0,
+          solvedBy: [] // se llena por usuario
+        });
+        showToast("¡Reto publicado!");
+        resetCreateFlow();
+        switchView('feed-view');
+      } catch (err) {
+        console.error(err);
+        showToast("No se pudo publicar el reto", "error");
+      }
+    });
+
+    createView.photoChallengeForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const dataUrl = createView.gotoStep2Btn.dataset.fileUrl;
+        if (!dataUrl) return showToast("Subí una imagen/video primero", "error");
+
+        const path = `challenges/${auth.currentUser.uid}/${Date.now()}.png`;
+        const contentUrl = await uploadDataUrlToStorage(dataUrl, path);
+
+        await addDoc(collection(db, "challenges"), {
+          authorId: auth.currentUser.uid,
+          authorName: auth.currentUser.displayName || "Usuario",
+          authorImg: auth.currentUser.photoURL || "",
+          type: "photo",
+          question: $("photo-challenge-task").value,
+          contentUrl,
+          createdAt: serverTimestamp(),
+          likesCount: 0,
+          commentsCount: 0,
+          solvedBy: []
+        });
+        showToast("¡Reto publicado!");
+        resetCreateFlow();
+        switchView('feed-view');
+      } catch (err) {
+        console.error(err);
+        showToast("No se pudo publicar el reto", "error");
+      }
+    });
+
+    // ====== NAV / VISTAS ======
+    const views = { 'feed-view': $("feed-view"), 'create-view': $("create-view"), 'profile-view': $("profile-view"), 'friends-view': $("friends-view") };
     function switchView(viewName) {
       Object.values(views).forEach(v => v.classList.add('hidden'));
-      if (views[viewName]) views[viewName].classList.remove('hidden');
+      views[viewName]?.classList.remove('hidden');
       document.querySelectorAll('.nav-button').forEach(btn => {
         btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
         btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
@@ -536,173 +598,265 @@
       if (viewName === 'create-view') resetCreateFlow();
       if (viewName === 'friends-view') renderFriendsTab('my-friends');
     }
+    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
 
-    function updateProfileUI() {
-      if (!mockUser) return;
-      profilePic.src = mockUser.photoURL;
-      profileName.textContent = mockUser.displayName;
-      profileEmail.textContent = mockUser.email;
-      createdCount.textContent = challengesData.filter(c => c.authorId === mockUser.uid).length;
-      loadPendingValidations();
+    // ====== LIKE / COMMENTS ======
+    document.addEventListener('click', async (e) => {
+      const postCard = e.target.closest('.post-card');
+      if (!postCard) return;
+      const challengeId = postCard.dataset.challengeId;
+
+      if (e.target.closest('.like-button')) {
+        await toggleLike(challengeId, postCard);
+      }
+      if (e.target.closest('.comment-button')) {
+        openCommentsModal(challengeId);
+      }
+    });
+
+    async function toggleLike(challengeId, postEl) {
+      const likeRef = doc(db, "challenges", challengeId, "likes", auth.currentUser.uid);
+      const chRef = doc(db, "challenges", challengeId);
+      const likedSnap = await getDoc(likeRef);
+      if (likedSnap.exists()) {
+        await deleteDoc(likeRef);
+        await updateDoc(chRef, { likesCount: increment(-1) });
+      } else {
+        await setDoc(likeRef, { uid: auth.currentUser.uid, at: serverTimestamp() });
+        await updateDoc(chRef, { likesCount: increment(1) });
+      }
     }
 
-    function loadPendingValidations() {
-      validationsContainer.innerHTML = '';
-      const pending = challengesData.filter(c => c.authorId === mockUser.uid && c.submission?.status === 'pending');
-      if (pending.length > 0) {
-        const header = document.createElement('h3');
-        header.className = 'text-xl font-bold text-slate-800 mb-4';
-        header.textContent = 'Validaciones Pendientes';
-        validationsContainer.appendChild(header);
-        pending.forEach(challenge => {
-          const validationEl = document.importNode(validationTemplate.content, true);
-          validationEl.querySelector('.validation-card').dataset.challengeId = challenge.id;
-          validationEl.querySelector('.original-challenge-question').textContent = challenge.question;
-          validationEl.querySelector('.submitter-name').textContent = challenge.submission.userName;
-          validationEl.querySelector('.submission-img').src = challenge.submission.submissionUrl;
-          validationsContainer.appendChild(validationEl);
+    // ====== COMMENTS ======
+    const commentsModal = $("comments-modal");
+    const commentsBody = $("comments-modal-body");
+    const commentForm = $("comment-form");
+    const commentInput = $("comment-input");
+    const commentUserImg = $("comment-user-img");
+    let commentsUnsub = null;
+    function openCommentsModal(challengeId) {
+      if (commentsUnsub) commentsUnsub();
+      commentForm.dataset.challengeId = challengeId;
+      commentUserImg.src = auth.currentUser.photoURL || "";
+      commentsBody.innerHTML = "";
+      const q = query(collection(db, "challenges", challengeId, "comments"), orderBy("createdAt","asc"));
+      commentsUnsub = onSnapshot(q, (snap) => {
+        commentsBody.innerHTML = "";
+        snap.forEach(d => {
+          const c = d.data();
+          const row = document.createElement('div');
+          row.className = "flex items-start space-x-3";
+          row.innerHTML = `
+            <img class="w-8 h-8 rounded-full" src="${c.userImg||''}">
+            <div class="flex-1 bg-slate-100 rounded-xl p-3">
+              <p class="text-sm"><strong class="text-slate-800">${c.userName||'User'}</strong> <span class="text-slate-600">${c.text||''}</span></p>
+              <p class="text-xs text-slate-400 mt-1">${c.createdAt?.toDate ? c.createdAt.toDate().toLocaleTimeString('es-AR') : ''}</p>
+            </div>`;
+          commentsBody.appendChild(row);
         });
-      }
-    }
-
-    function handleValidation(challengeId, isApproved) {
-      const challenge = challengesData.find(c => c.id === challengeId);
-      if (challenge) {
-        challenge.submission.status = isApproved ? 'approved' : 'rejected';
-        showToast(`Reto ${isApproved ? 'aprobado' : 'rechazado'}.`);
-        loadPendingValidations();
-      }
-    }
-
-    function loadFeed() {
-      loadingSpinner.classList.remove('hidden');
-      feedContainer.innerHTML = '';
-      setTimeout(() => {
-        challengesData.sort((a,b) => b.createdAt - a.createdAt).forEach(renderPost);
-        loadingSpinner.classList.add('hidden');
-      }, 400);
-    }
-
-    // 👉 centraliza abrir desafío por id
-    function openChallengeById(challengeId, postCardEl) {
-      const challenge = challengesData.find(c => c.id === challengeId);
-      if (!challenge) return;
-      if (challenge.type === 'trivia') {
-        openTriviaModal(challenge, postCardEl);
-      } else if (challenge.type === 'photo') {
-        openPhotoChallengeModal(challenge);
-      }
-    }
-
-    function renderPost(postData) {
-      const postElement = document.importNode(postTemplate.content, true);
-      const postCard = postElement.querySelector('.post-card');
-      postCard.dataset.challengeId = postData.id;
-
-      postElement.querySelector('.author-img').src = postData.authorImg;
-      postElement.querySelector('.author-name').textContent = postData.authorName;
-      postElement.querySelector('.post-time').textContent = postData.createdAt.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
-      postElement.querySelector('.content-img').src = postData.contentUrl;
-      postElement.querySelector('.likes-count').textContent = postData.likes;
-      postElement.querySelector('.comments-count').textContent = postData.comments.length;
-      if (postData.likedBy.includes(mockUser.uid)) postElement.querySelector('.like-icon').classList.add('liked');
-      if (postData.type === 'photo') postElement.querySelector('.lock-icon').textContent = '📸';
-
-      // Accesibilidad + manejadores explícitos del overlay
-      const overlay = postElement.querySelector('.lock-overlay');
-      overlay.setAttribute('role','button');
-      overlay.setAttribute('tabindex','0');
-      overlay.setAttribute('aria-label','Aceptar desafío');
-
-      // Click directo en overlay
-      overlay.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        openChallengeById(postData.id, postCard);
       });
-
-      // Enter/Espacio en overlay
-      overlay.addEventListener('keyup', (ev) => {
-        if (ev.key === 'Enter' || ev.code === 'Space' || ev.key === ' ') {
-          ev.preventDefault();
-          openChallengeById(postData.id, postCard);
-        }
+      commentsModal.classList.remove('hidden');
+    }
+    commentForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const challengeId = commentForm.dataset.challengeId;
+      const text = (commentInput.value || "").trim();
+      if (!text) return;
+      await addDoc(collection(db, "challenges", challengeId, "comments"), {
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName || "Usuario",
+        userImg: auth.currentUser.photoURL || "",
+        text,
+        createdAt: serverTimestamp()
       });
+      await updateDoc(doc(db, "challenges", challengeId), { commentsCount: increment(1) });
+      commentInput.value = "";
+    });
+    $("close-comments-modal")?.addEventListener('click', () => commentsModal.classList.add('hidden'));
 
-      feedContainer.append(postElement);
-    }
-
-    function toggleLike(challengeId) {
-      const challenge = challengesData.find(c => c.id === challengeId);
-      if (!challenge) return;
-      const userHasLiked = challenge.likedBy.includes(mockUser.uid);
-      challenge.likes += userHasLiked ? -1 : 1;
-      if (userHasLiked) challenge.likedBy = challenge.likedBy.filter(uid => uid !== mockUser.uid);
-      else challenge.likedBy.push(mockUser.uid);
-      const postCardToUpdate = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
-      if (postCardToUpdate) {
-        postCardToUpdate.querySelector('.likes-count').textContent = challenge.likes;
-        postCardToUpdate.querySelector('.like-icon').classList.toggle('liked', !userHasLiked);
-      }
-    }
-
-    function openTriviaModal(challenge, postElement) {
-      $("trivia-modal-question").textContent = challenge.question;
+    // ====== TRIVIA ======
+    function openTriviaModal(ch, postEl) {
+      $("trivia-modal-question").textContent = ch.question || '';
       const answersContainer = $("trivia-modal-answers");
       answersContainer.innerHTML = '';
-      [...challenge.wrongAnswers, challenge.correctAnswer]
+      [...(ch.wrongAnswers||[]), ch.correctAnswer]
+        .filter(Boolean)
         .sort(() => Math.random() - 0.5)
         .forEach(answer => {
-          const button = document.createElement('button');
-          button.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
-          button.textContent = answer;
-          button.onclick = () => checkAnswer(answer === challenge.correctAnswer, postElement);
-          answersContainer.appendChild(button);
+          const btn = document.createElement('button');
+          btn.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
+          btn.textContent = answer;
+          btn.onclick = () => checkAnswer(ch.id, answer === ch.correctAnswer, postEl);
+          answersContainer.appendChild(btn);
         });
-      triviaModal.classList.remove('hidden');
+      $("trivia-modal").classList.remove('hidden');
     }
+    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
 
-    function openPhotoChallengeModal(challenge) {
-      photoChallengeDescription.textContent = challenge.question;
-      $("submit-photo-challenge-btn").dataset.challengeId = challenge.id;
-      photoChallengeModal.classList.remove('hidden');
-    }
-
-    function checkAnswer(isCorrect, postElement) {
+    async function checkAnswer(challengeId, isCorrect, postEl) {
       if (isCorrect) {
-        triviaModal.classList.add('hidden');
-        unlockPost(postElement);
+        await updateDoc(doc(db, "challenges", challengeId), { solvedBy: arrayUnion(auth.currentUser.uid) });
+        $("trivia-modal").classList.add('hidden');
+        showToast("¡Correcto! Reto desbloqueado 🎉");
       } else {
         $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Inténtalo de nuevo!';
         setTimeout(() => { $("trivia-feedback").textContent = ''; }, 2000);
       }
     }
 
-    function unlockPost(postElement) {
-      postElement.querySelector('.content-img')?.classList.remove('blur-locked');
-      postElement.querySelector('.lock-overlay')?.classList.add('hidden');
-    }
+    // ====== PHOTO CHALLENGE ======
+    const photoChallengeModal = $("photo-challenge-modal");
+    const cameraModal = $("camera-modal");
+    const cameraStreamEl = $("camera-stream");
+    const cameraCanvas = $("camera-canvas");
+    let cameraStream = null;
+    let currentPhotoChallengeId = null;
 
-    function openCommentsModal(challengeId) {
-      const challenge = challengesData.find(c => c.id === challengeId);
-      if (!challenge) return;
-      commentUserImg.src = mockUser.photoURL;
-      commentForm.dataset.challengeId = challengeId;
-      renderComments(challenge);
-      commentsModal.classList.remove('hidden');
+    function openPhotoChallengeModal(ch) {
+      $("photo-challenge-description").textContent = ch.question || '';
+      $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
+      photoChallengeModal.classList.remove('hidden');
     }
+    $("close-photo-challenge-modal")?.addEventListener('click', () => photoChallengeModal.classList.add('hidden'));
+    $("submit-photo-challenge-btn")?.addEventListener('click', () => {
+      currentPhotoChallengeId = $("submit-photo-challenge-btn").dataset.challengeId;
+      openCamera();
+      photoChallengeModal.classList.add('hidden');
+    });
 
-    function renderComments(challenge) {
-      commentsModalBody.innerHTML = '';
-      challenge.comments.sort((a,b) => a.createdAt - b.createdAt).forEach(comment => {
-        const commentEl = document.importNode(commentTemplate.content, true);
-        commentEl.querySelector('.comment-author-img').src = comment.userImg;
-        commentEl.querySelector('.comment-author-name').textContent = comment.userName;
-        commentEl.querySelector('.comment-text').textContent = comment.text;
-        commentEl.querySelector('.comment-time').textContent = comment.createdAt.toLocaleString('es-AR', { timeStyle: 'short' });
-        commentsModalBody.appendChild(commentEl);
+    async function openCamera() {
+      try {
+        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        cameraStreamEl.srcObject = cameraStream;
+        cameraModal.classList.remove('hidden');
+      } catch (e) {
+        console.error(e);
+        showToast("No se pudo acceder a la cámara", "error");
+      }
+    }
+    function closeCamera() {
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+      cameraModal.classList.add('hidden');
+    }
+    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+    $("capture-btn")?.addEventListener('click', async () => {
+      const video = cameraStreamEl, canvas = cameraCanvas;
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      closeCamera();
+
+      // subir submission
+      try {
+        const path = `submissions/${currentPhotoChallengeId}/${auth.currentUser.uid}/${Date.now()}.png`;
+        const submissionUrl = await uploadDataUrlToStorage(dataUrl, path);
+        const chRef = doc(db, "challenges", currentPhotoChallengeId);
+        await addDoc(collection(chRef, "submissions"), {
+          solverUid: auth.currentUser.uid,
+          solverName: auth.currentUser.displayName || "Usuario",
+          solverImg: auth.currentUser.photoURL || "",
+          submissionUrl,
+          status: "pending",
+          createdAt: serverTimestamp()
+        });
+        showToast("Prueba enviada para validación.");
+      } catch (e) {
+        console.error(e);
+        showToast("No se pudo enviar la prueba", "error");
+      } finally {
+        currentPhotoChallengeId = null;
+      }
+    });
+
+    // ====== VALIDACIONES (autor) ======
+    const validationsContainer = $("validations-container");
+    let subsUnsub = null;
+    function listenPendingValidations() {
+      if (subsUnsub) subsUnsub();
+      // Traer TODAS las submissions pendientes del autor logueado (collectionGroup)
+      const q = query(
+        collectionGroup(db, "submissions"),
+        where("status", "==", "pending")
+      );
+      subsUnsub = onSnapshot(q, async (snap) => {
+        // filtramos por retos cuyo authorId == currentUser.uid
+        const items = [];
+        for (const d of snap.docs) {
+          const sub = { id: d.id, ...d.data() };
+          const chId = d.ref.parent.parent.id;
+          const chSnap = await getDoc(doc(db, "challenges", chId));
+          if (chSnap.exists() && chSnap.data().authorId === currentUser.uid) {
+            items.push({ submissionId: d.id, challengeId: chId, challenge: chSnap.data(), sub });
+          }
+        }
+        renderValidations(items);
       });
     }
 
+    function renderValidations(items) {
+      validationsContainer.innerHTML = '';
+      if (!items.length) return;
+      const header = document.createElement('h3');
+      header.className = 'text-xl font-bold text-slate-800 mb-4';
+      header.textContent = 'Validaciones Pendientes';
+      validationsContainer.appendChild(header);
+
+      items.forEach(({ submissionId, challengeId, challenge, sub }) => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card";
+        card.dataset.challengeId = challengeId;
+        card.dataset.submissionId = submissionId;
+        card.innerHTML = `
+          <div class="p-4">
+            <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
+            <p class="font-semibold text-slate-800 italic my-2">"${challenge.question||''}"</p>
+            <p class="text-sm text-slate-600 mb-4"><strong>${sub.solverName||'Usuario'}</strong> envió:</p>
+            <img class="w-full h-auto rounded-lg" src="${sub.submissionUrl}" alt="Prueba del reto">
+            <div class="flex space-x-3 mt-4">
+              <button class="approve-btn w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition">Aprobar</button>
+              <button class="reject-btn  w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Rechazar</button>
+            </div>
+          </div>`;
+        validationsContainer.appendChild(card);
+      });
+    }
+
+    validationsContainer.addEventListener('click', async (e) => {
+      const card = e.target.closest('.validation-card');
+      if (!card) return;
+      const approve = e.target.closest('.approve-btn');
+      const reject  = e.target.closest('.reject-btn');
+      if (!approve && !reject) return;
+
+      const challengeId = card.dataset.challengeId;
+      const submissionId = card.dataset.submissionId;
+      const subRef = doc(db, "challenges", challengeId, "submissions", submissionId);
+      const subSnap = await getDoc(subRef);
+      if (!subSnap.exists()) return;
+      const sub = subSnap.data();
+
+      if (approve) {
+        await updateDoc(subRef, { status: "approved" });
+        await updateDoc(doc(db, "challenges", challengeId), { solvedBy: arrayUnion(sub.solverUid) });
+        showToast("Reto aprobado.");
+      } else if (reject) {
+        await updateDoc(subRef, { status: "rejected" });
+        showToast("Reto rechazado.");
+      }
+    });
+
+    // ====== FRIENDS MOCK (igual que antes, sin Firestore) ======
+    const friendsTabButtons = document.querySelectorAll('.friends-tab');
+    const friendsTabContent = $("friends-tab-content");
+    let friends = ['user456'];
+    let friendRequests = ['user789'];
+    const allUsersMock = {
+      'user456': { uid: 'user456', displayName: 'Ana', photoURL: 'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
+      'user789': { uid: 'user789', displayName: 'Carlos', photoURL: 'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
+      'userABC': { uid: 'userABC', displayName: 'Beatriz', photoURL: 'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
+    };
     function renderFriendsTab(tab) {
       friendsTabContent.innerHTML = '';
       friendsTabButtons.forEach(btn => {
@@ -714,224 +868,118 @@
           friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`;
           return;
         }
-        friends.forEach(friendId => {
-          const user = allUsers[friendId];
-          const item = userListItemTemplate.content.cloneNode(true);
-          item.querySelector('.user-img').src = user.photoURL;
-          item.querySelector('.user-name').textContent = user.displayName;
-          friendsTabContent.appendChild(item);
+        friends.forEach(fid => {
+          const u = allUsersMock[fid];
+          const row = document.createElement('div');
+          row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
+          row.innerHTML = `<div class="flex items-center space-x-3">
+              <img class="w-10 h-10 rounded-full" src="${u.photoURL}">
+              <p class="font-semibold text-slate-700">${u.displayName}</p>
+            </div>`;
+          friendsTabContent.appendChild(row);
         });
-      } else if (tab === 'requests') {
+      } else {
         if (friendRequests.length === 0) {
           friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No tienes solicitudes pendientes.</p>`;
           return;
         }
-        friendRequests.forEach(userId => {
-          const user = allUsers[userId];
-          const item = userListItemTemplate.content.cloneNode(true);
-          item.querySelector('.user-img').src = user.photoURL;
-          item.querySelector('.user-name').textContent = user.displayName;
-          const actions = item.querySelector('.user-actions');
-          actions.innerHTML = `
-            <button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-user-id="${userId}" data-action="accept">Aceptar</button>
-            <button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full ml-2" data-user-id="${userId}" data-action="reject">Rechazar</button>`;
-          friendsTabContent.appendChild(item);
+        friendRequests.forEach(uid => {
+          const u = allUsersMock[uid];
+          const row = document.createElement('div');
+          row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
+          row.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <img class="w-10 h-10 rounded-full" src="${u.photoURL}">
+              <p class="font-semibold text-slate-700">${u.displayName}</p>
+            </div>
+            <div class="user-actions">
+              <button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-user-id="${uid}" data-action="accept">Aceptar</button>
+              <button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full ml-2" data-user-id="${uid}" data-action="reject">Rechazar</button>
+            </div>`;
+          friendsTabContent.appendChild(row);
         });
       }
     }
-
-    function handleFriendRequest(userId, accepted) {
-      friendRequests = friendRequests.filter(id => id !== userId);
-      if (accepted) {
-        friends.push(userId);
-        showToast("Solicitud de amistad aceptada.");
-      } else {
-        showToast("Solicitud rechazada.");
-      }
-      renderFriendsTab('requests');
-    }
-
-    function resetCreateFlow() {
-      createViewElements.triviaForm.reset();
-      createViewElements.photoChallengeForm.reset();
-      createViewElements.fileUpload.value = '';
-      createViewElements.fileNameDisplay.textContent = '';
-      createViewElements.gotoStep2Btn.disabled = true;
-      createViewElements.imagePreview.src = '#';
-      createViewElements.imagePreviewContainer.classList.add('hidden');
-      showCreateStep('create-step-1');
-    }
-    function showCreateStep(step) {
-      const steps = {
-        'create-step-1': $("create-step-1"),
-        'create-step-2': $("create-step-2"),
-        'create-step-3-trivia': $("create-step-3-trivia"),
-        'create-step-3-photo': $("create-step-3-photo")
-      };
-      Object.values(steps).forEach(s => s.classList.add('hidden'));
-      steps[step].classList.remove('hidden');
-    }
-
-    // ==== EVENTOS UI (delegación global) ====
-    document.addEventListener('click', (e) => {
-      const approve = e.target.closest('.approve-btn');
-      const reject = e.target.closest('.reject-btn');
-      const card = e.target.closest('.validation-card');
-      if (card && (approve || reject)) {
-        handleValidation(card.dataset.challengeId, !!approve);
-      }
-
-      const postCard = e.target.closest('.post-card');
-      if (postCard && postCard.dataset.challengeId) {
-        const challengeId = postCard.dataset.challengeId;
-        if (e.target.closest('.like-button')) toggleLike(challengeId);
-        else if (e.target.closest('.comment-button')) openCommentsModal(challengeId);
-        // NOTA: click en overlay ya está manejado por listener directo en renderPost()
-      }
-    });
-
-    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
     friendsTabButtons.forEach(btn => btn.addEventListener('click', () => renderFriendsTab(btn.dataset.tab)));
-
     friendsTabContent.addEventListener('click', (e) => {
       const uid = e.target.dataset.userId;
-      if (uid) handleFriendRequest(uid, e.target.dataset.action === 'accept');
+      if (!uid) return;
+      friendRequests = friendRequests.filter(x => x !== uid);
+      if (e.target.dataset.action === 'accept') friends.push(uid);
+      renderFriendsTab('requests');
+      showToast(e.target.dataset.action === 'accept' ? "Solicitud aceptada." : "Solicitud rechazada.");
     });
 
-    // Comentarios
-    commentForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const challengeId = e.target.dataset.challengeId;
-      const challenge = challengesData.find(c => c.id === challengeId);
-      const text = commentInput.value.trim();
-      if (!challenge || !text) return;
-      challenge.comments.push({
-        userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL,
-        text, createdAt: new Date()
+    // ====== PERFIL ======
+    const profilePic = $("profile-pic");
+    const profileName = $("profile-name");
+    const profileEmail = $("profile-email");
+    const createdCount = $("created-count");
+    const solvedCount = $("solved-count");
+
+    function updateProfileUI() {
+      profilePic.src = auth.currentUser.photoURL || "";
+      profileName.textContent = auth.currentUser.displayName || "Usuario";
+      profileEmail.textContent = auth.currentUser.email || "";
+      // Contar creados y resueltos en vivo
+      onSnapshot(query(collection(db, "challenges"), where("authorId","==", auth.currentUser.uid)), (snap) => {
+        createdCount.textContent = snap.size;
       });
-      commentInput.value = '';
-      renderComments(challenge);
-      const postCard = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
-      if (postCard) postCard.querySelector('.comments-count').textContent = challenge.comments.length;
+      onSnapshot(collection(db, "challenges"), (snap) => {
+        let solved = 0;
+        snap.forEach(d => {
+          const ch = d.data();
+          if (ch.authorId !== auth.currentUser.uid && Array.isArray(ch.solvedBy) && ch.solvedBy.includes(auth.currentUser.uid)) solved++;
+        });
+        solvedCount.textContent = solved;
+      });
+      listenPendingValidations();
+    }
+
+    // ====== MISC UI ======
+    $("close-comments-modal")?.addEventListener('click', () => $("comments-modal").classList.add('hidden'));
+
+    // ====== AUTH STATE ======
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
+      if (currentUser) {
+        loginScreen.classList.add("hidden");
+        appScreen.classList.remove("hidden");
+        listenFeed();
+        updateProfileUI();
+        switchView('feed-view');
+      } else {
+        if (challengesUnsub) challengesUnsub();
+        if (subsUnsub) subsUnsub();
+        appScreen.classList.add("hidden");
+        loginScreen.classList.remove("hidden");
+      }
     });
 
-    // Cámara
-    async function openCamera(challengeId = null) {
-      currentPhotoChallengeId = challengeId;
+    // ====== CREATE VIEW ACCESS ======
+    $("open-camera-btn")?.addEventListener('click', async () => {
+      // flujo de cámara para crear reto (no submission)
       try {
         if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
         cameraStreamEl.srcObject = cameraStream;
         cameraModal.classList.remove('hidden');
-      } catch (err) {
-        console.error("Error al acceder a la cámara:", err);
-        showToast("No se pudo acceder a la cámara. Revisa los permisos.", 'error');
-      }
-    }
-    function closeCamera() {
-      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-      cameraStream = null;
-      cameraModal.classList.add('hidden');
-    }
-    function capturePhoto() {
-      const video = cameraStreamEl, canvas = cameraCanvas;
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
-      if (currentPhotoChallengeId) {
-        const challenge = challengesData.find(c => c.id === currentPhotoChallengeId);
-        if (challenge) {
-          challenge.submission = { userId: mockUser.uid, userName: mockUser.displayName, submissionUrl: dataUrl, status: 'pending' };
-          showToast("Prueba enviada para validación.");
-        }
-        currentPhotoChallengeId = null;
-      } else {
-        createViewElements.imagePreview.src = dataUrl;
-        createViewElements.imagePreviewContainer.classList.remove('hidden');
-        createViewElements.fileNameDisplay.textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.png`;
-        createViewElements.gotoStep2Btn.dataset.fileUrl = dataUrl;
-        createViewElements.gotoStep2Btn.disabled = false;
-      }
-      closeCamera();
-    }
-
-    $("open-camera-btn")?.addEventListener('click', () => openCamera(null));
-    $("capture-btn")?.addEventListener('click', capturePhoto);
-    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
-    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
-    $("close-photo-challenge-modal")?.addEventListener('click', () => $("photo-challenge-modal").classList.add('hidden'));
-    $("close-comments-modal")?.addEventListener('click', () => $("comments-modal").classList.add('hidden'));
-    $("submit-photo-challenge-btn")?.addEventListener('click', () => {
-      const challengeId = $("submit-photo-challenge-btn").dataset.challengeId;
-      openCamera(challengeId);
-      $("photo-challenge-modal").classList.add('hidden');
-    });
-
-    // Create flow
-    createViewElements.fileUpload?.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        const file = e.target.files[0], reader = new FileReader();
-        createViewElements.fileNameDisplay.textContent = file.name;
-        createViewElements.gotoStep2Btn.disabled = false;
-        reader.onload = (event) => {
-          createViewElements.gotoStep2Btn.dataset.fileUrl = event.target.result;
-          createViewElements.imagePreview.src = event.target.result;
-          createViewElements.imagePreviewContainer.classList.remove('hidden');
+        // al capturar, si no hay currentPhotoChallengeId -> se usa como contenido del reto
+        $("capture-btn").onclick = () => {
+          const video = cameraStreamEl, canvas = cameraCanvas;
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/png');
+          createView.imagePreview.src = dataUrl;
+          createView.imagePreviewContainer.classList.remove('hidden');
+          createView.fileNameDisplay.textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.png`;
+          createView.gotoStep2Btn.dataset.fileUrl = dataUrl;
+          createView.gotoStep2Btn.disabled = false;
+          closeCamera();
         };
-        reader.readAsDataURL(file);
-      } else {
-        createViewElements.fileNameDisplay.textContent = '';
-        createViewElements.gotoStep2Btn.disabled = true;
-        createViewElements.imagePreviewContainer.classList.add('hidden');
-      }
-    });
-    createViewElements.gotoStep2Btn?.addEventListener('click', () => showCreateStep('create-step-2'));
-    createViewElements.selectTriviaBtn?.addEventListener('click', () => showCreateStep('create-step-3-trivia'));
-    createViewElements.selectPhotoChallengeBtn?.addEventListener('click', () => showCreateStep('create-step-3-photo'));
-    createViewElements.triviaForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      publishChallenge({
-        type: 'trivia',
-        question: $("trivia-question").value,
-        correctAnswer: $("correct-answer").value,
-        wrongAnswers: [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ]
-      });
-    });
-    createViewElements.photoChallengeForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      publishChallenge({ type: 'photo', question: $("photo-challenge-task").value });
-    });
-
-    function publishChallenge(challengeDetails) {
-      const newChallenge = {
-        id: `challenge_${Date.now()}`,
-        authorId: mockUser.uid,
-        authorName: mockUser.displayName,
-        authorImg: mockUser.photoURL,
-        createdAt: new Date(),
-        contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
-        likes: 0, likedBy: [], comments: [],
-        ...challengeDetails
-      };
-      challengesData.unshift(newChallenge);
-      loadFeed();
-      showToast('¡Reto creado con éxito!');
-      switchView('feed-view');
-    }
-
-    // ====== Auth state ======
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user || null;
-      if (currentUser) {
-        seedDataFor(currentUser);
-        loginScreen.classList.add("hidden");
-        appScreen.classList.remove("hidden");
-        updateProfileUI();
-        loadFeed();
-        switchView('feed-view');
-      } else {
-        appScreen.classList.add("hidden");
-        loginScreen.classList.remove("hidden");
+      } catch (e) {
+        console.error(e);
+        showToast("No se pudo acceder a la cámara", "error");
       }
     });
   </script>
