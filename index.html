@@ -19,6 +19,8 @@
     .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); color:#fff; }
     .btn-primary:hover { box-shadow: 0 4px 15px rgba(99,102,241,.5); }
     .like-icon.liked { fill: #ec4899; color: #ec4899; }
+    .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+    .btn-xs { padding: 4px 10px; border-radius: 999px; font-size: 12px; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -74,6 +76,7 @@
           </div>
           <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
         </header>
+        <div id="feed-empty" class="hidden p-8 text-center text-slate-500 text-sm">No hay retos todavía. ¡Creá el primero en “Crear”! 🎯</div>
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
 
@@ -84,7 +87,9 @@
 
           <div id="create-step-1" class="text-center">
             <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agrega el contenido a bloquear (opcional para Trivia)</h3>
-            <div id="image-preview-container" class="hidden my-4"><img id="image-preview" src="#" alt="Previsualización" class="rounded-lg max-h-64 object-cover mx-auto"/></div>
+            <div id="image-preview-container" class="hidden my-4">
+              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg max-h-64 object-cover mx-auto"/>
+            </div>
             <div class="grid grid-cols-2 gap-4 my-4">
               <label for="file-upload" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
                 <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -195,7 +200,7 @@
     </nav>
   </div>
 
-  <!-- Trivia Modal -->
+  <!-- Modales -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -207,7 +212,6 @@
     </div>
   </div>
 
-  <!-- Foto Modal -->
   <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
       <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -215,13 +219,12 @@
       </button>
       <div class="text-5xl mb-2">📸</div>
       <h2 class="text-2xl font-bold text-slate-800 mb-2">¡Acepta el Desafío!</h2>
-      <p class="text-slate-600 mb-3" id="photo-challenge-description"></p>
+      <p class="text-slate-600 mb-2" id="photo-challenge-description"></p>
       <p class="text-xs text-slate-400 mb-5">Tip: si el navegador pide permiso de cámara, tocá “Permitir”.</p>
       <button id="submit-photo-challenge-btn" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">Cumplir Reto</button>
     </div>
   </div>
 
-  <!-- Comentarios Modal -->
   <div id="comments-modal" class="hidden fixed inset-0 bg-white z-50 flex flex-col">
     <header class="flex items-center justify-between p-4 border-b">
       <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
@@ -239,7 +242,6 @@
     </footer>
   </div>
 
-  <!-- Templates -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -287,17 +289,7 @@
     </div>
   </template>
 
-  <template id="comment-template">
-    <div class="flex items-start space-x-3">
-      <img class="w-8 h-8 rounded-full comment-author-img" src="">
-      <div class="flex-1 bg-slate-100 rounded-xl p-3">
-        <p class="text-sm"><strong class="comment-author-name text-slate-800"></strong> <span class="text-slate-600 comment-text"></span></p>
-        <p class="text-xs text-slate-400 mt-1 comment-time"></p>
-      </div>
-    </div>
-  </template>
-
-  <!-- Cámara modal -->
+  <!-- Cámara -->
   <div id="camera-modal" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
     <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
     <canvas id="camera-canvas" class="hidden"></canvas>
@@ -326,7 +318,6 @@
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      // Si activás Storage, lo ideal es "tereto-prod.appspot.com".
       storageBucket: "tereto-prod.firebasestorage.app",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
@@ -343,21 +334,27 @@
 
     // Helpers UI
     const $ = (id) => document.getElementById(id);
-    const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
-    function showToast(msg, type='success'){ toastMessage.textContent=msg; toastIcon.innerHTML = type==='success'
-      ? `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`
-      : `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 10-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+    function showToast(msg, type='success'){
+      const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
+      toastMessage.textContent=msg;
+      toastIcon.innerHTML = type==='success'
+        ? `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`
+        : `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 10-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
       toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type==='success'?'text-green-500 bg-green-100':'text-red-500 bg-red-100'}`;
       toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),2600);
     }
 
     // Estado
     let currentUser = null;
-    let solvedSet = new Set(); // ids de retos resueltos por el usuario actual
-    let unsubscribeChallenges = null;
-    let unsubscribeSolved = null;
-    let unsubscribeUsers = null;
-    let unsubscribeValidations = null;
+    let solvedSet = new Set(); // retos resueltos por el usuario
+    let challengeCache = new Map();
+
+    // Suscripciones
+    let unsubUsers=null, unsubChallenges=null, unsubSolved=null, unsubValidations=null, unsubCommentsModal=null, perChallengeUnsubs={};
+    function clearPerChallengeUnsubs(){
+      Object.values(perChallengeUnsubs).forEach(arr=>arr.forEach(fn=>fn && fn()));
+      perChallengeUnsubs = {};
+    }
 
     // Navegación
     const views = {
@@ -388,7 +385,7 @@
       catch(err){ console.error(err); showToast("No se pudo cerrar sesión","error"); }
     });
 
-    // Firestore: users
+    // Users upsert
     async function upsertUser(user){
       await setDoc(doc(db,"users",user.uid),{
         uid:user.uid, displayName:user.displayName||"Usuario", email:user.email||"",
@@ -396,52 +393,147 @@
       },{merge:true});
     }
 
-    function startUsersSubscription(){
-      if(unsubscribeUsers) unsubscribeUsers();
-      const qUsers = query(collection(db,"users"));
-      const listEl = $("friends-tab-content");
-      const input = $("user-search-input");
-      let cache = [];
-      unsubscribeUsers = onSnapshot(qUsers, (snap)=>{
-        cache = [];
+    // === FRIENDSHIPS ===
+    // colección: friendships, docId = `${minUid}_${maxUid}`
+    // campos: users:[a,b], status:'pending'|'accepted', requestedBy, requestedTo, createdAt, updatedAt
+    let friendMap = new Map(); // otherUid -> {status, requestedBy, requestedTo}
+
+    function pairId(a,b){ return [a,b].sort().join('_'); }
+
+    function startFriendshipsListener(){
+      if(!currentUser) return;
+      // escucha todas mis relaciones
+      const qF = query(collection(db,'friendships'), where('users','array-contains', currentUser.uid));
+      return onSnapshot(qF, (snap)=>{
+        friendMap.clear();
         snap.forEach(d=>{
-          const u = d.data();
-          if(!currentUser || u.uid !== currentUser.uid) cache.push(u);
+          const fr = d.data();
+          const other = fr.users.find(u=>u!==currentUser.uid);
+          friendMap.set(other, { status: fr.status, requestedBy: fr.requestedBy, requestedTo: fr.requestedTo });
         });
-        render(cache);
+        // re-render lista de usuarios si está visible
+        renderUsersListCached();
       });
-      function render(users){
-        const term = (input.value||"").toLowerCase();
-        listEl.innerHTML = "";
-        const filtered = users.filter(u=>{
-          const s = (u.displayName||u.email||"").toLowerCase();
-          return !term || s.includes(term);
-        });
-        if(filtered.length===0){
-          listEl.innerHTML = `<p class="text-slate-500 text-center mt-4">No hay usuarios.</p>`; return;
-        }
-        filtered.forEach(u=>{
-          const row = document.createElement('div');
-          row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
-          row.innerHTML = `
-            <div class="flex items-center space-x-3">
-              <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
-              <div>
-                <p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p>
-                <p class="text-xs text-slate-400">${u.email || ''}</p>
-              </div>
-            </div>`;
-          listEl.appendChild(row);
-        });
-      }
-      input?.addEventListener('input',()=>render(cache));
     }
 
-    // Solved listener
+    async function sendFriendRequest(otherUid){
+      if(!currentUser) return;
+      const id = pairId(currentUser.uid, otherUid);
+      await setDoc(doc(db,'friendships', id), {
+        users: [currentUser.uid, otherUid],
+        status: 'pending',
+        requestedBy: currentUser.uid,
+        requestedTo: otherUid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      showToast("Solicitud enviada ✅");
+    }
+
+    async function acceptFriendRequest(otherUid){
+      if(!currentUser) return;
+      const id = pairId(currentUser.uid, otherUid);
+      await updateDoc(doc(db,'friendships', id), {
+        status: 'accepted',
+        updatedAt: serverTimestamp()
+      });
+      showToast("Ahora son amigos 🤝");
+    }
+
+    async function rejectFriendRequest(otherUid){
+      if(!currentUser) return;
+      const id = pairId(currentUser.uid, otherUid);
+      await deleteDoc(doc(db,'friendships', id));
+      showToast("Solicitud rechazada");
+    }
+
+    // Users (lista + búsqueda)
+    const usersListEl = $("friends-tab-content");
+    const usersSearchEl = $("user-search-input");
+    let usersCache = [];
+    function startUsersSubscription(){
+      if(unsubUsers) unsubUsers();
+      const qUsers = query(collection(db,'users'));
+      unsubUsers = onSnapshot(qUsers,(snap)=>{
+        usersCache = [];
+        snap.forEach(d=>{
+          const u=d.data();
+          if(!currentUser || u.uid !== currentUser.uid) usersCache.push(u);
+        });
+        renderUsersListCached();
+      });
+      usersSearchEl?.addEventListener('input', renderUsersListCached);
+    }
+
+    function renderUsersListCached(){
+      const term = (usersSearchEl?.value||'').toLowerCase();
+      usersListEl.innerHTML = '';
+      const filtered = usersCache.filter(u=>{
+        const s=(u.displayName||u.email||'').toLowerCase();
+        return !term || s.includes(term);
+      });
+      if(filtered.length===0){
+        usersListEl.innerHTML = `<p class="text-slate-500 text-center mt-4">No hay usuarios.</p>`;
+        return;
+      }
+      filtered.forEach(u=>{
+        const state = friendMap.get(u.uid);
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
+            <div>
+              <p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p>
+              <p class="text-xs text-slate-400">${u.email || ''}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">${renderFriendAction(u.uid, state)}</div>
+        `;
+        usersListEl.appendChild(row);
+      });
+    }
+
+    function renderFriendAction(otherUid, state){
+      if(!state){
+        return `<button data-action="add" data-uid="${otherUid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`;
+      }
+      if(state.status==='accepted'){
+        return `<span class="pill bg-green-100 text-green-700">Amigos ✓</span>`;
+      }
+      if(state.status==='pending'){
+        if(state.requestedBy===currentUser.uid){
+          return `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`;
+        }else{
+          // yo recibí la solicitud
+          return `
+            <button data-action="accept" data-uid="${otherUid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
+            <button data-action="reject" data-uid="${otherUid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>
+          `;
+        }
+      }
+      return '';
+    }
+
+    usersListEl?.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const uid = btn.dataset.uid;
+      const action = btn.dataset.action;
+      try{
+        if(action==='add') await sendFriendRequest(uid);
+        if(action==='accept') await acceptFriendRequest(uid);
+        if(action==='reject') await rejectFriendRequest(uid);
+      }catch(err){
+        console.error(err); showToast("No se pudo actualizar la solicitud","error");
+      }
+    });
+
+    // === SOLVED (retos resueltos) ===
     function startSolvedListener(){
       if(!currentUser) return;
-      if(unsubscribeSolved) unsubscribeSolved();
-      unsubscribeSolved = onSnapshot(collection(db,'users', currentUser.uid, 'solved'), (snap)=>{
+      if(unsubSolved) unsubSolved();
+      unsubSolved = onSnapshot(collection(db,'users', currentUser.uid, 'solved'), (snap)=>{
         const s = new Set();
         snap.forEach(d=>s.add(d.id));
         solvedSet = s;
@@ -449,7 +541,13 @@
         refreshUnlockStates();
       });
     }
-
+    async function markSolvedRemote(challengeId){
+      if(!currentUser) return;
+      await setDoc(doc(db,'users', currentUser.uid, 'solved', challengeId), {
+        challengeId, solvedAt: serverTimestamp()
+      }, { merge: true });
+    }
+    function updateSolvedCount(){ $("solved-count").textContent = solvedSet.size; }
     function refreshUnlockStates(){
       document.querySelectorAll('.post-card').forEach(card=>{
         const id = card.dataset.challengeId;
@@ -462,59 +560,25 @@
       });
     }
 
-    async function markSolvedRemote(challengeId){
-      if(!currentUser) return;
-      await setDoc(doc(db,'users', currentUser.uid, 'solved', challengeId), {
-        challengeId, solvedAt: serverTimestamp()
-      }, { merge: true });
-    }
-
-    // Feed (challenges)
-    let perChallengeUnsubs = {}; // { id: [fn, fn] }
-    function clearPerChallengeUnsubs(){
-      Object.values(perChallengeUnsubs).forEach(arr=>arr.forEach(fn=>fn && fn()));
-      perChallengeUnsubs = {};
-    }
-
-    function startChallengesListener(){
-      if(unsubscribeChallenges) unsubscribeChallenges();
-      clearPerChallengeUnsubs();
-      const q = query(collection(db,'challenges'), orderBy('createdAt','desc'));
-      const feed = $("feed-container");
-      unsubscribeChallenges = onSnapshot(q, (snap)=>{
-        feed.innerHTML = "";
-        snap.forEach(docSnap=>{
-          const ch = docSnap.data(); const id = docSnap.id;
-          renderChallengeCard(id, ch);
-        });
-        refreshUnlockStates();
-      });
-    }
-
+    // === FEED / RETOS ===
     function renderChallengeCard(id, ch){
       const tpl = $("post-template").content.cloneNode(true);
       const card = tpl.querySelector('.post-card');
       card.dataset.challengeId = id;
       card.dataset.authorUid = ch.authorUid;
 
-      const authorImg = tpl.querySelector('.author-img');
-      const authorName = tpl.querySelector('.author-name');
-      const postTime = tpl.querySelector('.post-time');
-      const contentImg = tpl.querySelector('.content-img');
-
-      authorImg.src = ch.authorPhoto || 'https://placehold.co/40x40?text=U';
-      authorName.textContent = ch.authorName || 'Usuario';
-      postTime.textContent = ch.createdAt?.toDate ? ch.createdAt.toDate().toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'}) : new Date().toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
+      tpl.querySelector('.author-img').src = ch.authorPhoto || 'https://placehold.co/40x40?text=U';
+      tpl.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
+      const ts = ch.createdAt?.toDate ? ch.createdAt.toDate() : new Date();
+      tpl.querySelector('.post-time').textContent = ts.toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
 
       const src = ch.contentUrl || ch.contentDataUrl || 'https://placehold.co/600x400/cccccc/000?text=TeReto';
-      contentImg.src = src;
-
-      // icono si es photo
+      tpl.querySelector('.content-img').src = src;
       if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
 
       $("feed-container").appendChild(tpl);
 
-      // Listeners por reto: likes + comments
+      // likes & comments live
       const likesEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .likes-count`);
       const likeIcon = document.querySelector(`.post-card[data-challenge-id="${id}"] .like-icon`);
       const commentsCountEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .comments-count`);
@@ -527,12 +591,37 @@
       const uncomments = onSnapshot(collection(db,'challenges',id,'comments'), (snap)=>{
         commentsCountEl.textContent = snap.size;
       });
-      perChallengeUnsubs[id] = [unlikes, uncomments];
-
-      // Tap handlers en toda la app (delegado abajo)
+      (perChallengeUnsubs[id] ||= []).push(unlikes, uncomments);
     }
 
-    // Like toggle
+    function startChallengesListener(){
+      if(unsubChallenges) unsubChallenges();
+      clearPerChallengeUnsubs();
+      const q = query(collection(db,'challenges'), orderBy('createdAt','desc'));
+      unsubChallenges = onSnapshot(q, (snap)=>{
+        const feed = $("feed-container");
+        const empty = $("feed-empty");
+        feed.innerHTML = "";
+        challengeCache.clear();
+        if(snap.empty){
+          empty.classList.remove('hidden');
+        }else{
+          empty.classList.add('hidden');
+          snap.forEach(docSnap=>{
+            const ch = { id: docSnap.id, ...docSnap.data() };
+            challengeCache.set(docSnap.id, ch);
+            renderChallengeCard(docSnap.id, ch);
+          });
+        }
+        refreshUnlockStates();
+      }, (err)=>{
+        console.error(err);
+        $("feed-container").innerHTML = "";
+        $("feed-empty").classList.remove('hidden');
+        showToast("No se pudo cargar el feed (revisa reglas).","error");
+      });
+    }
+
     async function toggleLike(challengeId){
       if(!currentUser) return showToast("Iniciá sesión","error");
       const likeRef = doc(db,'challenges', challengeId, 'likes', currentUser.uid);
@@ -541,26 +630,27 @@
       else await setDoc(likeRef, { uid: currentUser.uid, likedAt: serverTimestamp() });
     }
 
-    // Comentarios (modal con live listener)
-    let unsubscribeCommentsModal = null;
+    // Comentarios
     function openCommentsModal(challengeId){
-      if(unsubscribeCommentsModal){ unsubscribeCommentsModal(); unsubscribeCommentsModal=null; }
+      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
       const body = $("comments-modal-body");
       body.innerHTML = "";
       $("comment-user-img").src = currentUser?.photoURL || 'https://placehold.co/40x40?text=U';
       $("comment-form").dataset.challengeId = challengeId;
       const q = query(collection(db,'challenges',challengeId,'comments'), orderBy('createdAt','asc'));
-      unsubscribeCommentsModal = onSnapshot(q,(snap)=>{
+      unsubCommentsModal = onSnapshot(q,(snap)=>{
         body.innerHTML = "";
         snap.forEach(d=>{
           const c = d.data();
-          const el = $("comment-template").content.cloneNode(true);
-          el.querySelector('.comment-author-img').src = c.userPhoto || 'https://placehold.co/40x40?text=U';
-          el.querySelector('.comment-author-name').textContent = c.userName || 'Usuario';
-          el.querySelector('.comment-text').textContent = c.text || '';
-          el.querySelector('.comment-time').textContent =
-            c.createdAt?.toDate ? c.createdAt.toDate().toLocaleTimeString('es-AR') : '';
-          body.appendChild(el);
+          const row = document.createElement('div');
+          row.className = "flex items-start space-x-3";
+          row.innerHTML = `
+            <img class="w-8 h-8 rounded-full" src="${c.userPhoto || 'https://placehold.co/40x40?text=U'}">
+            <div class="flex-1 bg-slate-100 rounded-xl p-3">
+              <p class="text-sm"><strong class="text-slate-800">${c.userName || 'Usuario'}</strong> <span class="text-slate-600">${c.text || ''}</span></p>
+              <p class="text-xs text-slate-400 mt-1">${c.createdAt?.toDate? c.createdAt.toDate().toLocaleTimeString('es-AR'):''}</p>
+            </div>`;
+          body.appendChild(row);
         });
       });
       $("comments-modal").classList.remove('hidden');
@@ -571,17 +661,19 @@
       const challengeId = e.target.dataset.challengeId;
       const text = $("comment-input").value.trim();
       if(!text) return;
-      await addDoc(collection(db,'challenges',challengeId,'comments'),{
-        userUid: currentUser.uid,
-        userName: currentUser.displayName || 'Usuario',
-        userPhoto: currentUser.photoURL || '',
-        text, createdAt: serverTimestamp()
-      });
-      $("comment-input").value = '';
+      try{
+        await addDoc(collection(db,'challenges',challengeId,'comments'),{
+          userUid: currentUser.uid,
+          userName: currentUser.displayName || 'Usuario',
+          userPhoto: currentUser.photoURL || '',
+          text, createdAt: serverTimestamp()
+        });
+        $("comment-input").value = '';
+      }catch(err){ console.error(err); showToast("No se pudo comentar","error"); }
     });
     $("close-comments-modal")?.addEventListener('click', ()=>{
       $("comments-modal").classList.add('hidden');
-      if(unsubscribeCommentsModal){ unsubscribeCommentsModal(); unsubscribeCommentsModal=null; }
+      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
     });
 
     // Trivia
@@ -597,8 +689,8 @@
         b.onclick = async ()=>{
           if(ans === ch.correctAnswer){
             $("trivia-modal").classList.add('hidden');
-            await markSolvedRemote(ch.id);
-            showToast("¡Correcto! Reto desbloqueado 🎉");
+            try{ await markSolvedRemote(ch.id); showToast("¡Correcto! Reto desbloqueado 🎉"); }
+            catch(err){ console.error(err); showToast("No se pudo marcar como resuelto","error"); }
           }else{
             $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Intentalo de nuevo!';
             setTimeout(()=>{$("trivia-feedback").textContent='';},1500);
@@ -611,7 +703,7 @@
     $("close-trivia-modal")?.addEventListener('click',()=>$("trivia-modal").classList.add('hidden'));
 
     // Foto challenge: cámara + envío
-    let cameraStream = null, currentPhotoChallengeId = null, challengeCache = new Map();
+    let cameraStream = null, currentPhotoChallengeId = null;
     async function openCamera(challengeId=null){
       currentPhotoChallengeId = challengeId;
       try{
@@ -628,6 +720,7 @@
       cameraStream=null; $("camera-modal").classList.add('hidden');
     }
     $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+
     $("capture-btn")?.addEventListener('click', async ()=>{
       const video = $("camera-stream"), canvas = $("camera-canvas");
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -636,11 +729,9 @@
       closeCamera();
       if(!currentUser || !currentPhotoChallengeId) return;
 
-      // datos del reto (del cache)
       const ch = challengeCache.get(currentPhotoChallengeId);
       const submitterUid = currentUser.uid;
 
-      // Subir a storage (fallback a dataURL)
       let submissionUrl = null, submissionDataUrl = null;
       try{
         const path = `submissions/${currentPhotoChallengeId}/${submitterUid}/${Date.now()}.png`;
@@ -652,20 +743,20 @@
         submissionDataUrl = dataUrl;
       }
 
-      // Guardar submission
-      await setDoc(doc(db,'challenges', currentPhotoChallengeId, 'submissions', submitterUid), {
-        challengeId: currentPhotoChallengeId,
-        challengeAuthorUid: ch.authorUid,
-        challengeQuestion: ch.question || '',
-        submitterUid,
-        submitterName: currentUser.displayName || 'Usuario',
-        submitterPhoto: currentUser.photoURL || '',
-        submissionUrl, submissionDataUrl,
-        status: 'pending',
-        createdAt: serverTimestamp()
-      });
-
-      showToast("Prueba enviada para validación.");
+      try{
+        await setDoc(doc(db,'challenges', currentPhotoChallengeId, 'submissions', submitterUid), {
+          challengeId: currentPhotoChallengeId,
+          challengeAuthorUid: ch.authorUid,
+          challengeQuestion: ch.question || '',
+          submitterUid,
+          submitterName: currentUser.displayName || 'Usuario',
+          submitterPhoto: currentUser.photoURL || '',
+          submissionUrl, submissionDataUrl,
+          status: 'pending',
+          createdAt: serverTimestamp()
+        });
+        showToast("Prueba enviada para validación.");
+      }catch(err){ console.error(err); showToast("No se pudo enviar la prueba","error"); }
     });
 
     $("submit-photo-challenge-btn")?.addEventListener('click', ()=>{
@@ -712,29 +803,8 @@
         createEls.fileNameDisplay.textContent = '';
       }
     });
-    $("open-camera-btn")?.addEventListener('click', async ()=>{
-      // usar cámara para contenido del reto (no submission)
-      try{
-        if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
-        $("camera-stream").srcObject = cameraStream;
-        $("camera-modal").classList.remove('hidden');
-        // Reemplazamos el comportamiento de capture-btn temporalmente:
-        const old = $("capture-btn").onclick;
-        $("capture-btn").onclick = ()=>{
-          const video = $("camera-stream"), canvas = $("camera-canvas");
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-          canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-          const dataUrl = canvas.toDataURL('image/png'); closeCamera();
-          pendingFileDataUrl = dataUrl;
-          createEls.imagePreview.src = dataUrl;
-          createEls.imagePreviewContainer.classList.remove('hidden');
-          createEls.fileNameDisplay.textContent = `Foto - ${new Date().toLocaleTimeString()}.png`;
-          $("capture-btn").onclick = old;
-        };
-      }catch(err){ console.error(err); showToast("No se pudo acceder a la cámara","error"); }
-    });
 
+    // Botones pasos
     $("goto-step-2")?.addEventListener('click', ()=>{
       document.getElementById('create-step-1').classList.add('hidden');
       document.getElementById('create-step-2').classList.remove('hidden');
@@ -765,58 +835,61 @@
     createEls.triviaForm?.addEventListener('submit', async (e)=>{
       e.preventDefault();
       if(!currentUser) return showToast("Iniciá sesión","error");
-      const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
-      const question = $("trivia-question").value.trim();
-      const correctAnswer = $("correct-answer").value.trim();
-      const wrongAnswers = [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ].map(v=>v.trim()).filter(Boolean);
-      await addDoc(collection(db,'challenges'),{
-        authorUid: currentUser.uid,
-        authorName: currentUser.displayName || 'Usuario',
-        authorPhoto: currentUser.photoURL || '',
-        type: 'trivia',
-        question, correctAnswer, wrongAnswers,
-        contentUrl, contentDataUrl,
-        createdAt: serverTimestamp()
-      });
-      pendingFileDataUrl = null;
-      createEls.imagePreviewContainer.classList.add('hidden');
-      e.target.reset();
-      showToast("¡Reto creado!");
-      switchView('feed-view');
+      try{
+        const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
+        const question = $("trivia-question").value.trim();
+        const correctAnswer = $("correct-answer").value.trim();
+        const wrongAnswers = [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ].map(v=>v.trim()).filter(Boolean);
+        await addDoc(collection(db,'challenges'),{
+          authorUid: currentUser.uid,
+          authorName: currentUser.displayName || 'Usuario',
+          authorPhoto: currentUser.photoURL || '',
+          type: 'trivia',
+          question, correctAnswer, wrongAnswers,
+          contentUrl, contentDataUrl,
+          createdAt: serverTimestamp()
+        });
+        pendingFileDataUrl = null;
+        createEls.imagePreviewContainer.classList.add('hidden');
+        e.target.reset();
+        showToast("¡Reto creado!");
+        switchView('feed-view');
+      }catch(err){ console.error(err); showToast("No se pudo crear el reto (revisa reglas).","error"); }
     });
 
     createEls.photoForm?.addEventListener('submit', async (e)=>{
       e.preventDefault();
       if(!currentUser) return showToast("Iniciá sesión","error");
-      const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
-      const question = $("photo-challenge-task").value.trim();
-      await addDoc(collection(db,'challenges'),{
-        authorUid: currentUser.uid,
-        authorName: currentUser.displayName || 'Usuario',
-        authorPhoto: currentUser.photoURL || '',
-        type: 'photo',
-        question,
-        contentUrl, contentDataUrl,
-        createdAt: serverTimestamp()
-      });
-      pendingFileDataUrl = null;
-      createEls.imagePreviewContainer.classList.add('hidden');
-      e.target.reset();
-      showToast("¡Reto creado!");
-      switchView('feed-view');
+      try{
+        const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
+        const question = $("photo-challenge-task").value.trim();
+        await addDoc(collection(db,'challenges'),{
+          authorUid: currentUser.uid,
+          authorName: currentUser.displayName || 'Usuario',
+          authorPhoto: currentUser.photoURL || '',
+          type: 'photo',
+          question,
+          contentUrl, contentDataUrl,
+          createdAt: serverTimestamp()
+        });
+        pendingFileDataUrl = null;
+        createEls.imagePreviewContainer.classList.add('hidden');
+        e.target.reset();
+        showToast("¡Reto creado!");
+        switchView('feed-view');
+      }catch(err){ console.error(err); showToast("No se pudo crear el reto (revisa reglas).","error"); }
     });
 
     // Validaciones (collectionGroup submissions)
     function startValidationsListener(){
-      if(unsubscribeValidations) unsubscribeValidations();
+      if(unsubValidations) unsubValidations();
       if(!currentUser){ $("validations-container").innerHTML=''; return; }
       const q = query(collectionGroup(db,'submissions'), where('challengeAuthorUid','==', currentUser.uid), where('status','==','pending'));
       const box = $("validations-container");
-      unsubscribeValidations = onSnapshot(q,(snap)=>{
+      unsubValidations = onSnapshot(q,(snap)=>{
         box.innerHTML = '';
         const arr = [];
         snap.forEach(d=>{ const s=d.data(); arr.push({refPath:d.ref.path, ...s}); });
-        // ordenar localmente por createdAt (si existe)
         arr.sort((a,b)=>{
           const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
           const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -856,8 +929,8 @@
       const card = e.target.closest('.validation-card');
       if(card && (e.target.closest('.approve-btn') || e.target.closest('.reject-btn'))){
         const ok = e.target.closest('.approve-btn') ? 'approved' : 'rejected';
-        await setSubmissionStatus(card.dataset.refPath, ok);
-        showToast(ok==='approved'?'Reto aprobado':'Rechazado');
+        try{ await setSubmissionStatus(card.dataset.refPath, ok); showToast(ok==='approved'?'Reto aprobado':'Rechazado'); }
+        catch(err){ console.error(err); showToast("No se pudo actualizar el envío","error"); }
       }
 
       const postCard = e.target.closest('.post-card');
@@ -866,7 +939,6 @@
         if(e.target.closest('.like-button')){ await toggleLike(id); return; }
         if(e.target.closest('.comment-button')){ openCommentsModal(id); return; }
         if(e.target.closest('.challenge-container')){
-          // abrir modal según tipo
           const ch = challengeCache.get(id);
           if(!ch) return;
           if(ch.type==='trivia') openTriviaModal({ ...ch, id });
@@ -880,51 +952,36 @@
       $("profile-pic").src = currentUser?.photoURL || 'https://placehold.co/96x96?text=U';
       $("profile-name").textContent = currentUser?.displayName || 'Usuario';
       $("profile-email").textContent = currentUser?.email || '';
-      // contar creados (live: hacemos una consulta rápida cada vez que entras)
       if(currentUser){
         const q = query(collection(db,'challenges'), where('authorUid','==', currentUser.uid));
         onSnapshot(q,(snap)=>{ $("created-count").textContent = snap.size; });
       }
       updateSolvedCount();
     }
-    function updateSolvedCount(){ $("solved-count").textContent = solvedSet.size; }
-
-    // Feed: cachear retos para modales
-    function cacheChallenges(){
-      if(unsubscribeChallenges) unsubscribeChallenges();
-      clearPerChallengeUnsubs();
-      const q = query(collection(db,'challenges'), orderBy('createdAt','desc'));
-      unsubscribeChallenges = onSnapshot(q,(snap)=>{
-        $("feed-container").innerHTML = "";
-        challengeCache.clear();
-        snap.forEach(d=>{
-          const ch = d.data();
-          challengeCache.set(d.id, { ...ch, id: d.id });
-          renderChallengeCard(d.id, ch);
-        });
-        refreshUnlockStates();
-      });
-    }
 
     // Auth state
     onAuthStateChanged(auth, async (user)=>{
+      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
       currentUser = user || null;
       if(currentUser){
         $("login-screen").classList.add('hidden');
         $("app-screen").classList.remove('hidden');
-        await upsertUser(currentUser);
+        try{ await upsertUser(currentUser); }catch(e){ console.warn('No se pudo upsert user', e); }
         startUsersSubscription();
+        if(window._unsubFriendships) window._unsubFriendships();
+        window._unsubFriendships = startFriendshipsListener();
         startSolvedListener();
         startValidationsListener();
-        cacheChallenges();
+        startChallengesListener();
         switchView('feed-view');
       }else{
         $("app-screen").classList.add('hidden');
         $("login-screen").classList.remove('hidden');
-        if(unsubscribeUsers) unsubscribeUsers();
-        if(unsubscribeSolved) unsubscribeSolved();
-        if(unsubscribeValidations) unsubscribeValidations();
-        if(unsubscribeChallenges) unsubscribeChallenges();
+        if(unsubUsers) unsubUsers();
+        if(unsubSolved) unsubSolved();
+        if(unsubValidations) unsubValidations();
+        if(unsubChallenges) unsubChallenges();
+        if(window._unsubFriendships) window._unsubFriendships();
         clearPerChallengeUnsubs();
       }
     });
