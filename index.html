@@ -339,12 +339,19 @@
     };
 
     // --- INICIALIZACIÓN ---
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
+    let app, auth, db, storage, provider;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      console.log("✅ Firebase inicializado correctamente.");
+    } catch (error) {
+      console.error("🚨 Error grave al inicializar Firebase:", error);
+      alert("Error crítico: La aplicación no pudo cargarse. Revisa la consola para más detalles.");
+    }
 
     // --- HELPERS & UTILIDADES ---
     const $ = id => document.getElementById(id);
@@ -386,52 +393,60 @@
 
     // --- AUTENTICACIÓN Y ESTADO PRINCIPAL ---
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await initializeAppState(user);
-      } else {
-        cleanupAppState();
+      console.log("AUTH STATE CHANGED: ", user ? `Usuario detectado (${user.email})` : "Usuario no detectado");
+      try {
+        if (user) {
+          await initializeAppState(user);
+        } else {
+          cleanupAppState();
+        }
+      } catch (error) {
+        console.error("🚨 Error crítico en el cambio de estado de autenticación:", error);
       }
     });
 
     async function initializeAppState(user) {
-        currentUser = user;
-        await upsertUser(user);
-        
-        $("app-screen").classList.remove("hidden");
-        $("login-screen").classList.add("hidden");
-        switchView('feed-view');
-
-        startSolvedListener();
-        startChallengesListener();
-        startUsersSubscription();
-        unsubFriendships = startFriendshipsListener();
+      console.log("-> 1. Inicializando estado de la app...");
+      currentUser = user;
+      await upsertUser(user);
+      
+      $("app-screen").classList.remove("hidden");
+      $("login-screen").classList.add("hidden");
+      switchView('feed-view');
+      
+      console.log("-> 2. Iniciando listeners...");
+      startSolvedListener();
+      startChallengesListener();
+      startUsersSubscription();
+      unsubFriendships = startFriendshipsListener();
+      console.log("✅ Estado de la app inicializado y listeners activos.");
     }
 
     function cleanupAppState() {
-        unsubSolved?.();
-        unsubChallenges?.();
-        unsubValidations?.();
-        unsubUsers?.();
-        unsubFriendships?.();
-        unsubCommentsModal?.();
-        clearPerChallengeUnsubs();
+      console.log("-> Limpiando estado de la app (Logout)...");
+      const unsubs = [unsubSolved, unsubChallenges, unsubValidations, unsubUsers, unsubFriendships, unsubCommentsModal];
+      unsubs.forEach(unsub => unsub?.());
+      clearPerChallengeUnsubs();
 
-        currentUser = null;
-        solvedSet.clear();
-        challengeCache.clear();
-        usersCache = [];
-        friendMap.clear();
-        
-        $("login-screen").classList.remove("hidden");
-        $("app-screen").classList.add("hidden");
+      currentUser = null;
+      solvedSet.clear();
+      challengeCache.clear();
+      usersCache = [];
+      friendMap.clear();
+      
+      $("login-screen").classList.remove("hidden");
+      $("app-screen").classList.add("hidden");
+      console.log("✅ Estado de la app limpiado.");
     }
 
     $("google-btn")?.addEventListener("click", async () => {
       $("loading-spinner").classList.remove("hidden");
       try {
+        console.log("Iniciando popup de login...");
         await signInWithPopup(auth, provider);
+        console.log("Popup de login exitoso.");
       } catch (err) {
-        console.error(err);
+        console.error("🚨 Error durante el signInWithPopup:", err);
         showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
       } finally {
         $("loading-spinner").classList.add("hidden");
@@ -448,66 +463,58 @@
       const userRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(userRef);
       const userData = {
-        uid: user.uid,
-        displayName: user.displayName || "Usuario",
-        email: user.email || "",
-        photoURL: user.photoURL || "https://placehold.co/100x100?text=U",
-        lastSeen: serverTimestamp()
+        uid: user.uid, displayName: user.displayName || "Usuario", email: user.email || "",
+        photoURL: user.photoURL || "https://placehold.co/100x100?text=U", lastSeen: serverTimestamp()
       };
-      if (!docSnap.exists()) {
-        userData.createdAt = serverTimestamp();
-      }
+      if (!docSnap.exists()) userData.createdAt = serverTimestamp();
       await setDoc(userRef, userData, { merge: true });
     }
 
     function pairId(a, b) { return [a, b].sort().join('_'); }
 
     function startFriendshipsListener() {
-      if (!currentUser) return () => {};
-      const qF = query(collection(db, 'friendships'), where('users', 'array-contains', currentUser.uid));
-      return onSnapshot(qF, (snap) => {
-        friendMap.clear();
-        snap.forEach(d => {
-          const fr = d.data();
-          const otherId = fr.users.find(u => u !== currentUser.uid);
-          friendMap.set(otherId, { status: fr.status, requestedBy: fr.requestedBy });
+      try {
+        console.log("   - Iniciando listener de amistades...");
+        if (!currentUser) return () => {};
+        const qF = query(collection(db, 'friendships'), where('users', 'array-contains', currentUser.uid));
+        return onSnapshot(qF, (snap) => {
+          friendMap.clear();
+          snap.forEach(d => {
+            const fr = d.data();
+            const otherId = fr.users.find(u => u !== currentUser.uid);
+            friendMap.set(otherId, { status: fr.status, requestedBy: fr.requestedBy });
+          });
+          renderUsersList();
+        }, (error) => {
+          console.error("🚨 Error en listener de amistades:", error);
+          showToast("Error al cargar amigos", "error");
         });
-        renderUsersList();
-      });
+      } catch (error) {
+        console.error("🚨 Falla crítica al iniciar listener de amistades:", error);
+        return () => {};
+      }
     }
 
-    async function sendFriendRequest(otherUid) {
-      const id = pairId(currentUser.uid, otherUid);
-      await setDoc(doc(db, 'friendships', id), {
-        users: [currentUser.uid, otherUid], status: 'pending',
-        requestedBy: currentUser.uid,
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      });
-      showToast("Solicitud enviada ✅");
-    }
-
-    async function acceptFriendRequest(otherUid) {
-      const id = pairId(currentUser.uid, otherUid);
-      await updateDoc(doc(db, 'friendships', id), { status: 'accepted', updatedAt: serverTimestamp() });
-      showToast("Ahora son amigos 🤝");
-    }
-
-    async function rejectFriendRequest(otherUid) {
-      const id = pairId(currentUser.uid, otherUid);
-      await deleteDoc(doc(db, 'friendships', id));
-      showToast("Solicitud rechazada");
-    }
+    // ... (El resto de las funciones de amigos se mantiene igual) ...
+    async function sendFriendRequest(otherUid) { await setDoc(doc(db, 'friendships', pairId(currentUser.uid, otherUid)), { users: [currentUser.uid, otherUid], status: 'pending', requestedBy: currentUser.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); showToast("Solicitud enviada ✅"); }
+    async function acceptFriendRequest(otherUid) { await updateDoc(doc(db, 'friendships', pairId(currentUser.uid, otherUid)), { status: 'accepted', updatedAt: serverTimestamp() }); showToast("Ahora son amigos 🤝"); }
+    async function rejectFriendRequest(otherUid) { await deleteDoc(doc(db, 'friendships', pairId(currentUser.uid, otherUid))); showToast("Solicitud rechazada"); }
 
     function startUsersSubscription() {
-      unsubUsers?.();
-      const qUsers = query(collection(db, 'users'));
-      unsubUsers = onSnapshot(qUsers, (snap) => {
-        usersCache = snap.docs
-            .map(d => d.data())
-            .filter(u => currentUser && u.uid !== currentUser.uid);
-        renderUsersList();
-      });
-      $("user-search-input")?.addEventListener('input', renderUsersList);
+      try {
+        console.log("   - Iniciando listener de usuarios...");
+        unsubUsers?.();
+        const qUsers = query(collection(db, 'users'));
+        unsubUsers = onSnapshot(qUsers, (snap) => {
+          usersCache = snap.docs.map(d => d.data()).filter(u => currentUser && u.uid !== currentUser.uid);
+          renderUsersList();
+        }, (error) => {
+          console.error("🚨 Error en listener de usuarios:", error);
+        });
+        $("user-search-input")?.addEventListener('input', renderUsersList);
+      } catch (error) {
+        console.error("🚨 Falla crítica al iniciar listener de usuarios:", error);
+      }
     }
     
     function renderUsersList() {
@@ -516,32 +523,18 @@
       const term = ($("user-search-input")?.value || '').toLowerCase();
       container.innerHTML = '';
       const filtered = usersCache.filter(u => ((u.displayName || '').toLowerCase() + ' ' + (u.email || '').toLowerCase()).includes(term));
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
-        return;
-      }
-      
+      if (filtered.length === 0) { container.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return; }
       const fragment = document.createDocumentFragment();
       filtered.forEach(u => {
         const state = friendMap.get(u.uid);
         const row = document.createElement('div');
         row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
         let actionHtml = '';
-        if (!state) {
-            actionHtml = `<button data-action="add" data-uid="${u.uid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`;
-        } else if (state.status === 'accepted') {
-            actionHtml = `<span class="pill bg-green-100 text-green-700">Amigos ✓</span>`;
-        } else if (state.requestedBy === currentUser.uid) {
-            actionHtml = `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`;
-        } else {
-            actionHtml = `<button data-action="accept" data-uid="${u.uid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
-                          <button data-action="reject" data-uid="${u.uid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>`;
-        }
-        row.innerHTML = `<div class="flex items-center space-x-3">
-            <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
-            <div><p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p><p class="text-xs text-slate-400">${u.email || ''}</p></div>
-          </div><div class="flex items-center gap-2">${actionHtml}</div>`;
+        if (!state) { actionHtml = `<button data-action="add" data-uid="${u.uid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`;
+        } else if (state.status === 'accepted') { actionHtml = `<span class="pill bg-green-100 text-green-700">Amigos ✓</span>`;
+        } else if (state.requestedBy === currentUser.uid) { actionHtml = `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`;
+        } else { actionHtml = `<button data-action="accept" data-uid="${u.uid}" class="btn-xs bg-green-600 text-white">Aceptar</button><button data-action="reject" data-uid="${u.uid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>`; }
+        row.innerHTML = `<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}"><div><p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p><p class="text-xs text-slate-400">${u.email || ''}</p></div></div><div class="flex items-center gap-2">${actionHtml}</div>`;
         fragment.appendChild(row);
       });
       container.appendChild(fragment);
@@ -556,23 +549,13 @@
         if (action === 'add') await sendFriendRequest(uid);
         else if (action === 'accept') await acceptFriendRequest(uid);
         else if (action === 'reject') await rejectFriendRequest(uid);
-      } catch (err) {
-        console.error("Error en acción de amistad:", err);
-        showToast("Ocurrió un error", "error");
-      } finally {
-        btn.disabled = false;
-      }
+      } catch (err) { console.error("Error en acción de amistad:", err); showToast("Ocurrió un error", "error");
+      } finally { btn.disabled = false; }
     });
 
     // --- LÓGICA DE RETOS (FEED, SOLVED, PERFIL) ---
-    function updateProfileUI(user){
-      if(!user) return;
-      $("profile-pic").src = user.photoURL;
-      $("profile-name").textContent = user.displayName;
-      $("profile-email").textContent = user.email;
-    }
-    
-    function updateSolvedCount() { $("solved-count").textContent = solvedSet.size; }
+    function updateProfileUI(user){ if(!user) return; $("profile-pic").src = user.photoURL; $("profile-name").textContent = user.displayName; $("profile-email").textContent = user.email; }
+    function updateSolvedCount() { if($("solved-count")) $("solved-count").textContent = solvedSet.size; }
 
     function refreshUnlockStates() {
       document.querySelectorAll('.post-card').forEach(card => {
@@ -585,47 +568,52 @@
     }
 
     function startSolvedListener() {
-      unsubSolved?.();
-      if (!currentUser) return;
-      unsubSolved = onSnapshot(collection(db, 'users', currentUser.uid, 'solved'), (snap) => {
-        solvedSet = new Set(snap.docs.map(d => d.id));
-        updateSolvedCount();
-        refreshUnlockStates();
-      });
+      try {
+        console.log("   - Iniciando listener de retos resueltos...");
+        unsubSolved?.();
+        if (!currentUser) return;
+        unsubSolved = onSnapshot(collection(db, 'users', currentUser.uid, 'solved'), (snap) => {
+          solvedSet = new Set(snap.docs.map(d => d.id));
+          updateSolvedCount();
+          refreshUnlockStates();
+        }, (error) => console.error("🚨 Error en listener de retos resueltos:", error));
+      } catch (error) {
+        console.error("🚨 Falla crítica al iniciar listener de retos resueltos:", error);
+      }
     }
 
-    function clearPerChallengeUnsubs() {
-      Object.values(perChallengeUnsubs).forEach(arr => arr.forEach(fn => fn?.()));
-      perChallengeUnsubs = {};
-    }
+    function clearPerChallengeUnsubs() { Object.values(perChallengeUnsubs).forEach(arr => arr.forEach(fn => fn?.())); perChallengeUnsubs = {}; }
 
     function startChallengesListener() {
-      unsubChallenges?.();
-      clearPerChallengeUnsubs();
-      const qChallenges = query(collection(db, 'challenges'), orderBy('createdAt', 'desc'));
-      unsubChallenges = onSnapshot(qChallenges, (snap) => {
-        const feed = $("feed-container");
-        const empty = $("feed-empty");
-        if(!feed || !empty) return;
-        feed.innerHTML = "";
-        challengeCache.clear();
-        empty.classList.toggle('hidden', !snap.empty);
-
-        if (!snap.empty) {
-          const fragment = document.createDocumentFragment();
-          snap.forEach(docSnap => {
-            const ch = { id: docSnap.id, ...docSnap.data() };
-            challengeCache.set(docSnap.id, ch);
-            const card = renderChallengeCard(docSnap.id, ch);
-            if (card) fragment.appendChild(card);
-          });
-          feed.appendChild(fragment);
-        }
-        refreshUnlockStates();
-      }, (err) => {
-        console.error("Error al cargar el feed:", err);
-        showToast("No se pudo cargar el feed.", "error");
-      });
+      try {
+        console.log("   - Iniciando listener de retos (feed)...");
+        unsubChallenges?.();
+        clearPerChallengeUnsubs();
+        const qChallenges = query(collection(db, 'challenges'), orderBy('createdAt', 'desc'));
+        unsubChallenges = onSnapshot(qChallenges, (snap) => {
+          const feed = $("feed-container"), empty = $("feed-empty");
+          if(!feed || !empty) return;
+          feed.innerHTML = "";
+          challengeCache.clear();
+          empty.classList.toggle('hidden', !snap.empty);
+          if (!snap.empty) {
+            const fragment = document.createDocumentFragment();
+            snap.forEach(docSnap => {
+              const ch = { id: docSnap.id, ...docSnap.data() };
+              challengeCache.set(docSnap.id, ch);
+              const card = renderChallengeCard(docSnap.id, ch);
+              if (card) fragment.appendChild(card);
+            });
+            feed.appendChild(fragment);
+          }
+          refreshUnlockStates();
+        }, (err) => {
+          console.error("🚨 Error en listener de retos (feed):", err);
+          showToast("No se pudo cargar el feed. Revisa la consola.", "error");
+        });
+      } catch (error) {
+        console.error("🚨 Falla crítica al iniciar listener de retos (feed):", error);
+      }
     }
 
     function renderChallengeCard(id, ch) {
@@ -641,16 +629,12 @@
       tpl.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400';
       if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
       
-      const likesEl = tpl.querySelector('.likes-count');
-      const likeIcon = tpl.querySelector('.like-icon');
-      const commentsCountEl = tpl.querySelector('.comments-count');
+      const likesEl = tpl.querySelector('.likes-count'), likeIcon = tpl.querySelector('.like-icon'), commentsCountEl = tpl.querySelector('.comments-count');
       const unlikes = onSnapshot(collection(db, 'challenges', id, 'likes'), (snap) => {
         likesEl.textContent = snap.size;
         likeIcon.classList.toggle('liked', currentUser ? snap.docs.some(d => d.id === currentUser.uid) : false);
       });
-      const uncomments = onSnapshot(collection(db, 'challenges', id, 'comments'), (snap) => {
-        commentsCountEl.textContent = snap.size;
-      });
+      const uncomments = onSnapshot(collection(db, 'challenges', id, 'comments'), (snap) => { commentsCountEl.textContent = snap.size; });
       (perChallengeUnsubs[id] ||= []).push(unlikes, uncomments);
       return card;
     }
