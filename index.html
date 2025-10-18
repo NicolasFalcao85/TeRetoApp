@@ -1,990 +1,580 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TeReto</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Poppins', sans-serif; }
-    .blur-locked { filter: blur(20px); transition: filter 0.25s ease-in-out; }
-    .unlocked { filter: blur(0px); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all .45s cubic-bezier(.68,-.55,.27,1.55); }
-    .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0,0,0,0.08); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg);} }
-    .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); color:#fff; }
-    .btn-primary:hover { box-shadow: 0 4px 15px rgba(99,102,241,.5); }
-    .like-icon.liked { fill: #ec4899; color: #ec4899; }
-    .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
-    .btn-xs { padding: 4px 10px; border-radius: 999px; font-size: 12px; }
-  </style>
-</head>
-<body class="bg-slate-100 h-screen">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, addDoc, updateDoc, getDoc,
+    collection, collectionGroup, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import {
+    getStorage, ref as storageRef, uploadString, getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
-  <!-- Spinner -->
-  <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
-    <div class="spinner"></div>
-  </div>
+  // === CONFIG FIREBASE (PROD) ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+    authDomain: "tereto-prod.firebaseapp.com",
+    projectId: "tereto-prod",
+    storageBucket: "tereto-prod.firebasestorage.app",
+    messagingSenderId: "914605096619",
+    appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+  };
 
-  <!-- Toast -->
-  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]">
-    <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
-    <div id="toast-message" class="ml-3 text-sm font-normal"></div>
-  </div>
+  // Init
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
 
-  <!-- Login -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
-      <div class="flex items-center justify-center mb-4">
-        <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-          <circle cx="16" cy="16" r="12" stroke="url(#lg1)" stroke-width="3"/><circle cx="16" cy="16" r="4" stroke="url(#lg1)" stroke-width="3"/>
-        </svg>
-        <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lt1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-          <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#lt1)">TeReto</text>
-        </svg>
-      </div>
-      <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
-      <button id="google-btn" class="w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50">
-        <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-        <span class="font-semibold text-slate-700">Continuar con Google</span>
-      </button>
-      <p class="text-[11px] text-center text-slate-400 mt-4">Al continuar aceptás los Términos y la Política de Privacidad.</p>
-    </div>
-  </div>
+  const db = getFirestore(app);
+  const storage = getStorage(app);
 
-  <!-- App -->
-  <div id="app-screen" class="h-full flex flex-col hidden">
-    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-      <!-- Feed -->
-      <div id="feed-view">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
-          <div class="flex items-center space-x-2">
-            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="lg2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <circle cx="16" cy="16" r="12" stroke="url(#lg2)" stroke-width="3"/><circle cx="16" cy="16" r="4" stroke="url(#lg2)" stroke-width="3"/>
-            </svg>
-            <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="lt2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#lt2)">TeReto</text>
-            </svg>
-          </div>
-          <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
-        </header>
-        <div id="feed-empty" class="hidden p-8 text-center text-slate-500 text-sm">No hay retos todavía. ¡Creá el primero en “Crear”! 🎯</div>
-        <div id="feed-container" class="p-2 space-y-4"></div>
-      </div>
+  // Helpers UI
+  const $ = id => document.getElementById(id);
+  function showToast(msg, type='success'){
+    const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
+    toastMessage.textContent=msg;
+    toastIcon.innerHTML = type==='success'
+      ? `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`
+      : `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 10-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+    toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type==='success'?'text-green-500 bg-green-100':'text-red-500 bg-red-100'}`;
+    toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),2600);
+  }
 
-      <!-- Crear -->
-      <div id="create-view" class="hidden p-4">
-        <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
+  // Estado
+  let currentUser = null;
+  let solvedSet = new Set();
+  let challengeCache = new Map();
 
-          <div id="create-step-1" class="text-center">
-            <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agrega el contenido a bloquear (opcional para Trivia)</h3>
-            <div id="image-preview-container" class="hidden my-4">
-              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg max-h-64 object-cover mx-auto"/>
-            </div>
-            <div class="grid grid-cols-2 gap-4 my-4">
-              <label for="file-upload" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
-                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                <span class="text-sm font-semibold">Subir Archivo</span>
-                <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
-              </label>
-              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
-                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span class="text-sm font-semibold">Usar Cámara</span>
-              </button>
-            </div>
-            <p id="file-name" class="mt-2 text-sm text-slate-500"></p>
-            <button id="goto-step-2" class="mt-4 w-full font-bold py-2 px-4 rounded-md btn-primary">Siguiente</button>
-          </div>
-
-          <div id="create-step-2" class="hidden text-center">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 2: Elige el tipo de reto</h3>
-            <div class="space-y-4">
-              <button id="select-trivia-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
-                <span class="text-3xl mr-4">🧠</span>
-                <div><p class="font-bold text-slate-800">Trivia</p><p class="text-sm text-slate-500">Pregunta de opción múltiple.</p></div>
-              </button>
-              <button id="select-photo-challenge-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
-                <span class="text-3xl mr-4">📸</span>
-                <div><p class="font-bold text-slate-800">Reto con Foto / Video</p><p class="text-sm text-slate-500">Cumplí la consigna con una captura.</p></div>
-              </button>
-            </div>
-          </div>
-
-          <div id="create-step-3-trivia" class="hidden">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Configura la Trivia</h3>
-            <form id="trivia-form" class="space-y-4">
-              <div><label for="trivia-question" class="block text-sm font-medium text-slate-700">Pregunta</label>
-                <input type="text" id="trivia-question" class="mt-1 block w-full border rounded-md px-3 py-2" placeholder="¿En qué año llegó el hombre a la luna?" required></div>
-              <div><label for="correct-answer" class="block text-sm font-medium text-green-700">Respuesta Correcta</label>
-                <input type="text" id="correct-answer" class="mt-1 block w-full border rounded-md px-3 py-2 border-green-400" placeholder="1969" required></div>
-              <div><label class="block text-sm font-medium text-red-700">Respuestas Incorrectas</label>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
-                  <input id="wrong-answer-1" class="border rounded-md px-3 py-2" placeholder="1965" required>
-                  <input id="wrong-answer-2" class="border rounded-md px-3 py-2" placeholder="1972" required>
-                  <input id="wrong-answer-3" class="border rounded-md px-3 py-2" placeholder="1980" required>
-                </div>
-              </div>
-              <button type="submit" class="w-full btn-primary py-2 rounded-md">Publicar Reto</button>
-            </form>
-          </div>
-
-          <div id="create-step-3-photo" class="hidden">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Describe el Desafío</h3>
-            <form id="photo-challenge-form" class="space-y-4">
-              <div><label for="photo-challenge-task" class="block text-sm font-medium text-slate-700">Consigna</label>
-                <textarea id="photo-challenge-task" rows="4" class="mt-1 block w-full px-3 py-2 border rounded-md" placeholder="Sácate una foto imitando a una estatua." required></textarea></div>
-              <button type="submit" class="w-full btn-primary py-2 rounded-md">Publicar Reto</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Amigos -->
-      <div id="friends-view" class="hidden">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40"><h1 class="text-3xl font-bold text-slate-800">Usuarios</h1></header>
-        <div class="p-4">
-          <div class="relative mb-4">
-            <input type="search" id="user-search-input" placeholder="Buscar usuarios..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
-              <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </div>
-          </div>
-          <div id="friends-tab-content" class="mt-4"></div>
-        </div>
-      </div>
-
-      <!-- Perfil -->
-      <div id="profile-view" class="hidden">
-        <div class="p-4 bg-white shadow-lg">
-          <div class="flex flex-col items-center">
-            <img id="profile-pic" src="" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
-            <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
-            <p id="profile-email" class="text-slate-500"></p>
-            <div class="flex space-x-8 mt-4">
-              <div class="text-center"><span id="created-count" class="font-bold text-lg text-slate-700">0</span><p class="text-slate-500 text-sm">Retos Creados</p></div>
-              <div class="text-center"><span id="solved-count" class="font-bold text-lg text-slate-700">0</span><p class="text-slate-500 text-sm">Retos Superados</p></div>
-            </div>
-          </div>
-        </div>
-        <div id="validations-container" class="p-4"></div>
-      </div>
-    </main>
-
-    <!-- Nav inferior -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
-      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 0 0-1.414 0l-7 7a1 1 0 0 0 1.414 1.414L4 10.414V17a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V9l-7-7z"/></svg>
-        <span class="text-xs font-semibold">Inicio</span>
-      </button>
-      <button data-view="friends-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0m6 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0M7 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0"/></svg>
-        <span class="text-xs font-semibold">Amigos</span>
-      </button>
-      <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm1-11a1 1 0 1 0-2 0v2H7a1 1 0 1 0 0 2h2v2a1 1 0 1 0 2 0v-2h2a1 1 0 1 0 0-2h-2V7Z" clip-rule="evenodd"/></svg>
-        <span class="text-xs font-semibold">Crear</span>
-      </button>
-      <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-6-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm-2 4a5 5 0 0 0-4.546 2.916A5.986 5.986 0 0 0 10 16a5.986 5.986 0 0 0 4.546-2.084A5 5 0 0 0 10 11Z" clip-rule="evenodd"/></svg>
-        <span class="text-xs font-semibold">Perfil</span>
-      </button>
-    </nav>
-  </div>
-
-  <!-- Modales -->
-  <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
-      <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
-      </button>
-      <h2 id="trivia-modal-question" class="text-2xl font-bold text-slate-800 mb-6"></h2>
-      <div id="trivia-modal-answers" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      <p id="trivia-feedback" class="mt-4 text-red-500 font-semibold h-6"></p>
-    </div>
-  </div>
-
-  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative">
-      <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
-      </button>
-      <div class="text-5xl mb-2">📸</div>
-      <h2 class="text-2xl font-bold text-slate-800 mb-2">¡Acepta el Desafío!</h2>
-      <p class="text-slate-600 mb-2" id="photo-challenge-description"></p>
-      <p class="text-xs text-slate-400 mb-5">Tip: si el navegador pide permiso de cámara, tocá “Permitir”.</p>
-      <button id="submit-photo-challenge-btn" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">Cumplir Reto</button>
-    </div>
-  </div>
-
-  <div id="comments-modal" class="hidden fixed inset-0 bg-white z-50 flex flex-col">
-    <header class="flex items-center justify-between p-4 border-b">
-      <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
-      <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
-      </button>
-    </header>
-    <div id="comments-modal-body" class="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
-    <footer class="p-4 border-t bg-white">
-      <form id="comment-form" class="flex items-center space-x-2">
-        <img id="comment-user-img" src="" class="w-8 h-8 rounded-full">
-        <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <button type="submit" class="btn-primary text-white rounded-full px-4 py-2">Enviar</button>
-      </form>
-    </footer>
-  </div>
-
-  <template id="post-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
-      <div class="p-4 flex items-center space-x-3">
-        <img class="w-10 h-10 rounded-full author-img" src="" alt="Author">
-        <div><p class="font-semibold text-slate-800 author-name"></p><p class="text-xs text-slate-500 post-time"></p></div>
-      </div>
-      <div class="relative cursor-pointer group challenge-container">
-        <img class="w-full h-96 object-cover blur-locked content-img" src="" alt="Contenido del reto">
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
-          <div class="text-5xl mb-2 lock-icon">🔒</div>
-          <h3 class="font-bold text-lg">Reto Bloqueado</h3>
-          <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
-        </div>
-      </div>
-      <div class="p-4">
-        <div class="flex items-center justify-between mt-1 text-slate-500">
-          <div class="flex space-x-4">
-            <button class="like-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 0 0 0 6.364L12 20.364l7.682-7.682a4.5 4.5 0 0 0-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 0 0-6.364 0z"/></svg>
-              <span class="likes-count">0</span>
-            </button>
-            <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-              <span class="comments-count">0</span>
-            </button>
-          </div>
-          <span class="text-xs post-time-secondary"></span>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <template id="validation-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card">
-      <div class="p-4">
-        <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
-        <p class="font-semibold text-slate-800 italic my-2">"<span class="original-challenge-question"></span>"</p>
-        <p class="text-sm text-slate-600 mb-4"><strong class="submitter-name"></strong> envió una prueba:</p>
-        <img class="w-full h-auto rounded-lg submission-img" src="" alt="Prueba del reto">
-        <div class="flex space-x-3 mt-4">
-          <button class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition approve-btn">Aprobar</button>
-          <button class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition reject-btn">Rechazar</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- Cámara -->
-  <div id="camera-modal" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
-    <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
-    <canvas id="camera-canvas" class="hidden"></canvas>
-    <button id="cancel-camera-btn" class="absolute top-4 left-4 text-white bg-black/50 rounded-full p-2">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
-    </button>
-    <div class="absolute bottom-10 flex flex-col items-center">
-      <button id="capture-btn" class="w-20 h-20 rounded-full bg-white border-4 border-slate-400 hover:border-white focus:outline-none"></button>
-    </div>
-  </div>
-
-  <!-- Firebase App -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, addDoc, updateDoc, getDoc,
-      collection, collectionGroup, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-    import {
-      getStorage, ref as storageRef, uploadString, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-
-    // === CONFIG FIREBASE (PROD) ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
-      authDomain: "tereto-prod.firebaseapp.com",
-      projectId: "tereto-prod",
-      storageBucket: "tereto-prod.firebasestorage.app",
-      messagingSenderId: "914605096619",
-      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
-    };
-
-    // Init
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // Helpers UI
-    const $ = (id) => document.getElementById(id);
-    function showToast(msg, type='success'){
-      const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
-      toastMessage.textContent=msg;
-      toastIcon.innerHTML = type==='success'
-        ? `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`
-        : `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 10-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
-      toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type==='success'?'text-green-500 bg-green-100':'text-red-500 bg-red-100'}`;
-      toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),2600);
-    }
-
-    // Estado
-    let currentUser = null;
-    let solvedSet = new Set(); // retos resueltos por el usuario
-    let challengeCache = new Map();
-
-    // Suscripciones
-    let unsubUsers=null, unsubChallenges=null, unsubSolved=null, unsubValidations=null, unsubCommentsModal=null, perChallengeUnsubs={};
-    function clearPerChallengeUnsubs(){
-      Object.values(perChallengeUnsubs).forEach(arr=>arr.forEach(fn=>fn && fn()));
-      perChallengeUnsubs = {};
-    }
-
-    // Navegación
-    const views = {
-      'feed-view': $("feed-view"),
-      'create-view': $("create-view"),
-      'profile-view': $("profile-view"),
-      'friends-view': $("friends-view")
-    };
-    function switchView(viewName){
-      Object.values(views).forEach(v=>v.classList.add('hidden'));
-      if (views[viewName]) views[viewName].classList.remove('hidden');
-      document.querySelectorAll('.nav-button').forEach(btn=>{
-        btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
-        btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
-      });
-      if(viewName==='profile-view'){ updateProfileUI(); }
-    }
-    document.querySelectorAll('.nav-button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
-
-    // Auth
-    $("google-btn")?.addEventListener("click", async ()=>{
-      try{ $("loading-spinner").classList.remove("hidden"); await signInWithPopup(auth, provider); }
-      catch(err){ console.error(err); showToast(err.code?.replace("auth/","") || "Error al iniciar sesión","error"); }
-      finally{ $("loading-spinner").classList.add("hidden"); }
+  // Vistas/Nav
+  const views = {
+    'feed-view': $("feed-view"),
+    'create-view': $("create-view"),
+    'profile-view': $("profile-view"),
+    'friends-view': $("friends-view")
+  };
+  function switchView(viewName){
+    Object.values(views).forEach(v=>v.classList.add('hidden'));
+    if (views[viewName]) views[viewName].classList.remove('hidden');
+    document.querySelectorAll('.nav-button').forEach(btn=>{
+      btn.classList.toggle('text-indigo-500', btn.dataset.view === viewName);
+      btn.classList.toggle('text-slate-500', btn.dataset.view !== viewName);
     });
-    $("signout-btn")?.addEventListener("click", async ()=>{
-      try{ await signOut(auth); showToast("Sesión cerrada."); }
-      catch(err){ console.error(err); showToast("No se pudo cerrar sesión","error"); }
+    if(viewName==='profile-view'){ updateProfileUI(); }
+  }
+  document.querySelectorAll('.nav-button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
+
+  // Auth
+  $("google-btn")?.addEventListener("click", async ()=>{
+    try{ $("loading-spinner").classList.remove("hidden"); await signInWithPopup(auth, provider); }
+    catch(err){ console.error(err); showToast(err.code?.replace("auth/","") || "Error al iniciar sesión","error"); }
+    finally{ $("loading-spinner").classList.add("hidden"); }
+  });
+  $("signout-btn")?.addEventListener("click", async ()=>{
+    try{ await signOut(auth); showToast("Sesión cerrada."); }
+    catch(err){ console.error(err); showToast("No se pudo cerrar sesión","error"); }
+  });
+
+  // Upsert user
+  async function upsertUser(user){
+    await setDoc(doc(db,"users",user.uid),{
+      uid:user.uid, displayName:user.displayName||"Usuario", email:user.email||"",
+      photoURL:user.photoURL||"", lastSeen:serverTimestamp(), createdAt:serverTimestamp()
+    },{merge:true});
+  }
+
+  // --- AMIGOS (idéntico a la versión anterior) ---
+  let friendMap = new Map(), usersCache=[], unsubUsers=null;
+  function pairId(a,b){ return [a,b].sort().join('_'); }
+  function startFriendshipsListener(){
+    if(!currentUser) return;
+    const qF = query(collection(db,'friendships'), where('users','array-contains', currentUser.uid));
+    return onSnapshot(qF, (snap)=>{
+      friendMap.clear();
+      snap.forEach(d=>{
+        const fr = d.data(); const other = fr.users.find(u=>u!==currentUser.uid);
+        friendMap.set(other, { status: fr.status, requestedBy: fr.requestedBy, requestedTo: fr.requestedTo });
+      });
+      renderUsersListCached();
     });
-
-    // Users upsert
-    async function upsertUser(user){
-      await setDoc(doc(db,"users",user.uid),{
-        uid:user.uid, displayName:user.displayName||"Usuario", email:user.email||"",
-        photoURL:user.photoURL||"", lastSeen:serverTimestamp(), createdAt:serverTimestamp()
-      },{merge:true});
-    }
-
-    // === FRIENDSHIPS ===
-    // colección: friendships, docId = `${minUid}_${maxUid}`
-    // campos: users:[a,b], status:'pending'|'accepted', requestedBy, requestedTo, createdAt, updatedAt
-    let friendMap = new Map(); // otherUid -> {status, requestedBy, requestedTo}
-
-    function pairId(a,b){ return [a,b].sort().join('_'); }
-
-    function startFriendshipsListener(){
-      if(!currentUser) return;
-      // escucha todas mis relaciones
-      const qF = query(collection(db,'friendships'), where('users','array-contains', currentUser.uid));
-      return onSnapshot(qF, (snap)=>{
-        friendMap.clear();
-        snap.forEach(d=>{
-          const fr = d.data();
-          const other = fr.users.find(u=>u!==currentUser.uid);
-          friendMap.set(other, { status: fr.status, requestedBy: fr.requestedBy, requestedTo: fr.requestedTo });
-        });
-        // re-render lista de usuarios si está visible
-        renderUsersListCached();
-      });
-    }
-
-    async function sendFriendRequest(otherUid){
-      if(!currentUser) return;
-      const id = pairId(currentUser.uid, otherUid);
-      await setDoc(doc(db,'friendships', id), {
-        users: [currentUser.uid, otherUid],
-        status: 'pending',
-        requestedBy: currentUser.uid,
-        requestedTo: otherUid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      showToast("Solicitud enviada ✅");
-    }
-
-    async function acceptFriendRequest(otherUid){
-      if(!currentUser) return;
-      const id = pairId(currentUser.uid, otherUid);
-      await updateDoc(doc(db,'friendships', id), {
-        status: 'accepted',
-        updatedAt: serverTimestamp()
-      });
-      showToast("Ahora son amigos 🤝");
-    }
-
-    async function rejectFriendRequest(otherUid){
-      if(!currentUser) return;
-      const id = pairId(currentUser.uid, otherUid);
-      await deleteDoc(doc(db,'friendships', id));
-      showToast("Solicitud rechazada");
-    }
-
-    // Users (lista + búsqueda)
-    const usersListEl = $("friends-tab-content");
-    const usersSearchEl = $("user-search-input");
-    let usersCache = [];
-    function startUsersSubscription(){
-      if(unsubUsers) unsubUsers();
-      const qUsers = query(collection(db,'users'));
-      unsubUsers = onSnapshot(qUsers,(snap)=>{
-        usersCache = [];
-        snap.forEach(d=>{
-          const u=d.data();
-          if(!currentUser || u.uid !== currentUser.uid) usersCache.push(u);
-        });
-        renderUsersListCached();
-      });
-      usersSearchEl?.addEventListener('input', renderUsersListCached);
-    }
-
-    function renderUsersListCached(){
-      const term = (usersSearchEl?.value||'').toLowerCase();
-      usersListEl.innerHTML = '';
-      const filtered = usersCache.filter(u=>{
-        const s=(u.displayName||u.email||'').toLowerCase();
-        return !term || s.includes(term);
-      });
-      if(filtered.length===0){
-        usersListEl.innerHTML = `<p class="text-slate-500 text-center mt-4">No hay usuarios.</p>`;
-        return;
-      }
-      filtered.forEach(u=>{
-        const state = friendMap.get(u.uid);
-        const row = document.createElement('div');
-        row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
-        row.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
-            <div>
-              <p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p>
-              <p class="text-xs text-slate-400">${u.email || ''}</p>
-            </div>
+  }
+  async function sendFriendRequest(otherUid){
+    const id = pairId(currentUser.uid, otherUid);
+    await setDoc(doc(db,'friendships', id), {
+      users: [currentUser.uid, otherUid], status: 'pending',
+      requestedBy: currentUser.uid, requestedTo: otherUid,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    }, { merge: true });
+    showToast("Solicitud enviada ✅");
+  }
+  async function acceptFriendRequest(otherUid){
+    const id = pairId(currentUser.uid, otherUid);
+    await updateDoc(doc(db,'friendships', id), { status:'accepted', updatedAt: serverTimestamp() });
+    showToast("Ahora son amigos 🤝");
+  }
+  async function rejectFriendRequest(otherUid){
+    const id = pairId(currentUser.uid, otherUid);
+    await deleteDoc(doc(db,'friendships', id));
+    showToast("Solicitud rechazada");
+  }
+  const usersListEl = $("friends-tab-content");
+  const usersSearchEl = $("user-search-input");
+  function startUsersSubscription(){
+    if(unsubUsers) unsubUsers();
+    const qUsers = query(collection(db,'users'));
+    unsubUsers = onSnapshot(qUsers,(snap)=>{
+      usersCache = [];
+      snap.forEach(d=>{ const u=d.data(); if(!currentUser || u.uid !== currentUser.uid) usersCache.push(u); });
+      renderUsersListCached();
+    });
+    usersSearchEl?.addEventListener('input', renderUsersListCached);
+  }
+  function renderUsersListCached(){
+    const term = (usersSearchEl?.value||'').toLowerCase();
+    usersListEl.innerHTML = '';
+    const filtered = usersCache.filter(u=>{
+      const s=(u.displayName||u.email||'').toLowerCase();
+      return !term || s.includes(term);
+    });
+    if(filtered.length===0){ usersListEl.innerHTML = `<p class="text-slate-500 text-center mt-4">No hay usuarios.</p>`; return; }
+    filtered.forEach(u=>{
+      const state = friendMap.get(u.uid);
+      const row = document.createElement('div');
+      row.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-100";
+      row.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <img class="w-10 h-10 rounded-full" src="${u.photoURL || 'https://placehold.co/40x40?text=U'}">
+          <div>
+            <p class="font-semibold text-slate-700">${u.displayName || 'Usuario'}</p>
+            <p class="text-xs text-slate-400">${u.email || ''}</p>
           </div>
-          <div class="flex items-center gap-2">${renderFriendAction(u.uid, state)}</div>
-        `;
-        usersListEl.appendChild(row);
-      });
-    }
-
-    function renderFriendAction(otherUid, state){
-      if(!state){
-        return `<button data-action="add" data-uid="${otherUid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`;
-      }
-      if(state.status==='accepted'){
-        return `<span class="pill bg-green-100 text-green-700">Amigos ✓</span>`;
-      }
-      if(state.status==='pending'){
-        if(state.requestedBy===currentUser.uid){
-          return `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`;
-        }else{
-          // yo recibí la solicitud
-          return `
-            <button data-action="accept" data-uid="${otherUid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
-            <button data-action="reject" data-uid="${otherUid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>
-          `;
-        }
-      }
-      return '';
-    }
-
-    usersListEl?.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button');
-      if(!btn) return;
-      const uid = btn.dataset.uid;
-      const action = btn.dataset.action;
-      try{
-        if(action==='add') await sendFriendRequest(uid);
-        if(action==='accept') await acceptFriendRequest(uid);
-        if(action==='reject') await rejectFriendRequest(uid);
-      }catch(err){
-        console.error(err); showToast("No se pudo actualizar la solicitud","error");
-      }
-    });
-
-    // === SOLVED (retos resueltos) ===
-    function startSolvedListener(){
-      if(!currentUser) return;
-      if(unsubSolved) unsubSolved();
-      unsubSolved = onSnapshot(collection(db,'users', currentUser.uid, 'solved'), (snap)=>{
-        const s = new Set();
-        snap.forEach(d=>s.add(d.id));
-        solvedSet = s;
-        updateSolvedCount();
-        refreshUnlockStates();
-      });
-    }
-    async function markSolvedRemote(challengeId){
-      if(!currentUser) return;
-      await setDoc(doc(db,'users', currentUser.uid, 'solved', challengeId), {
-        challengeId, solvedAt: serverTimestamp()
-      }, { merge: true });
-    }
-    function updateSolvedCount(){ $("solved-count").textContent = solvedSet.size; }
-    function refreshUnlockStates(){
-      document.querySelectorAll('.post-card').forEach(card=>{
-        const id = card.dataset.challengeId;
-        const author = card.dataset.authorUid;
-        const unlock = (currentUser && id && (author===currentUser.uid || solvedSet.has(id)));
-        const img = card.querySelector('.content-img');
-        const lock = card.querySelector('.lock-overlay');
-        if(unlock){ img?.classList.remove('blur-locked'); lock?.classList.add('hidden'); }
-        else { img?.classList.add('blur-locked'); lock?.classList.remove('hidden'); }
-      });
-    }
-
-    // === FEED / RETOS ===
-    function renderChallengeCard(id, ch){
-      const tpl = $("post-template").content.cloneNode(true);
-      const card = tpl.querySelector('.post-card');
-      card.dataset.challengeId = id;
-      card.dataset.authorUid = ch.authorUid;
-
-      tpl.querySelector('.author-img').src = ch.authorPhoto || 'https://placehold.co/40x40?text=U';
-      tpl.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
-      const ts = ch.createdAt?.toDate ? ch.createdAt.toDate() : new Date();
-      tpl.querySelector('.post-time').textContent = ts.toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
-
-      const src = ch.contentUrl || ch.contentDataUrl || 'https://placehold.co/600x400/cccccc/000?text=TeReto';
-      tpl.querySelector('.content-img').src = src;
-      if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
-
-      $("feed-container").appendChild(tpl);
-
-      // likes & comments live
-      const likesEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .likes-count`);
-      const likeIcon = document.querySelector(`.post-card[data-challenge-id="${id}"] .like-icon`);
-      const commentsCountEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .comments-count`);
-
-      const unlikes = onSnapshot(collection(db,'challenges',id,'likes'), (snap)=>{
-        likesEl.textContent = snap.size;
-        const liked = currentUser ? snap.docs.some(d=>d.id===currentUser.uid) : false;
-        likeIcon.classList.toggle('liked', liked);
-      });
-      const uncomments = onSnapshot(collection(db,'challenges',id,'comments'), (snap)=>{
-        commentsCountEl.textContent = snap.size;
-      });
-      (perChallengeUnsubs[id] ||= []).push(unlikes, uncomments);
-    }
-
-    function startChallengesListener(){
-      if(unsubChallenges) unsubChallenges();
-      clearPerChallengeUnsubs();
-      const q = query(collection(db,'challenges'), orderBy('createdAt','desc'));
-      unsubChallenges = onSnapshot(q, (snap)=>{
-        const feed = $("feed-container");
-        const empty = $("feed-empty");
-        feed.innerHTML = "";
-        challengeCache.clear();
-        if(snap.empty){
-          empty.classList.remove('hidden');
-        }else{
-          empty.classList.add('hidden');
-          snap.forEach(docSnap=>{
-            const ch = { id: docSnap.id, ...docSnap.data() };
-            challengeCache.set(docSnap.id, ch);
-            renderChallengeCard(docSnap.id, ch);
-          });
-        }
-        refreshUnlockStates();
-      }, (err)=>{
-        console.error(err);
-        $("feed-container").innerHTML = "";
-        $("feed-empty").classList.remove('hidden');
-        showToast("No se pudo cargar el feed (revisa reglas).","error");
-      });
-    }
-
-    async function toggleLike(challengeId){
-      if(!currentUser) return showToast("Iniciá sesión","error");
-      const likeRef = doc(db,'challenges', challengeId, 'likes', currentUser.uid);
-      const snap = await getDoc(likeRef);
-      if(snap.exists()) await deleteDoc(likeRef);
-      else await setDoc(likeRef, { uid: currentUser.uid, likedAt: serverTimestamp() });
-    }
-
-    // Comentarios
-    function openCommentsModal(challengeId){
-      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
-      const body = $("comments-modal-body");
-      body.innerHTML = "";
-      $("comment-user-img").src = currentUser?.photoURL || 'https://placehold.co/40x40?text=U';
-      $("comment-form").dataset.challengeId = challengeId;
-      const q = query(collection(db,'challenges',challengeId,'comments'), orderBy('createdAt','asc'));
-      unsubCommentsModal = onSnapshot(q,(snap)=>{
-        body.innerHTML = "";
-        snap.forEach(d=>{
-          const c = d.data();
-          const row = document.createElement('div');
-          row.className = "flex items-start space-x-3";
-          row.innerHTML = `
-            <img class="w-8 h-8 rounded-full" src="${c.userPhoto || 'https://placehold.co/40x40?text=U'}">
-            <div class="flex-1 bg-slate-100 rounded-xl p-3">
-              <p class="text-sm"><strong class="text-slate-800">${c.userName || 'Usuario'}</strong> <span class="text-slate-600">${c.text || ''}</span></p>
-              <p class="text-xs text-slate-400 mt-1">${c.createdAt?.toDate? c.createdAt.toDate().toLocaleTimeString('es-AR'):''}</p>
-            </div>`;
-          body.appendChild(row);
-        });
-      });
-      $("comments-modal").classList.remove('hidden');
-    }
-    $("comment-form")?.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      if(!currentUser) return;
-      const challengeId = e.target.dataset.challengeId;
-      const text = $("comment-input").value.trim();
-      if(!text) return;
-      try{
-        await addDoc(collection(db,'challenges',challengeId,'comments'),{
-          userUid: currentUser.uid,
-          userName: currentUser.displayName || 'Usuario',
-          userPhoto: currentUser.photoURL || '',
-          text, createdAt: serverTimestamp()
-        });
-        $("comment-input").value = '';
-      }catch(err){ console.error(err); showToast("No se pudo comentar","error"); }
-    });
-    $("close-comments-modal")?.addEventListener('click', ()=>{
-      $("comments-modal").classList.add('hidden');
-      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
-    });
-
-    // Trivia
-    function openTriviaModal(ch){
-      $("trivia-modal-question").textContent = ch.question;
-      const answersEl = $("trivia-modal-answers");
-      answersEl.innerHTML = '';
-      const answers = [...(ch.wrongAnswers||[]), ch.correctAnswer].filter(Boolean).sort(()=>Math.random()-0.5);
-      answers.forEach(ans=>{
-        const b = document.createElement('button');
-        b.className = 'bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
-        b.textContent = ans;
-        b.onclick = async ()=>{
-          if(ans === ch.correctAnswer){
-            $("trivia-modal").classList.add('hidden');
-            try{ await markSolvedRemote(ch.id); showToast("¡Correcto! Reto desbloqueado 🎉"); }
-            catch(err){ console.error(err); showToast("No se pudo marcar como resuelto","error"); }
-          }else{
-            $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Intentalo de nuevo!';
-            setTimeout(()=>{$("trivia-feedback").textContent='';},1500);
+        </div>
+        <div class="flex items-center gap-2">
+          ${!state
+            ? `<button data-action="add" data-uid="${u.uid}" class="btn-xs bg-indigo-600 text-white">Agregar</button>`
+            : state.status==='accepted'
+              ? `<span class="pill bg-green-100 text-green-700">Amigos ✓</span>`
+              : state.requestedBy===currentUser.uid
+                ? `<span class="pill bg-slate-200 text-slate-600">Pendiente…</span>`
+                : `
+                  <button data-action="accept" data-uid="${u.uid}" class="btn-xs bg-green-600 text-white">Aceptar</button>
+                  <button data-action="reject" data-uid="${u.uid}" class="btn-xs bg-slate-200 text-slate-700">Rechazar</button>`
           }
-        };
-        answersEl.appendChild(b);
-      });
-      $("trivia-modal").classList.remove('hidden');
-    }
-    $("close-trivia-modal")?.addEventListener('click',()=>$("trivia-modal").classList.add('hidden'));
+        </div>`;
+      usersListEl.appendChild(row);
+    });
+  }
+  usersListEl?.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    const uid = btn.dataset.uid, action = btn.dataset.action;
+    try{
+      if(action==='add') await sendFriendRequest(uid);
+      if(action==='accept') await acceptFriendRequest(uid);
+      if(action==='reject') await rejectFriendRequest(uid);
+    }catch(err){ console.error(err); showToast("No se pudo actualizar la solicitud","error"); }
+  });
 
-    // Foto challenge: cámara + envío
-    let cameraStream = null, currentPhotoChallengeId = null;
-    async function openCamera(challengeId=null){
-      currentPhotoChallengeId = challengeId;
-      try{
-        if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
-        $("camera-stream").srcObject = cameraStream;
-        $("camera-modal").classList.remove('hidden');
-      }catch(err){
-        console.error(err); showToast("No se pudo acceder a la cámara","error");
-      }
-    }
-    function closeCamera(){
-      if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
-      cameraStream=null; $("camera-modal").classList.add('hidden');
-    }
-    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+  // SOLVED
+  let unsubSolved=null;
+  function startSolvedListener(){
+    if(unsubSolved) unsubSolved();
+    unsubSolved = onSnapshot(collection(db,'users', currentUser.uid, 'solved'), (snap)=>{
+      const s = new Set(); snap.forEach(d=>s.add(d.id));
+      solvedSet = s; updateSolvedCount(); refreshUnlockStates();
+    });
+  }
+  function updateSolvedCount(){ $("solved-count").textContent = solvedSet.size; }
+  async function markSolvedRemote(challengeId){
+    await setDoc(doc(db,'users', currentUser.uid, 'solved', challengeId), { challengeId, solvedAt: serverTimestamp() }, { merge: true });
+  }
+  function refreshUnlockStates(){
+    document.querySelectorAll('.post-card').forEach(card=>{
+      const id = card.dataset.challengeId;
+      const author = card.dataset.authorUid;
+      const unlock = (currentUser && id && (author===currentUser.uid || solvedSet.has(id)));
+      const img = card.querySelector('.content-img');
+      const lock = card.querySelector('.lock-overlay');
+      if(unlock){ img?.classList.remove('blur-locked'); lock?.classList.add('hidden'); }
+      else { img?.classList.add('blur-locked'); lock?.classList.remove('hidden'); }
+    });
+  }
 
-    $("capture-btn")?.addEventListener('click', async ()=>{
-      const video = $("camera-stream"), canvas = $("camera-canvas");
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
-      closeCamera();
-      if(!currentUser || !currentPhotoChallengeId) return;
+  // FEED
+  let unsubChallenges=null, unsubValidations=null, unsubCommentsModal=null, perChallengeUnsubs={};
+  function clearPerChallengeUnsubs(){
+    Object.values(perChallengeUnsubs).forEach(arr=>arr.forEach(fn=>fn && fn()));
+    perChallengeUnsubs = {};
+  }
+  function renderChallengeCard(id, ch){
+    const tpl = $("post-template").content.cloneNode(true);
+    const card = tpl.querySelector('.post-card');
+    card.dataset.challengeId = id;
+    card.dataset.authorUid = ch.authorUid;
+    tpl.querySelector('.author-img').src = ch.authorPhoto || 'https://placehold.co/40x40?text=U';
+    tpl.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
+    const ts = ch.createdAt?.toDate ? ch.createdAt.toDate() : new Date();
+    tpl.querySelector('.post-time').textContent = ts.toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'});
+    const src = ch.contentUrl || ch.contentDataUrl || 'https://placehold.co/600x400/cccccc/000?text=TeReto';
+    tpl.querySelector('.content-img').src = src;
+    if (ch.type === 'photo') tpl.querySelector('.lock-icon').textContent = '📸';
+    $("feed-container").appendChild(tpl);
 
-      const ch = challengeCache.get(currentPhotoChallengeId);
-      const submitterUid = currentUser.uid;
+    // live likes/comments
+    const likesEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .likes-count`);
+    const likeIcon = document.querySelector(`.post-card[data-challenge-id="${id}"] .like-icon`);
+    const commentsCountEl = document.querySelector(`.post-card[data-challenge-id="${id}"] .comments-count`);
 
-      let submissionUrl = null, submissionDataUrl = null;
-      try{
-        const path = `submissions/${currentPhotoChallengeId}/${submitterUid}/${Date.now()}.png`;
-        const ref = storageRef(storage, path);
-        await uploadString(ref, dataUrl, 'data_url');
-        submissionUrl = await getDownloadURL(ref);
-      }catch(e){
-        console.warn('Storage no disponible, usando dataURL', e);
-        submissionDataUrl = dataUrl;
-      }
-
-      try{
-        await setDoc(doc(db,'challenges', currentPhotoChallengeId, 'submissions', submitterUid), {
-          challengeId: currentPhotoChallengeId,
-          challengeAuthorUid: ch.authorUid,
-          challengeQuestion: ch.question || '',
-          submitterUid,
-          submitterName: currentUser.displayName || 'Usuario',
-          submitterPhoto: currentUser.photoURL || '',
-          submissionUrl, submissionDataUrl,
-          status: 'pending',
-          createdAt: serverTimestamp()
+    const unlikes = onSnapshot(collection(db,'challenges',id,'likes'), (snap)=>{
+      likesEl.textContent = snap.size;
+      const liked = currentUser ? snap.docs.some(d=>d.id===currentUser.uid) : false;
+      likeIcon.classList.toggle('liked', liked);
+    });
+    const uncomments = onSnapshot(collection(db,'challenges',id,'comments'), (snap)=>{
+      commentsCountEl.textContent = snap.size;
+    });
+    (perChallengeUnsubs[id] ||= []).push(unlikes, uncomments);
+  }
+  function startChallengesListener(){
+    if(unsubChallenges) unsubChallenges();
+    clearPerChallengeUnsubs();
+    const q = query(collection(db,'challenges'), orderBy('createdAt','desc'));
+    unsubChallenges = onSnapshot(q, (snap)=>{
+      const feed = $("feed-container");
+      const empty = $("feed-empty");
+      feed.innerHTML = ""; challengeCache.clear();
+      if(snap.empty){ empty.classList.remove('hidden'); }
+      else{
+        empty.classList.add('hidden');
+        snap.forEach(docSnap=>{
+          const ch = { id: docSnap.id, ...docSnap.data() };
+          challengeCache.set(docSnap.id, ch);
+          renderChallengeCard(docSnap.id, ch);
         });
-        showToast("Prueba enviada para validación.");
-      }catch(err){ console.error(err); showToast("No se pudo enviar la prueba","error"); }
-    });
-
-    $("submit-photo-challenge-btn")?.addEventListener('click', ()=>{
-      const id = $("submit-photo-challenge-btn").dataset.challengeId;
-      $("photo-challenge-modal").classList.add('hidden');
-      openCamera(id);
-    });
-    $("close-photo-challenge-modal")?.addEventListener('click', ()=>$("photo-challenge-modal").classList.add('hidden'));
-
-    function openPhotoChallengeModal(ch){
-      $("photo-challenge-description").textContent = ch.question || '';
-      $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
-      $("photo-challenge-modal").classList.remove('hidden');
-    }
-
-    // Crear retos
-    const createEls = {
-      fileUpload: $("file-upload"),
-      fileNameDisplay: $("file-name"),
-      imagePreviewContainer: $("image-preview-container"),
-      imagePreview: $("image-preview"),
-      gotoStep2Btn: $("goto-step-2"),
-      selectTriviaBtn: $("select-trivia-btn"),
-      selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
-      triviaForm: $("trivia-form"),
-      photoForm: $("photo-challenge-form")
-    };
-    let pendingFileDataUrl = null;
-
-    createEls.fileUpload?.addEventListener('change', (e)=>{
-      if(e.target.files?.length){
-        const f = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = ev=>{
-          pendingFileDataUrl = ev.target.result;
-          createEls.imagePreview.src = pendingFileDataUrl;
-          createEls.imagePreviewContainer.classList.remove('hidden');
-          createEls.fileNameDisplay.textContent = f.name;
-        };
-        reader.readAsDataURL(f);
-      }else{
-        pendingFileDataUrl = null;
-        createEls.imagePreviewContainer.classList.add('hidden');
-        createEls.fileNameDisplay.textContent = '';
       }
+      refreshUnlockStates();
+    }, (err)=>{
+      console.error(err);
+      $("feed-container").innerHTML = "";
+      $("feed-empty").classList.remove('hidden');
+      showToast("No se pudo cargar el feed (revisa reglas).","error");
     });
+  }
+  async function toggleLike(challengeId){
+    const likeRef = doc(db,'challenges', challengeId, 'likes', currentUser.uid);
+    const snap = await getDoc(likeRef);
+    if(snap.exists()) await deleteDoc(likeRef);
+    else await setDoc(likeRef, { uid: currentUser.uid, likedAt: serverTimestamp() });
+  }
 
-    // Botones pasos
-    $("goto-step-2")?.addEventListener('click', ()=>{
-      document.getElementById('create-step-1').classList.add('hidden');
-      document.getElementById('create-step-2').classList.remove('hidden');
+  // Comentarios
+  function openCommentsModal(challengeId){
+    if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
+    const body = $("comments-modal-body");
+    body.innerHTML = "";
+    $("comment-user-img").src = currentUser?.photoURL || 'https://placehold.co/40x40?text=U';
+    $("comment-form").dataset.challengeId = challengeId;
+    const q = query(collection(db,'challenges',challengeId,'comments'), orderBy('createdAt','asc'));
+    unsubCommentsModal = onSnapshot(q,(snap)=>{
+      body.innerHTML = "";
+      snap.forEach(d=>{
+        const c = d.data();
+        const row = document.createElement('div');
+        row.className = "flex items-start space-x-3";
+        row.innerHTML = `
+          <img class="w-8 h-8 rounded-full" src="${c.userPhoto || 'https://placehold.co/40x40?text=U'}">
+          <div class="flex-1 bg-slate-100 rounded-xl p-3">
+            <p class="text-sm"><strong class="text-slate-800">${c.userName || 'Usuario'}</strong> <span class="text-slate-600">${c.text || ''}</span></p>
+            <p class="text-xs text-slate-400 mt-1">${c.createdAt?.toDate? c.createdAt.toDate().toLocaleTimeString('es-AR'):''}</p>
+          </div>`;
+        body.appendChild(row);
+      });
     });
-    $("select-trivia-btn")?.addEventListener('click', ()=>{
-      document.getElementById('create-step-2').classList.add('hidden');
-      document.getElementById('create-step-3-trivia').classList.remove('hidden');
-    });
-    $("select-photo-challenge-btn")?.addEventListener('click', ()=>{
-      document.getElementById('create-step-2').classList.add('hidden');
-      document.getElementById('create-step-3-photo').classList.remove('hidden');
-    });
+    $("comments-modal").classList.remove('hidden');
+  }
+  $("comment-form")?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const challengeId = e.target.dataset.challengeId;
+    const text = $("comment-input").value.trim();
+    if(!text) return;
+    try{
+      await addDoc(collection(db,'challenges',challengeId,'comments'),{
+        userUid: currentUser.uid,
+        userName: currentUser.displayName || 'Usuario',
+        userPhoto: currentUser.photoURL || '',
+        text, createdAt: serverTimestamp()
+      });
+      $("comment-input").value = '';
+    }catch(err){ console.error(err); showToast("No se pudo comentar","error"); }
+  });
+  $("close-comments-modal")?.addEventListener('click', ()=>{ $("comments-modal").classList.add('hidden'); if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; } });
 
-    async function uploadChallengeMediaIfAny(){
-      if(!pendingFileDataUrl) return { contentUrl:null, contentDataUrl:null };
-      try{
-        const path = `challenges/${currentUser.uid}/${Date.now()}.png`;
-        const ref = storageRef(storage, path);
-        await uploadString(ref, pendingFileDataUrl, 'data_url');
-        const url = await getDownloadURL(ref);
-        return { contentUrl:url, contentDataUrl:null };
-      }catch(e){
-        console.warn('Storage no disponible, usando dataURL', e);
-        return { contentUrl:null, contentDataUrl:pendingFileDataUrl };
-      }
+  // Trivia
+  function openTriviaModal(ch){
+    $("trivia-modal-question").textContent = ch.question;
+    const answersEl = $("trivia-modal-answers");
+    answersEl.innerHTML = '';
+    const answers = [...(ch.wrongAnswers||[]), ch.correctAnswer].filter(Boolean).sort(()=>Math.random()-0.5);
+    answers.forEach(ans=>{
+      const b = document.createElement('button');
+      b.className = 'bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
+      b.textContent = ans;
+      b.onclick = async ()=>{
+        if(ans === ch.correctAnswer){
+          $("trivia-modal").classList.add('hidden');
+          try{ await markSolvedRemote(ch.id); showToast("¡Correcto! Reto desbloqueado 🎉"); }
+          catch(err){ console.error(err); showToast("No se pudo marcar como resuelto","error"); }
+        }else{
+          $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Intentalo de nuevo!';
+          setTimeout(()=>{$("trivia-feedback").textContent='';},1500);
+        }
+      };
+      answersEl.appendChild(b);
+    });
+    $("trivia-modal").classList.remove('hidden');
+  }
+  $("close-trivia-modal")?.addEventListener('click',()=>$("trivia-modal").classList.add('hidden'));
+
+  // Foto challenge (cámara)
+  let cameraStream = null, currentPhotoChallengeId = null;
+  async function openCamera(challengeId=null){
+    currentPhotoChallengeId = challengeId;
+    try{
+      if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+      $("camera-stream").srcObject = cameraStream;
+      $("camera-modal").classList.remove('hidden');
+    }catch(err){ console.error(err); showToast("No se pudo acceder a la cámara","error"); }
+  }
+  function closeCamera(){ if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; $("camera-modal").classList.add('hidden'); }
+  $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+  $("capture-btn")?.addEventListener('click', async ()=>{
+    const video = $("camera-stream"), canvas = $("camera-canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    const dataUrl = canvas.toDataURL('image/png');
+    closeCamera();
+    if(!currentUser || !currentPhotoChallengeId) return;
+    const ch = challengeCache.get(currentPhotoChallengeId);
+    const submitterUid = currentUser.uid;
+    let submissionUrl = null, submissionDataUrl = null;
+    try{
+      const path = `submissions/${currentPhotoChallengeId}/${submitterUid}/${Date.now()}.png`;
+      const ref = storageRef(storage, path);
+      await uploadString(ref, dataUrl, 'data_url');
+      submissionUrl = await getDownloadURL(ref);
+    }catch(e){ submissionDataUrl = dataUrl; }
+    try{
+      await setDoc(doc(db,'challenges', currentPhotoChallengeId, 'submissions', submitterUid), {
+        challengeId: currentPhotoChallengeId, challengeAuthorUid: ch.authorUid,
+        challengeQuestion: ch.question || '', submitterUid,
+        submitterName: currentUser.displayName || 'Usuario', submitterPhoto: currentUser.photoURL || '',
+        submissionUrl, submissionDataUrl, status: 'pending', createdAt: serverTimestamp()
+      });
+      showToast("Prueba enviada para validación.");
+    }catch(err){ console.error(err); showToast("No se pudo enviar la prueba","error"); }
+  });
+  $("submit-photo-challenge-btn")?.addEventListener('click', ()=>{ const id = $("submit-photo-challenge-btn").dataset.challengeId; $("photo-challenge-modal").classList.add('hidden'); openCamera(id); });
+  $("close-photo-challenge-modal")?.addEventListener('click', ()=>$("photo-challenge-modal").classList.add('hidden'));
+  function openPhotoChallengeModal(ch){ $("photo-challenge-description").textContent = ch.question || ''; $("submit-photo-challenge-btn").dataset.challengeId = ch.id; $("photo-challenge-modal").classList.remove('hidden'); }
+
+  // --- CREAR RETOS (Arreglo clave: delegación de submit + feedback y bloqueo) ---
+  let pendingFileDataUrl = null;
+  const fileUpload = $("file-upload"), fileNameDisplay=$("file-name"),
+        imagePreviewContainer=$("image-preview-container"), imagePreview=$("image-preview");
+
+  fileUpload?.addEventListener('change', (e)=>{
+    if(e.target.files?.length){
+      const f = e.target.files[0];
+      const rd = new FileReader();
+      rd.onload = ev=>{
+        pendingFileDataUrl = ev.target.result;
+        imagePreview.src = pendingFileDataUrl;
+        imagePreviewContainer.classList.remove('hidden');
+        fileNameDisplay.textContent = f.name;
+      };
+      rd.readAsDataURL(f);
+    }else{
+      pendingFileDataUrl = null;
+      imagePreviewContainer.classList.add('hidden');
+      fileNameDisplay.textContent = '';
     }
+  });
 
-    createEls.triviaForm?.addEventListener('submit', async (e)=>{
-      e.preventDefault();
+  $("goto-step-2")?.addEventListener('click', ()=>{
+    $("create-step-1").classList.add('hidden');
+    $("create-step-2").classList.remove('hidden');
+  });
+  $("select-trivia-btn")?.addEventListener('click', ()=>{
+    $("create-step-2").classList.add('hidden');
+    $("create-step-3-trivia").classList.remove('hidden');
+  });
+  $("select-photo-challenge-btn")?.addEventListener('click', ()=>{
+    $("create-step-2").classList.add('hidden');
+    $("create-step-3-photo").classList.remove('hidden');
+  });
+
+  async function uploadChallengeMediaIfAny(){
+    if(!pendingFileDataUrl) return { contentUrl:null, contentDataUrl:null };
+    try{
+      const path = `challenges/${currentUser.uid}/${Date.now()}.png`;
+      const ref = storageRef(storage, path);
+      await uploadString(ref, pendingFileDataUrl, 'data_url');
+      const url = await getDownloadURL(ref);
+      return { contentUrl:url, contentDataUrl:null };
+    }catch(e){
+      return { contentUrl:null, contentDataUrl:pendingFileDataUrl };
+    }
+  }
+
+  // 🔧 Delegación de submit para que SIEMPRE dispare
+  document.addEventListener('submit', async (e)=>{
+    const form = e.target;
+    // Trivia
+    if(form.id === 'trivia-form'){
+      e.preventDefault(); e.stopPropagation();
       if(!currentUser) return showToast("Iniciá sesión","error");
+      const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = 'Publicando...';
       try{
         const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
         const question = $("trivia-question").value.trim();
         const correctAnswer = $("correct-answer").value.trim();
-        const wrongAnswers = [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ].map(v=>v.trim()).filter(Boolean);
+        const wrongAnswers = [ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ]
+          .map(v=>v.trim()).filter(Boolean);
         await addDoc(collection(db,'challenges'),{
-          authorUid: currentUser.uid,
-          authorName: currentUser.displayName || 'Usuario',
-          authorPhoto: currentUser.photoURL || '',
-          type: 'trivia',
-          question, correctAnswer, wrongAnswers,
-          contentUrl, contentDataUrl,
+          authorUid: currentUser.uid, authorName: currentUser.displayName || 'Usuario',
+          authorPhoto: currentUser.photoURL || '', type: 'trivia',
+          question, correctAnswer, wrongAnswers, contentUrl, contentDataUrl,
           createdAt: serverTimestamp()
         });
-        pendingFileDataUrl = null;
-        createEls.imagePreviewContainer.classList.add('hidden');
-        e.target.reset();
+        pendingFileDataUrl = null; imagePreviewContainer.classList.add('hidden'); form.reset();
         showToast("¡Reto creado!");
         switchView('feed-view');
       }catch(err){ console.error(err); showToast("No se pudo crear el reto (revisa reglas).","error"); }
-    });
+      finally{ btn.disabled = false; btn.textContent = 'Publicar Reto'; }
+    }
 
-    createEls.photoForm?.addEventListener('submit', async (e)=>{
-      e.preventDefault();
+    // Foto
+    if(form.id === 'photo-challenge-form'){
+      e.preventDefault(); e.stopPropagation();
       if(!currentUser) return showToast("Iniciá sesión","error");
+      const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = 'Publicando...';
       try{
         const { contentUrl, contentDataUrl } = await uploadChallengeMediaIfAny();
         const question = $("photo-challenge-task").value.trim();
         await addDoc(collection(db,'challenges'),{
-          authorUid: currentUser.uid,
-          authorName: currentUser.displayName || 'Usuario',
-          authorPhoto: currentUser.photoURL || '',
-          type: 'photo',
-          question,
-          contentUrl, contentDataUrl,
-          createdAt: serverTimestamp()
+          authorUid: currentUser.uid, authorName: currentUser.displayName || 'Usuario',
+          authorPhoto: currentUser.photoURL || '', type: 'photo',
+          question, contentUrl, contentDataUrl, createdAt: serverTimestamp()
         });
-        pendingFileDataUrl = null;
-        createEls.imagePreviewContainer.classList.add('hidden');
-        e.target.reset();
+        pendingFileDataUrl = null; imagePreviewContainer.classList.add('hidden'); form.reset();
         showToast("¡Reto creado!");
         switchView('feed-view');
       }catch(err){ console.error(err); showToast("No se pudo crear el reto (revisa reglas).","error"); }
-    });
+      finally{ btn.disabled = false; btn.textContent = 'Publicar Reto'; }
+    }
+  });
 
-    // Validaciones (collectionGroup submissions)
-    function startValidationsListener(){
-      if(unsubValidations) unsubValidations();
-      if(!currentUser){ $("validations-container").innerHTML=''; return; }
-      const q = query(collectionGroup(db,'submissions'), where('challengeAuthorUid','==', currentUser.uid), where('status','==','pending'));
-      const box = $("validations-container");
-      unsubValidations = onSnapshot(q,(snap)=>{
-        box.innerHTML = '';
-        const arr = [];
-        snap.forEach(d=>{ const s=d.data(); arr.push({refPath:d.ref.path, ...s}); });
-        arr.sort((a,b)=>{
-          const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-          const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-          return tb - ta;
-        });
-        if(arr.length===0) return;
-        const header = document.createElement('h3');
-        header.className = 'text-xl font-bold text-slate-800 mb-4';
-        header.textContent = 'Validaciones Pendientes';
-        box.appendChild(header);
-        arr.forEach(s=>{
-          const el = $("validation-template").content.cloneNode(true);
-          el.querySelector('.validation-card').dataset.refPath = s.refPath;
-          el.querySelector('.original-challenge-question').textContent = s.challengeQuestion || '';
-          el.querySelector('.submitter-name').textContent = s.submitterName || 'Usuario';
-          el.querySelector('.submission-img').src = s.submissionUrl || s.submissionDataUrl || 'https://placehold.co/600x400?text=EVIDENCIA';
-          box.appendChild(el);
-        });
+  // Validaciones (igual que antes)
+  function startValidationsListener(){
+    if(unsubValidations) unsubValidations();
+    if(!currentUser){ $("validations-container").innerHTML=''; return; }
+    const q = query(collectionGroup(db,'submissions'), where('challengeAuthorUid','==', currentUser.uid), where('status','==','pending'));
+    const box = $("validations-container");
+    unsubValidations = onSnapshot(q,(snap)=>{
+      box.innerHTML = '';
+      const arr = [];
+      snap.forEach(d=>{ const s=d.data(); arr.push({refPath:d.ref.path, ...s}); });
+      arr.sort((a,b)=>{
+        const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return tb - ta;
       });
-    }
-
-    async function setSubmissionStatus(refPath, status){
-      const ref = doc(db, refPath);
-      const snap = await getDoc(ref);
-      if(!snap.exists()) return;
-      const data = snap.data();
-      await updateDoc(ref, { status });
-      if(status==='approved' && data.submitterUid && data.challengeId){
-        await setDoc(doc(db,'users', data.submitterUid, 'solved', data.challengeId),{
-          challengeId: data.challengeId, solvedAt: serverTimestamp(), byApproval:true
-        },{merge:true});
-      }
-    }
-
-    // Delegated clicks
-    document.addEventListener('click', async (e)=>{
-      const card = e.target.closest('.validation-card');
-      if(card && (e.target.closest('.approve-btn') || e.target.closest('.reject-btn'))){
-        const ok = e.target.closest('.approve-btn') ? 'approved' : 'rejected';
-        try{ await setSubmissionStatus(card.dataset.refPath, ok); showToast(ok==='approved'?'Reto aprobado':'Rechazado'); }
-        catch(err){ console.error(err); showToast("No se pudo actualizar el envío","error"); }
-      }
-
-      const postCard = e.target.closest('.post-card');
-      if(postCard){
-        const id = postCard.dataset.challengeId;
-        if(e.target.closest('.like-button')){ await toggleLike(id); return; }
-        if(e.target.closest('.comment-button')){ openCommentsModal(id); return; }
-        if(e.target.closest('.challenge-container')){
-          const ch = challengeCache.get(id);
-          if(!ch) return;
-          if(ch.type==='trivia') openTriviaModal({ ...ch, id });
-          else if(ch.type==='photo') openPhotoChallengeModal({ ...ch, id });
-        }
-      }
+      if(arr.length===0) return;
+      const header = document.createElement('h3');
+      header.className = 'text-xl font-bold text-slate-800 mb-4';
+      header.textContent = 'Validaciones Pendientes';
+      box.appendChild(header);
+      arr.forEach(s=>{
+        const el = $("validation-template").content.cloneNode(true);
+        el.querySelector('.validation-card').dataset.refPath = s.refPath;
+        el.querySelector('.original-challenge-question').textContent = s.challengeQuestion || '';
+        el.querySelector('.submitter-name').textContent = s.submitterName || 'Usuario';
+        el.querySelector('.submission-img').src = s.submissionUrl || s.submissionDataUrl || 'https://placehold.co/600x400?text=EVIDENCIA';
+        box.appendChild(el);
+      });
     });
+  }
+  async function setSubmissionStatus(refPath, status){
+    const ref = doc(db, refPath);
+    const snap = await getDoc(ref); if(!snap.exists()) return;
+    const data = snap.data();
+    await updateDoc(ref, { status });
+    if(status==='approved' && data.submitterUid && data.challengeId){
+      await setDoc(doc(db,'users', data.submitterUid, 'solved', data.challengeId),{
+        challengeId: data.challengeId, solvedAt: serverTimestamp(), byApproval:true
+      },{merge:true});
+    }
+  }
 
-    // Perfil
-    function updateProfileUI(){
-      $("profile-pic").src = currentUser?.photoURL || 'https://placehold.co/96x96?text=U';
-      $("profile-name").textContent = currentUser?.displayName || 'Usuario';
-      $("profile-email").textContent = currentUser?.email || '';
-      if(currentUser){
-        const q = query(collection(db,'challenges'), where('authorUid','==', currentUser.uid));
-        onSnapshot(q,(snap)=>{ $("created-count").textContent = snap.size; });
-      }
-      updateSolvedCount();
+  // Delegación clicks global (likes / comments / abrir modales)
+  document.addEventListener('click', async (e)=>{
+    const card = e.target.closest('.validation-card');
+    if(card && (e.target.closest('.approve-btn') || e.target.closest('.reject-btn'))){
+      const ok = e.target.closest('.approve-btn') ? 'approved' : 'rejected';
+      try{ await setSubmissionStatus(card.dataset.refPath, ok); showToast(ok==='approved'?'Reto aprobado':'Rechazado'); }
+      catch(err){ console.error(err); showToast("No se pudo actualizar el envío","error"); }
+      return;
     }
 
-    // Auth state
-    onAuthStateChanged(auth, async (user)=>{
-      if(unsubCommentsModal){ unsubCommentsModal(); unsubCommentsModal=null; }
-      currentUser = user || null;
-      if(currentUser){
-        $("login-screen").classList.add('hidden');
-        $("app-screen").classList.remove('hidden');
-        try{ await upsertUser(currentUser); }catch(e){ console.warn('No se pudo upsert user', e); }
-        startUsersSubscription();
-        if(window._unsubFriendships) window._unsubFriendships();
-        window._unsubFriendships = startFriendshipsListener();
-        startSolvedListener();
-        startValidationsListener();
-        startChallengesListener();
-        switchView('feed-view');
-      }else{
-        $("app-screen").classList.add('hidden');
-        $("login-screen").classList.remove('hidden');
-        if(unsubUsers) unsubUsers();
-        if(unsubSolved) unsubSolved();
-        if(unsubValidations) unsubValidations();
-        if(unsubChallenges) unsubChallenges();
-        if(window._unsubFriendships) window._unsubFriendships();
-        clearPerChallengeUnsubs();
+    const postCard = e.target.closest('.post-card');
+    if(postCard){
+      const id = postCard.dataset.challengeId;
+      if(e.target.closest('.like-button')){ if(!currentUser) return showToast("Iniciá sesión","error"); await toggleLike(id); return; }
+      if(e.target.closest('.comment-button')){ openCommentsModal(id); return; }
+      if(e.target.closest('.challenge-container')){
+        const ch = challengeCache.get(id);
+        if(!ch) return;
+        if(ch.type==='trivia') openTriviaModal({ ...ch, id });
+        else if(ch.type==='photo') openPhotoChallengeModal({ ...ch, id });
       }
-    });
-  </script>
-</body>
-</html>
+    }
+  });
+
+  // Perfil
+  function updateProfileUI(){
+    $("profile-pic").src = currentUser?.photoURL || 'https://placehold.co/96x96?text=U';
+    $("profile-name").textContent = currentUser?.displayName || 'Usuario';
+    $("profile-email").textContent = currentUser?.email || '';
+    if(currentUser){
+      const q = query(collection(db,'challenges'), where('authorUid','==', currentUser.uid));
+      onSnapshot(q,(snap)=>{ $("created-count").textContent = snap.size; });
+    }
+    updateSolvedCount();
+  }
+
+  // Auth state
+  let unsubFriendships=null;
+  onAuthStateChanged(auth, async (user)=>{
+    currentUser = user || null;
+    if(currentUser){
+      $("login-screen").classList.add('hidden');
+      $("app-screen").classList.remove('hidden');
+      try{ await upsertUser(currentUser); }catch(e){ console.warn('No se pudo upsert user', e); }
+      startUsersSubscription();
+      if(unsubFriendships) unsubFriendships();
+      unsubFriendships = startFriendshipsListener();
+      startSolvedListener();
+      startValidationsListener();
+      startChallengesListener();
+      switchView('feed-view');
+    }else{
+      $("app-screen").classList.add('hidden');
+      $("login-screen").classList.remove('hidden');
+      if(unsubUsers) unsubUsers();
+      if(unsubSolved) unsubSolved();
+      if(unsubValidations) unsubValidations();
+      if(unsubChallenges) unsubChallenges();
+      if(unsubFriendships) unsubFriendships();
+      clearPerChallengeUnsubs();
+    }
+  });
+</script>
