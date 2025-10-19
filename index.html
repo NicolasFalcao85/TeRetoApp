@@ -339,7 +339,7 @@
               <span class="likes-count">0</span>
             </button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               <span class="comments-count">0</span>
             </button>
           </div>
@@ -419,6 +419,42 @@
       setTimeout(() => toastEl.classList.remove('show'), 2800);
     }
 
+    // === Utils de imagen: redimensionar/comprimir a < ~300KB ===
+    async function fileToCompressedDataURL(file, maxW = 960, quality = 0.7) {
+      if (!file || !file.type?.startsWith('image/')) {
+        return 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      }
+      const bitmap = await createImageBitmap(file);
+      const ratio = bitmap.width / bitmap.height;
+      const targetW = Math.min(bitmap.width, maxW);
+      const targetH = Math.round(targetW / ratio);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      const kb = Math.round((dataUrl.length * 3) / 4 / 1024);
+      if (kb > 300) dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      return dataUrl;
+    }
+    function canvasToCompressedDataURL(canvas, quality = 0.7, maxW = 960) {
+      const ratio = canvas.width / canvas.height;
+      const targetW = Math.min(canvas.width, maxW);
+      const targetH = Math.round(targetW / ratio);
+
+      const tmp = document.createElement('canvas');
+      tmp.width = targetW; tmp.height = targetH;
+      const ctx = tmp.getContext('2d');
+      ctx.drawImage(canvas, 0, 0, targetW, targetH);
+      let dataUrl = tmp.toDataURL('image/jpeg', quality);
+      const kb = Math.round((dataUrl.length * 3) / 4 / 1024);
+      if (kb > 300) dataUrl = tmp.toDataURL('image/jpeg', 0.6);
+      return dataUrl;
+    }
+
     // ==== Auth buttons ====
     $("google-btn")?.addEventListener("click", async () => {
       try {
@@ -439,12 +475,11 @@
     let currentUser = null;
     let mockUser = null;
 
-    // Persistencia local por usuario (para unlocks locales)
     const lsKey = (k, uid) => `tereto_${k}_${uid}`;
     const loadSet = (k, uid) => new Set(JSON.parse(localStorage.getItem(lsKey(k, uid)) || '[]'));
     const saveSet = (k, uid, set) => localStorage.setItem(lsKey(k, uid), JSON.stringify([...set]));
 
-    // Following (persistente)
+    // Following
     let followingSet = new Set();
     let followingUnsub = null;
 
@@ -452,7 +487,6 @@
     let challengesData = [];
     let feedUnsub = null;
 
-    // ===== Users =====
     function seedUsersFor(user){
       mockUser = {
         uid: user.uid,
@@ -476,7 +510,7 @@
       } catch(e){ console.error("users setDoc error:", e); }
     }
 
-    // ===== Following =====
+    // Following helpers
     function clearFollowingSub(){ if (followingUnsub){ followingUnsub(); followingUnsub=null; } }
     function setFollowing(setIds){ followingSet = new Set(setIds); restartFeedSubscription(); }
 
@@ -494,7 +528,6 @@
         showToast('Dejaste de seguir');
       } catch(e){ console.error(e); showToast('No se pudo dejar de seguir','error'); }
     }
-
     function startFollowingSub(){
       clearFollowingSub();
       if (!currentUser) return;
@@ -502,11 +535,11 @@
       followingUnsub = onSnapshot(qRef, (snap)=>{
         const ids = snap.docs.map(d=>d.id);
         setFollowing(ids);
-        refreshFriendsTab(); // para que botones reflejen seguir / dejar de seguir
+        refreshFriendsTab();
       });
     }
 
-    // ===== UI refs =====
+    // UI refs
     const feedContainer = $("feed-container");
     const postTemplate = $("post-template");
     const commentTemplate = $("comment-template");
@@ -516,10 +549,10 @@
     const myMosaic = $("my-mosaic");
     const myRetosCount = $("my-retos-count");
 
-    // ===== Unlock helpers =====
+    // Unlock helpers
     function shouldUnlockForUser(ch){
       if (!mockUser) return false;
-      if (ch.authorId === mockUser.uid) return true; // autor ve desbloqueado
+      if (ch.authorId === mockUser.uid) return true;
       const solvedSet = loadSet('solved', currentUser.uid);
       return solvedSet.has(ch.id);
     }
@@ -528,14 +561,14 @@
       postEl.querySelector('.lock-overlay')?.classList.add('hidden');
     }
 
-    // ===== Expiration helper =====
+    // Expiration
     function isExpired(ch){
       if (!ch.expiresAt) return false;
       const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
       return exp && exp < new Date();
     }
 
-    // ===== Render feed =====
+    // Render feed
     function renderPost(ch){
       const frag = document.importNode(postTemplate.content, true);
       const card = frag.querySelector('.post-card');
@@ -556,17 +589,14 @@
       img.classList.add('blur-locked'); overlay.classList.remove('hidden');
       if (shouldUnlockForUser(ch)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
 
-      // estado liked (lazy)
       if (currentUser){
         const likeDocRef = doc(db, 'challenges', ch.id, 'likes', currentUser.uid);
         getDoc(likeDocRef).then(s=>{
           if (s.exists()) card.querySelector('.like-icon').classList.add('liked');
         }).catch(()=>{});
       }
-
       feedContainer.append(frag);
     }
-
     function renderEmptyFeedHint(){
       const div = document.createElement('div');
       div.className = 'mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600';
@@ -575,7 +605,6 @@
         <p class="text-sm">Seguí usuarios en <span class="font-semibold">Amigos → Descubrir</span> para ver sus retos.</p>`;
       feedContainer.appendChild(div);
     }
-
     function refreshFeed(){
       const items = challengesData.filter(c => !isExpired(c));
       feedContainer.innerHTML = '';
@@ -584,6 +613,7 @@
       items.forEach(renderPost);
     }
 
+    // Perfil
     function refreshProfile(){
       profilePic.src = mockUser.photoURL;
       profileName.textContent = mockUser.displayName;
@@ -599,7 +629,6 @@
         img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
         img.className = 'mosaic-img'; wrap.appendChild(img);
 
-        // Badges
         const bar = document.createElement('div');
         bar.style.position='absolute'; bar.style.left='.25rem'; bar.style.bottom='.25rem'; bar.style.display='flex'; bar.style.gap='.25rem';
         const bLikes = document.createElement('span'); bLikes.className='badge'; bLikes.style.background='rgba(0,0,0,.6)'; bLikes.style.color='#fff'; bLikes.textContent = `❤ ${ch.likesCount||0}`;
@@ -608,7 +637,6 @@
         if (isExpired(ch)){ const exp = document.createElement('span'); exp.className='badge'; exp.style.background='rgba(255,0,0,.7)'; exp.style.color='#fff'; exp.textContent='Vencido'; bar.appendChild(exp); }
         wrap.appendChild(bar);
 
-        // Delete
         const del = document.createElement('button');
         del.className = 'mosaic-del'; del.textContent = '🗑️'; del.title = 'Eliminar reto';
         del.addEventListener('click', async (e)=>{
@@ -619,27 +647,22 @@
         });
         wrap.appendChild(del);
 
-        // Insights
         wrap.addEventListener('click', ()=> openInsights(ch.id));
         myMosaic.appendChild(wrap);
       });
     }
 
-    // ===== Feed subscription (siguiendo)
+    // Feed subscription
     function clearFeedSub(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
     function restartFeedSubscription(){
       clearFeedSub();
       if (!currentUser) return;
-
       const ids = [...followingSet];
       if (ids.length === 0){
-        // nada seguido → feed vacío
         challengesData = [];
         refreshFeed(); refreshProfile();
         return;
       }
-
-      // Caso A: hasta 10 seguidos → query server-side con IN
       if (ids.length <= 10){
         const qRef = query(collection(db,'challenges'), where('authorId','in', ids));
         feedUnsub = onSnapshot(qRef, (snap)=>{
@@ -649,8 +672,6 @@
         }, (err)=>{ console.error('feed in[]', err); showToast('No se pudo cargar el feed','error'); });
         return;
       }
-
-      // Caso B: +10 seguidos → traemos últimos N y filtramos client-side
       const qRef = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(120));
       feedUnsub = onSnapshot(qRef, (snap)=>{
         const set = new Set(ids);
@@ -659,12 +680,11 @@
       }, (err)=>{ console.error('feed fallback', err); showToast('No se pudo cargar el feed','error'); });
     }
 
-    // ===== Comentarios (Firestore)
+    // Comentarios
     const commentForm = $("comment-form"), commentInput = $("comment-input"),
           commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
           commentsModalBody = $("comments-modal-body");
     let commentsUnsub = null;
-
     function clearCommentsSub(){ if (commentsUnsub){ commentsUnsub(); commentsUnsub = null; } }
     function openCommentsModal(chId){
       commentUserImg.src = mockUser.photoURL;
@@ -715,22 +735,19 @@
     $("comments-modal")?.addEventListener('click',(e)=>{ if (e.target.id === 'comments-modal') closeComments(); });
     document.addEventListener('keydown',(e)=>{ if (e.key === 'Escape' && !commentsModal.classList.contains('hidden')) closeComments(); });
 
-    // ===== Insights (likes + comments de mi reto)
+    // Insights (likes + comments de mi reto)
     const insightsModal = $("insights-modal");
     const insightsBody = $("insights-body");
     let insightsUnsubLikes = null, insightsUnsubComments = null;
-
     function clearInsightsSubs(){
       if (insightsUnsubLikes){ insightsUnsubLikes(); insightsUnsubLikes=null; }
       if (insightsUnsubComments){ insightsUnsubComments(); insightsUnsubComments=null; }
     }
-
     async function openInsights(chId){
       insightsModal.classList.remove('hidden');
       insightsBody.innerHTML = `<div class="p-4 text-slate-500">Cargando...</div>`;
       clearInsightsSubs();
 
-      // Cargamos el reto
       const chSnap = await getDoc(doc(db,'challenges', chId));
       const ch = chSnap.exists() ? { id: chSnap.id, ...chSnap.data() } : null;
 
@@ -759,16 +776,13 @@
         </div>
       `;
 
-      // Subs a likes
       const likesRef = collection(db,'challenges', chId, 'likes');
       insightsUnsubLikes = onSnapshot(likesRef, async (snap)=>{
         const likesList = document.getElementById('likes-list');
         likesList.innerHTML = '';
         if (snap.empty){ likesList.innerHTML = `<p class="text-slate-500 text-sm">Sin likes.</p>`; return; }
-        // Traer perfiles por lote
         const ids = snap.docs.map(d=>d.id);
         const users = [];
-        // chunks de 10 por limitación de 'in'
         for (let i=0; i<ids.length; i+=10){
           const chunk = ids.slice(i,i+10);
           const qUsers = query(collection(db,'users'), where('__name__','in', chunk));
@@ -783,7 +797,6 @@
         });
       });
 
-      // Subs a comments
       const commentsRef = query(collection(db,'challenges', chId, 'comments'), orderBy('createdAt','desc'), limit(50));
       insightsUnsubComments = onSnapshot(commentsRef, (snap)=>{
         const cmList = document.getElementById('comments-list');
@@ -810,7 +823,7 @@
     $("close-insights-modal")?.addEventListener('click', closeInsights);
     $("insights-modal")?.addEventListener('click', (e)=>{ if (e.target.id === 'insights-modal') closeInsights(); });
 
-    // ===== Likes (Firestore)
+    // Likes
     async function toggleLike(chId, ui){
       if (!currentUser) return;
       const likeRef = doc(db,'challenges', chId, 'likes', currentUser.uid);
@@ -826,7 +839,6 @@
           batch.update(chRef, { likesCount: increment(1) });
         }
         await batch.commit();
-        // UI optimista
         if (ui){
           const icon = ui.querySelector('.like-icon');
           const span = ui.querySelector('.likes-count');
@@ -838,9 +850,8 @@
       } catch(e){ console.error('toggle like', e); showToast('No se pudo actualizar el like','error'); }
     }
 
-    // ===== Friends (UI + búsqueda + follow)
+    // Friends (búsqueda + follow)
     const friendsTabButtons = document.querySelectorAll('.friends-tab');
-
     function renderUserRow(user){
       const item = userListItemTemplate.content.cloneNode(true);
       item.querySelector('.user-img').src = user.photoURL || '';
@@ -857,13 +868,11 @@
       }
       friendsTabContent.appendChild(item);
     }
-
     async function renderDiscover(){
       const termRaw = ($("user-search-input").value || '').trim();
       const term = termRaw.toLowerCase();
       friendsTabContent.innerHTML = '';
       const results = new Map();
-
       try {
         if (term && term.includes('@')) {
           const qEmail = query(collection(db,'users'), where('emailLower','==', term), limit(5));
@@ -884,14 +893,12 @@
           snap.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         }
       } catch (e) { console.error('search users error', e); }
-
       if (results.size === 0){
         friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
         return;
       }
       [...results.values()].forEach(u=>renderUserRow({ uid:u.uid||u.id, ...u }));
     }
-
     function refreshFriendsTab(tab = document.querySelector('.friends-tab.active')?.dataset.tab || 'my-friends'){
       friendsTabButtons.forEach(btn=>{
         btn.classList.toggle('active', btn.dataset.tab===tab);
@@ -902,7 +909,6 @@
         if (followingSet.size===0){
           friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Todavía no seguís a nadie.</p>`; return;
         }
-        // Traer perfiles de seguidos
         const ids = [...followingSet];
         (async ()=>{
           for (let i=0;i<ids.length;i+=10){
@@ -914,7 +920,6 @@
         })();
       } else if (tab==='discover'){ renderDiscover(); }
     }
-
     $("user-search-input")?.addEventListener('input', ()=>{
       const active = document.querySelector('.friends-tab.active')?.dataset.tab;
       if (active === 'discover') renderDiscover();
@@ -927,7 +932,7 @@
       if (btn.dataset.action === 'unfollow') unfollow(uid);
     });
 
-    // ===== Navegación + acciones globales =====
+    // Navegación y acciones globales
     const views = {
       'feed-view': $("feed-view"),
       'friends-view': $("friends-view"),
@@ -947,30 +952,23 @@
     }
 
     document.addEventListener('click', (e) => {
-      // Navegación inferior
       const navBtn = e.target.closest('.nav-button');
       if (navBtn && navBtn.dataset.view) { e.preventDefault(); switchView(navBtn.dataset.view); return; }
 
-      // Tip del feed
       if (e.target.closest('.challenge-container')){
         localStorage.setItem("tereto_tip_seen","1");
         $("feed-tip")?.classList.add("hidden");
       }
 
-      // Acciones en posts
       const postCard = e.target.closest('.post-card');
       if (postCard && postCard.dataset.challengeId){
         const chId = postCard.dataset.challengeId;
         const ch = challengesData.find(c=>c.id===chId);
         if (!ch) return;
 
-        // Like persistente
         if (e.target.closest('.like-button')){ toggleLike(chId, postCard); return; }
-
-        // Comentarios
         if (e.target.closest('.comment-button')) { openCommentsModal(chId); return; }
 
-        // Abrir reto (desbloqueo local)
         if (e.target.closest('.challenge-container')){
           if (shouldUnlockForUser(ch)) return;
           if (ch.type==='trivia') openTriviaModal(ch, postCard);
@@ -1010,14 +1008,14 @@
       const video = cameraStreamEl, canvas = cameraCanvas;
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
+      const dataUrl = canvasToCompressedDataURL(canvas, 0.7, 960); // <— comprimido
       if (currentPhotoChallengeId){
         showToast("Prueba enviada (mock).");
         currentPhotoChallengeId = null;
       } else {
         $("image-preview").src = dataUrl;
         $("image-preview-container").classList.remove('hidden');
-        $("file-name").textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.png`;
+        $("file-name").textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.jpg`;
         $("goto-step-2").dataset.fileUrl = dataUrl;
         $("goto-step-2").disabled = false;
       }
@@ -1049,15 +1047,33 @@
       Object.values(steps).forEach(s=>s.classList.add('hidden'));
       steps[step].classList.remove('hidden');
     }
-    $("file-upload")?.addEventListener('change', (e)=>{
-      if (e.target.files.length>0){
-        const file = e.target.files[0]; const reader = new FileReader();
-        $("file-name").textContent = file.name; $("goto-step-2").disabled = false;
-        reader.onload = (ev)=>{ $("goto-step-2").dataset.fileUrl = ev.target.result; $("image-preview").src = ev.target.result; $("image-preview-container").classList.remove('hidden'); };
-        reader.readAsDataURL(file);
-      } else {
-        $("file-name").textContent = ''; $("goto-step-2").disabled = true; $("image-preview-container").classList.add('hidden');
+
+    // Subir archivo (comprimido)
+    const createViewElements = {
+      fileUpload: $("file-upload"),
+      fileNameDisplay: $("file-name"),
+      gotoStep2Btn: $("goto-step-2"),
+      imagePreviewContainer: $("image-preview-container"),
+      imagePreview: $("image-preview"),
+      selectTriviaBtn: $("select-trivia-btn"),
+      selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
+      triviaForm: $("trivia-form"),
+      photoChallengeForm: $("photo-challenge-form")
+    };
+    createViewElements.fileUpload?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) {
+        createViewElements.fileNameDisplay.textContent = '';
+        createViewElements.gotoStep2Btn.disabled = true;
+        createViewElements.imagePreviewContainer.classList.add('hidden');
+        return;
       }
+      createViewElements.fileNameDisplay.textContent = file.name;
+      const dataUrl = await fileToCompressedDataURL(file); // <— comprimido
+      createViewElements.gotoStep2Btn.dataset.fileUrl = dataUrl;
+      createViewElements.imagePreview.src = dataUrl;
+      createViewElements.imagePreviewContainer.classList.remove('hidden');
+      createViewElements.gotoStep2Btn.disabled = false;
     });
     $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
     $("select-trivia-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-trivia'));
@@ -1070,8 +1086,15 @@
       return null;
     }
 
+    // Publicar reto (con guardas y errores claros)
     async function publishChallenge(challengeDetails){
       if (!mockUser) return;
+
+      let contentUrl = $("goto-step-2").dataset.fileUrl;
+      if (!contentUrl || contentUrl.length > 900_000) { // ~900KB base64
+        contentUrl = 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      }
+
       try{
         await addDoc(collection(db, "challenges"), {
           authorId: mockUser.uid,
@@ -1079,7 +1102,7 @@
           authorImg: mockUser.photoURL,
           createdAt: serverTimestamp(),
           expiresAt: calcExpiresAt(),
-          contentUrl: $("goto-step-2").dataset.fileUrl,
+          contentUrl,
           caption: $("challenge-caption").value.trim() || null,
           likesCount: 0,
           commentsCount: 0,
@@ -1089,7 +1112,14 @@
         switchView('feed-view');
       } catch(e){
         console.error("addDoc challenge error:", e);
-        showToast("No se pudo publicar el reto","error");
+        const msg = (e?.code || e?.message || '').toString();
+        if (msg.includes('permission-denied')) {
+          showToast("Permisos denegados (revisá reglas y que el authorId sea tu UID).", "error");
+        } else if (msg.includes('INVALID_ARGUMENT') || msg.includes('FAILED_PRECONDITION')) {
+          showToast("El contenido es muy grande. Probá con una imagen más liviana.", "error");
+        } else {
+          showToast("No se pudo publicar el reto", "error");
+        }
       }
     }
     $("trivia-form")?.addEventListener('submit', (e)=>{
@@ -1137,20 +1167,18 @@
     $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
     $("close-photo-challenge-modal")?.addEventListener('click', () => $("photo-challenge-modal").classList.add('hidden'));
 
-    // Global clicks (likes/comments & open comments)
+    // Global likes/comments click
     document.addEventListener('click', (e) => {
       const postCard = e.target.closest('.post-card');
       if (postCard && postCard.dataset.challengeId){
         const chId = postCard.dataset.challengeId;
-
         if (e.target.closest('.like-button')){ toggleLike(chId, postCard); return; }
         if (e.target.closest('.comment-button')){ openCommentsModal(chId); return; }
       }
     });
 
-    // ==== Auth state ====
+    // Auth state
     function clearAllSubs(){ clearFeedSub(); clearFollowingSub(); clearCommentsSub(); clearInsightsSubs(); }
-
     onAuthStateChanged(auth, async (user)=>{
       clearAllSubs();
       if (!user){
