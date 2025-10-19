@@ -10,18 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; }
-    .blur-locked { filter: blur(20px); transition: filter 0.25s ease-in-out; }
-    .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
-    .answer-btn:hover { transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .blur-locked { filter: blur(20px); transition: filter .25s ease-in-out; }
+    .animate-fade-in-up { animation: fadeInUp .5s ease-out forwards; }
+    @keyframes fadeInUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+    .answer-btn:hover { transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
     .like-icon.liked { fill:#ec4899; color:#ec4899; }
-    .like-button:active { transform: scale(0.9); }
+    .like-button:active { transform: scale(.9); }
     .image-preview { max-height: 200px; object-fit: cover; }
     .comments-modal-body { height: calc(100vh - 12rem); }
     .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55);}
     .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
     .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite; }
-    @keyframes spin { 0%{ transform:rotate(0);} 100%{ transform:rotate(360deg);} }
+    @keyframes spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
     .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
     .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); transition:all .3s ease; }
     .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.75); }
@@ -209,7 +209,7 @@
         <span class="text-xs font-semibold">Inicio</span>
       </button>
       <button data-view="friends-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0z"/></svg>
         <span class="text-xs font-semibold">Amigos</span>
       </button>
       <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
@@ -226,7 +226,7 @@
   <!-- MODALES -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
-      <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+      <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" aria-label="Cerrar trivia">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
       <h2 id="trivia-modal-question" class="text-2xl font-bold text-slate-800 mb-6"></h2>
@@ -237,7 +237,7 @@
 
   <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
-      <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+      <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" aria-label="Cerrar reto foto">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
       <div class="text-5xl mb-4">📸</div>
@@ -303,7 +303,7 @@
               <span class="likes-count">0</span>
             </button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               <span class="comments-count">0</span>
             </button>
           </div>
@@ -345,7 +345,7 @@
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
       getFirestore, collection, addDoc, setDoc, doc,
-      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where, startAt, endAt
+      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // ==== Firebase config (PROD) ====
@@ -506,12 +506,22 @@
       feedContainer.append(frag);
     }
 
+    function renderEmptyFeedHint(){
+      const div = document.createElement('div');
+      div.className = 'mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600';
+      div.innerHTML = `
+        <p class="font-semibold text-slate-800 mb-1">Tu feed está vacío</p>
+        <p class="text-sm">Agregá amigos en <span class="font-semibold">Amigos → Descubrir</span> para ver sus retos.</p>`;
+      feedContainer.appendChild(div);
+    }
+
     function refreshFeed(){
       // filtro: solo retos de amigos
       const friendsIds = new Set(friendsSet);
       const items = challengesData.filter(c => friendsIds.has(c.authorId));
       feedContainer.innerHTML = '';
       $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
+      if (items.length === 0) { renderEmptyFeedHint(); return; }
       items.forEach(renderPost);
     }
 
@@ -742,7 +752,6 @@
           });
         });
       } else if (tab==='discover'){
-        // Traigo algunos usuarios (primeros 30) y filtro por texto en cliente (simple para Fase 1)
         renderDiscover();
       }
     }
@@ -764,6 +773,7 @@
     }
 
     async function renderDiscover(){
+      // Trae hasta 30 usuarios y filtra por cliente
       const qUsers = query(collection(db,'users'), orderBy('displayName'), limit(30));
       const snap = await getDocs(qUsers);
       const term = ($("user-search-input").value || '').toLowerCase();
@@ -814,29 +824,37 @@
       if (viewName==='friends-view') refreshFriendsTab('my-friends');
     }
 
-    document.addEventListener('click', (e)=>{
-      // Tip
+    // 🔧 Delegador global (fix barra inferior)
+    document.addEventListener('click', (e) => {
+      // Navegación inferior
+      const navBtn = e.target.closest('.nav-button');
+      if (navBtn && navBtn.dataset.view) {
+        e.preventDefault();
+        switchView(navBtn.dataset.view);
+        return;
+      }
+
+      // Tip del feed
       if (e.target.closest('.challenge-container')){
         localStorage.setItem("tereto_tip_seen","1");
         $("feed-tip")?.classList.add("hidden");
       }
-      // Post actions
+
+      // Acciones en posts
       const postCard = e.target.closest('.post-card');
       if (postCard && postCard.dataset.challengeId){
         const challengeId = postCard.dataset.challengeId;
         const ch = challengesData.find(c=>c.id===challengeId);
         if (!ch) return;
 
-        // Like (local estable)
+        // Like (local)
         if (e.target.closest('.like-button')){
           likeState[challengeId] = likeState[challengeId] || { liked:false, count: ch.likes||0 };
           const curr = likeState[challengeId];
           curr.liked = !curr.liked;
           curr.count = (curr.count || 0) + (curr.liked ? 1 : -1);
-          const icon = postCard.querySelector('.like-icon');
-          const cnt = postCard.querySelector('.likes-count');
-          icon.classList.toggle('liked', curr.liked);
-          cnt.textContent = curr.count;
+          postCard.querySelector('.like-icon').classList.toggle('liked', curr.liked);
+          postCard.querySelector('.likes-count').textContent = curr.count;
           saveObj('likes', currentUser.uid, likeState);
           return;
         }
@@ -857,6 +875,7 @@
       }
     });
 
+    // Cámara
     $("open-camera-btn")?.addEventListener('click', () => openCamera(null));
     $("capture-btn")?.addEventListener('click', capturePhoto);
     $("cancel-camera-btn")?.addEventListener('click', closeCamera);
@@ -891,7 +910,7 @@
       publishChallenge({ type:'photo', question:$("photo-challenge-task").value });
     });
 
-    // ===== Auth state =====
+    // ==== Auth state ====
     onAuthStateChanged(auth, async (user)=>{
       currentUser = user || null;
       if (currentUser){
@@ -899,7 +918,7 @@
         await upsertUserProfile(currentUser);
 
         // cargar estados locales por usuario
-        friendsSet = loadSet('friends', currentUser.uid);
+        loadFriends(currentUser.uid);
         likeState = loadObj('likes', currentUser.uid);
         commentState = loadObj('comments', currentUser.uid);
 
@@ -915,9 +934,6 @@
         loginScreen.classList.remove("hidden");
       }
     });
-
-    // ===== Descubrir por defecto usa pestaña discover si buscan
-    // (ya resuelto en input listener)
   </script>
 </body>
 </html>
