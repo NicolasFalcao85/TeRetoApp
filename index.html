@@ -231,7 +231,7 @@
     </div>
   </div>
 
-  <!-- CAMERA MODAL (para crear y para cumplir foto) -->
+  <!-- CAMERA MODAL -->
   <div id="camera-modal" class="hidden fixed inset-0 bg-black/80 z-[100]">
     <video id="cam-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
     <canvas id="cam-canvas" class="hidden"></canvas>
@@ -264,15 +264,12 @@
         <p class="text-sm text-slate-700 caption mt-1"></p>
         <div class="flex items-center justify-between mt-2 text-slate-500">
           <div class="flex space-x-4">
-            <button class="like-button flex items-center space-x-1 cursor-pointer">
-              <span>❤</span><span class="likes-count">0</span>
-            </button>
-            <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <span>💬</span><span class="comments-count">0</span>
-            </button>
+            <button class="like-button flex items-center space-x-1 cursor-pointer"><span>❤</span><span class="likes-count">0</span></button>
+            <button class="comment-button flex items-center space-x-1 cursor-pointer"><span>💬</span><span class="comments-count">0</span></button>
           </div>
           <span class="text-[11px] post-time-secondary"></span>
         </div>
+      </div>
     </div>
   </template>
 
@@ -296,7 +293,7 @@
     import {
       getFirestore, collection, addDoc, setDoc, doc, updateDoc,
       serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
-      startAt, endAt, deleteDoc, writeBatch, increment
+      startAt, endAt, deleteDoc, writeBatch, increment, getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // Config (prod)
@@ -322,13 +319,13 @@
     function showToast(msg,type='success'){ $("toast-message").textContent=msg; $("toast-icon").innerHTML= type==='success'?'✅':'❌'; const t=$("toast"); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
     function isExpired(ch){ if(!ch.expiresAt) return false; const d=ch.expiresAt?.toDate?.()||new Date(ch.expiresAt); return d && d<new Date(); }
 
-    // === Solved por usuario (localStorage) ===
+    // Solved por usuario (local)
     function solvedKey(uid){ return `tereto_solved_${uid}`; }
     function loadSolved(uid){ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid))||'[]')); }catch{return new Set();} }
     function saveSolved(uid,set){ try{ localStorage.setItem(solvedKey(uid), JSON.stringify([...set])); }catch{} }
 
-    // === Cámara ===
-    let camStream=null, camResolve=null; // camResolve para devolver dataURL al que lo pida
+    // Cámara
+    let camStream=null, camResolve=null;
     const camModal=$("camera-modal"), camVideo=$("cam-video"), camCanvas=$("cam-canvas");
     async function openCamera(){
       try{
@@ -344,15 +341,15 @@
     $("cam-capture")?.addEventListener('click', ()=>{ const dataUrl=capturePhoto(); closeCamera(); if(camResolve) camResolve(dataUrl); camResolve=null; });
     function captureWithModal(){ return new Promise(async (res)=>{ camResolve=res; await openCamera(); }); }
 
-    // === Imagen ===
+    // Imagen
     async function fileToCompressedDataURL(file,maxW=960,quality=0.7){
       if(!file||!file.type?.startsWith('image/')) return 'https://placehold.co/600x400/333/FFF?text=TeReto';
       const bmp=await createImageBitmap(file); const r=bmp.width/bmp.height; const w=Math.min(bmp.width,maxW); const h=Math.round(w/r);
-      const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h; const ctx=cvs.getContext('2d'); ctx.drawImage(bmp,0,0,w,h);
+      const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h; cvs.getContext('2d').drawImage(bmp,0,0,w,h);
       let data=cvs.toDataURL('image/jpeg',quality); const kb=Math.round((data.length*3)/4/1024); if(kb>300) data=cvs.toDataURL('image/jpeg',0.6); return data;
     }
 
-    // === Auth ===
+    // Auth
     $("google-btn")?.addEventListener("click", async ()=>{
       try{
         $("loading-spinner").classList.remove("hidden");
@@ -362,7 +359,7 @@
     });
     $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>showToast('No se pudo cerrar sesión','error')));
 
-    // === Estado y subs ===
+    // Estado & subs
     let currentUser=null, solvedSet=new Set();
     let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null, followingUnsub=null;
     let myChallenges=[], followingSet=new Set();
@@ -384,7 +381,6 @@
     function restartFeed(){
       if(feedUnsub){ feedUnsub(); feedUnsub=null; }
       if(!currentUser) return;
-      // Si no seguís a nadie, feed vacío (así forzamos UX a seguir)
       const ids=[...followingSet];
       if(ids.length===0){ renderFeed([]); return; }
       if(ids.length<=10){
@@ -396,11 +392,29 @@
       }
     }
 
+    // FIX: Mis retos (sin orderBy, ordenamos en cliente)
     function startMyChallenges(){
-      if(myChallengesUnsub){ myChallengesUnsub(); myChallengesUnsub=null; }
-      if(!currentUser) return;
-      const qRef=query(collection(db,'challenges'), where('authorId','==',currentUser.uid), orderBy('createdAt','desc'), limit(200));
-      myChallengesUnsub=onSnapshot(qRef,(snap)=>{ myChallenges=snap.docs.map(d=>({id:d.id,...d.data()})); refreshProfile(); });
+      if (myChallengesUnsub) { myChallengesUnsub(); myChallengesUnsub = null; }
+      if (!currentUser) return;
+      const qRef = query(
+        collection(db,'challenges'),
+        where('authorId','==', currentUser.uid),
+        limit(500)
+      );
+      myChallengesUnsub = onSnapshot(qRef, (snap)=>{
+        myChallenges = snap.docs.map(d=>{
+          const data = d.data();
+          return {
+            id: d.id,
+            ...data,
+            _createdAtMs: data.createdAt?.toDate?.()?.getTime?.() ?? 0
+          };
+        }).sort((a,b)=> b._createdAtMs - a._createdAtMs);
+        refreshProfile();
+      }, (err)=>{
+        console.error('myChallenges sub', err);
+        showToast('No se pudo cargar tus retos','error');
+      });
     }
 
     onAuthStateChanged(auth, async (user)=>{
@@ -417,7 +431,7 @@
       switchView('feed-view');
     });
 
-    // === Render feed + lógica de bloqueo ===
+    // Feed + bloqueo
     const feedContainer=$("feed-container"), postTemplate=$("post-template");
     function shouldUnlock(ch){
       if(!currentUser) return false;
@@ -454,9 +468,10 @@
       items.forEach(renderPost);
     }
 
-    // === Comentarios ===
+    // Comentarios
     const commentsModal=$("comments-modal"), commentsModalBody=$("comments-modal-body");
     const commentForm=$("comment-form"), commentInput=$("comment-input"), commentUserImg=$("comment-user-img"), commentItemTemplate=$("comment-item-template");
+    let commentsUnsub=null;
     function openComments(chId){
       if(!currentUser) return;
       commentUserImg.src=currentUser.photoURL||'';
@@ -474,15 +489,15 @@
       try{ const batch=writeBatch(db); const cRef=doc(collection(db,'challenges',chId,'comments')); batch.set(cRef,{authorId:currentUser.uid,authorName:currentUser.displayName,authorImg:currentUser.photoURL,text,createdAt:serverTimestamp()}); batch.update(doc(db,'challenges',chId),{commentsCount:increment(1)}); await batch.commit(); commentInput.value=''; }catch(e){ console.error(e); showToast('No se pudo comentar','error'); }
     });
 
-    // === Crear reto ===
+    // Crear reto
+    async function fileToCompressed(file){ return fileToCompressedDataURL(file); }
     function calcExpiresAt(){ const v=$("challenge-expiry").value; if(v==='24') return new Date(Date.now()+24*3600*1000); if(v==='48') return new Date(Date.now()+48*3600*1000); return null; }
-    $("file-upload")?.addEventListener('change', async (e)=>{ const f=e.target.files?.[0]; if(!f){ $("file-name").textContent=''; $("goto-step-2").disabled=true; $("image-preview-container").classList.add('hidden'); return; } $("file-name").textContent=f.name; const dataUrl=await fileToCompressedDataURL(f); $("goto-step-2").dataset.fileUrl=dataUrl; $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); $("goto-step-2").disabled=false; });
+    $("file-upload")?.addEventListener('change', async (e)=>{ const f=e.target.files?.[0]; if(!f){ $("file-name").textContent=''; $("goto-step-2").disabled=true; $("image-preview-container").classList.add('hidden'); return; } $("file-name").textContent=f.name; const dataUrl=await fileToCompressed(f); $("goto-step-2").dataset.fileUrl=dataUrl; $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); $("goto-step-2").disabled=false; });
     $("open-camera-btn")?.addEventListener('click', async ()=>{ const dataUrl=await captureWithModal(); if(!dataUrl){ return; } $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); const btn=$("goto-step-2"); btn.dataset.fileUrl=dataUrl; btn.disabled=false; $("file-name").textContent=`Foto capturada - ${new Date().toLocaleTimeString()}.jpg`; });
     function showCreateStep(step){ ["create-step-1","create-step-2","create-step-3-trivia","create-step-3-photo"].forEach(id=>$(id).classList.add("hidden")); $(step).classList.remove("hidden"); }
     $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
     $("select-trivia-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-trivia'));
     $("select-photo-challenge-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-photo'));
-
     async function publishChallenge(payload){
       if(!currentUser) return;
       let contentUrl=$("goto-step-2").dataset.fileUrl;
@@ -495,7 +510,7 @@
     $("trivia-form")?.addEventListener('submit',(e)=>{ e.preventDefault(); publishChallenge({ type:'trivia', question:$("trivia-question").value, correctAnswer:$("correct-answer").value, wrongAnswers:[ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ] }); });
     $("photo-challenge-form")?.addEventListener('submit',(e)=>{ e.preventDefault(); publishChallenge({ type:'photo', question:$("photo-challenge-task").value }); });
 
-    // === Trivia modal ===
+    // Trivia
     const triviaModal=$("trivia-modal"), triviaQ=$("trivia-q"), triviaOpts=$("trivia-opts"), triviaFeedback=$("trivia-feedback"); let triviaCurrent=null;
     $("trivia-close")?.addEventListener('click', ()=>{ triviaModal.classList.add('hidden'); triviaCurrent=null; triviaOpts.innerHTML=''; triviaFeedback.textContent=''; });
     function openTrivia(ch, card){
@@ -511,7 +526,7 @@
       triviaModal.classList.remove('hidden');
     }
 
-    // === Friends: buscar + seguir/dejar de seguir ===
+    // Friends: buscar + seguir/dejar de seguir
     const friendsResults=$("friends-results");
     async function searchUsers(){
       const term=($("user-search-input").value||'').toLowerCase().trim();
@@ -545,10 +560,11 @@
     }
     $("user-search-input")?.addEventListener('input', ()=>searchUsers());
 
-    // === Perfil ===
+    // Perfil
     function refreshProfile(){
       if(!currentUser) return;
       $("profile-pic").src=currentUser.photoURL||''; $("profile-name").textContent=currentUser.displayName||'Usuario'; $("profile-email").textContent=currentUser.email||'';
+      // ya vienen ordenados desc por _createdAtMs
       const grid=$("my-mosaic"); grid.innerHTML=''; $("my-retos-count").textContent=`${myChallenges.length} retos`;
       myChallenges.forEach(ch=>{
         const wrap=document.createElement('div'); wrap.className='mosaic-item'; wrap.dataset.id=ch.id;
@@ -566,7 +582,7 @@
       });
     }
 
-    // === NAV + acciones de feed (like / abrir modales de reto) ===
+    // Nav + acciones de feed
     const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
     function switchView(v){ Object.values(views).forEach(x=>x.classList.add('hidden')); if(views[v]) views[v].classList.remove('hidden');
       document.querySelectorAll('.nav-button').forEach(btn=>{ btn.classList.toggle('text-indigo-500', btn.dataset.view===v); btn.classList.toggle('text-slate-500', btn.dataset.view!==v); });
@@ -586,28 +602,19 @@
 
       // Abrir reto si está bloqueado
       const img=card.querySelector('.content-img'); const locked=img.classList.contains('locked'); if(!locked) return;
-      const ch = (()=>{ // buscar data mínima del DOM (solo id) y forzar fetch rápido desde el feed actual
-        // No tenemos un array global del feed; consultamos un snapshot puntual de este doc si hace falta
-        return { id: chId }; 
-      })();
 
-      // Traer doc para saber type y contenido
       (async ()=>{
-        const d = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js")).getDoc(doc(db,'challenges',chId));
+        const d = await getDoc(doc(db,'challenges',chId));
         if(!d.exists()) { showToast('El reto ya no existe','error'); return; }
         const data=d.data();
 
         if(data.type==='trivia'){
-          // abrir trivia
-          triviaOpts.innerHTML=''; triviaFeedback.textContent='';
           openTrivia(data, card);
         } else if(data.type==='photo'){
-          // pedir foto, marcar como resuelto local
           const dataUrl = await captureWithModal();
           if(!dataUrl){ showToast('No se envió la foto','error'); return; }
           solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); showToast('Enviado. Desbloqueado 👌');
         } else {
-          // Tipo desconocido: desbloqueo directo para no bloquear UX
           solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true);
         }
       })();
