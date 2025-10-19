@@ -11,22 +11,23 @@
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .blur-locked { filter: blur(20px); transition: filter 0.25s ease-in-out; }
-    .unlocked { filter: blur(0px); }
     .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .answer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .like-icon.liked { fill: #ec4899; color: #ec4899; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
+    .answer-btn:hover { transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .like-icon.liked { fill:#ec4899; color:#ec4899; }
     .like-button:active { transform: scale(0.9); }
     .image-preview { max-height: 200px; object-fit: cover; }
     .comments-modal-body { height: calc(100vh - 12rem); }
-    .toast { visibility: hidden; opacity: 0; transform: translateY(100%); transition: all 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);}
-    .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-    .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #6366f1; animation: spin 1s ease infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-    .friends-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 600; }
-    .btn-primary { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; }
-    .btn-primary:hover { box-shadow: 0 4px 15px 0 rgba(99,102,241,0.75); }
-    .tip-chip { font-size: 10px; padding: 2px 8px; border-radius: 9999px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.5); }
+    .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55);}
+    .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
+    .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite; }
+    @keyframes spin { 0%{ transform:rotate(0);} 100%{ transform:rotate(360deg);} }
+    .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
+    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); transition:all .3s ease; }
+    .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.75); }
+    .tip-chip { font-size:10px; padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.5); }
+    .grid-mosaic { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .mosaic-item { aspect-ratio:1/1; object-fit:cover; border-radius:.5rem; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -169,7 +170,7 @@
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40"><h1 class="text-3xl font-bold text-slate-800">Amigos</h1></header>
         <div class="p-4">
           <div class="relative mb-4">
-            <input type="search" id="user-search-input" placeholder="Buscar usuarios..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="search" id="user-search-input" placeholder="Buscar por nombre o email..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
               <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
@@ -177,7 +178,7 @@
           <div class="border-b border-slate-200">
             <nav class="-mb-px flex space-x-6" aria-label="Tabs">
               <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-tab="my-friends">Mis Amigos</button>
-              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="requests">Solicitudes</button>
+              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="discover">Descubrir</button>
             </nav>
           </div>
           <div id="friends-tab-content" class="mt-4"></div>
@@ -191,15 +192,9 @@
             <img id="profile-pic" src="" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
             <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
             <p id="profile-email" class="text-slate-500"></p>
-            <div class="flex space-x-8 mt-4">
-              <div class="text-center">
-                <span id="created-count" class="font-bold text-lg text-slate-700">0</span>
-                <p class="text-slate-500 text-sm">Retos Creados</p>
-              </div>
-              <div class="text-center">
-                <span id="solved-count" class="font-bold text-lg text-slate-700">0</span>
-                <p class="text-slate-500 text-sm">Retos Superados</p>
-              </div>
+            <div class="w-full mt-6">
+              <h3 class="text-lg font-semibold text-slate-700 mb-2">Mis retos</h3>
+              <div id="my-mosaic" class="grid-mosaic"></div>
             </div>
           </div>
         </div>
@@ -229,7 +224,7 @@
   </div>
 
   <!-- MODALES -->
-  <div id="trivia-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+  <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
       <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -240,7 +235,7 @@
     </div>
   </div>
 
-  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
       <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -252,29 +247,31 @@
     </div>
   </div>
 
-  <div id="comments-modal" class="hidden fixed inset-0 bg-white z-50 flex flex-col">
-    <header class="flex items-center justify-between p-4 border-b">
-      <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
-      <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-    </header>
-    <div id="comments-modal-body" class="comments-modal-body flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
-    <footer class="p-4 border-t bg-white">
-      <form id="comment-form" class="flex items-center space-x-2">
-        <img id="comment-user-img" src="" class="w-8 h-8 rounded-full">
-        <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <button type="submit" class="btn-primary text-white rounded-full p-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+  <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+      <header class="flex items-center justify-between p-4 border-b">
+        <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
+        <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800" aria-label="Cerrar comentarios">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
-      </form>
-    </footer>
+      </header>
+      <div id="comments-modal-body" class="comments-modal-body flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
+      <footer class="p-4 border-t bg-white">
+        <form id="comment-form" class="flex items-center space-x-2">
+          <img id="comment-user-img" src="" class="w-8 h-8 rounded-full" alt="">
+          <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button type="submit" class="btn-primary text-white rounded-full p-2" aria-label="Enviar comentario">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          </button>
+        </form>
+      </footer>
+    </div>
   </div>
 
   <div id="camera-modal" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
     <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
     <canvas id="camera-canvas" class="hidden"></canvas>
-    <button id="cancel-camera-btn" class="absolute top-4 left-4 text-white bg-black/50 rounded-full p-2">
+    <button id="cancel-camera-btn" class="absolute top-4 left-4 text-white bg-black/50 rounded-full p-2" aria-label="Cerrar cámara">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
     <div class="absolute bottom-10 flex flex-col items-center">
@@ -316,20 +313,6 @@
     </div>
   </template>
 
-  <template id="validation-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-4 validation-card">
-      <div class="p-4">
-        <p class="text-sm text-slate-500">Solicitud de validación para tu reto:</p>
-        <p class="text-sm text-slate-600 mb-4"><strong class="submitter-name"></strong> ha enviado una prueba:</p>
-        <img class="w-full h-auto rounded-lg submission-img" src="" alt="Prueba del reto">
-        <div class="flex space-x-3 mt-4">
-          <button class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition approve-btn">Aprobar</button>
-          <button class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition reject-btn">Rechazar</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
   <template id="comment-template">
     <div class="flex items-start space-x-3">
       <img class="w-8 h-8 rounded-full comment-author-img" src="">
@@ -344,7 +327,10 @@
     <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100">
       <div class="flex items-center space-x-3">
         <img class="w-10 h-10 rounded-full user-img" src="">
-        <p class="font-semibold user-name text-slate-700"></p>
+        <div class="flex flex-col">
+          <p class="font-semibold user-name text-slate-700"></p>
+          <p class="text-xs text-slate-500 user-email"></p>
+        </div>
       </div>
       <div class="user-actions"></div>
     </div>
@@ -359,7 +345,7 @@
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
       getFirestore, collection, addDoc, setDoc, doc,
-      serverTimestamp, query, orderBy, onSnapshot
+      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where, startAt, endAt
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // ==== Firebase config (PROD) ====
@@ -400,18 +386,12 @@
     $("google-btn")?.addEventListener("click", async () => {
       try {
         loadingSpinner.classList.remove("hidden");
-        try {
-          await signInWithPopup(auth, provider);
-        } catch (e) {
-          if (e?.code === "auth/popup-blocked") await signInWithRedirect(auth, provider);
-          else throw e;
-        }
+        try { await signInWithPopup(auth, provider); }
+        catch (e) { if (e?.code === "auth/popup-blocked") await signInWithRedirect(auth, provider); else throw e; }
       } catch (err) {
         console.error(err);
         showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
-      } finally {
-        loadingSpinner.classList.add("hidden");
-      }
+      } finally { loadingSpinner.classList.add("hidden"); }
     });
     $("signout-btn")?.addEventListener("click", async () => {
       try { await signOut(auth); showToast("Sesión cerrada."); }
@@ -421,18 +401,23 @@
     // ==== State ====
     let currentUser = null;
     let mockUser = null;
-    let allUsers = {};
-    let friends = ['user456'];
-    let friendRequests = ['user789'];
 
-    let challengesData = [];   // UI feed
+    // Persistencia local por usuario
+    const lsKey = (k, uid) => `tereto_${k}_${uid}`;
+    const loadSet = (k, uid) => new Set(JSON.parse(localStorage.getItem(lsKey(k, uid)) || '[]'));
+    const saveSet = (k, uid, set) => localStorage.setItem(lsKey(k, uid), JSON.stringify([...set]));
+    const loadObj = (k, uid) => JSON.parse(localStorage.getItem(lsKey(k, uid)) || '{}');
+    const saveObj = (k, uid, obj) => localStorage.setItem(lsKey(k, uid), JSON.stringify(obj));
+
+    let friendsSet = new Set();           // uids de amigos
+    let likeState = {};                   // { challengeId: { liked:boolean, count:number } }
+    let commentState = {};                // { challengeId: [{userId, userName, userImg, text, createdAt}] }
+
+    // feed
+    let challengesData = [];
     let feedUnsub = null;
 
-    let solvedByUser = new Set();
-    const solvedKeyFor = (uid) => `tereto_solved_${uid}`;
-    function loadSolvedFor(uid){ try { return new Set(JSON.parse(localStorage.getItem(solvedKeyFor(uid))||'[]')); } catch { return new Set(); } }
-    function saveSolvedFor(uid,set){ try { localStorage.setItem(solvedKeyFor(uid), JSON.stringify([...set])); } catch {} }
-
+    // ===== Users helpers =====
     function seedUsersFor(user){
       mockUser = {
         uid: user.uid,
@@ -440,28 +425,44 @@
         email: user.email || "",
         photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0]||'U'}`
       };
-      allUsers = {
-        [mockUser.uid]: mockUser,
-        'user456': { uid:'user456', displayName:'Ana', photoURL:'https://placehold.co/40x40/FFA0A0/FFFFFF?text=A' },
-        'user789': { uid:'user789', displayName:'Carlos', photoURL:'https://placehold.co/40x40/A0FFA0/FFFFFF?text=C' },
-        'userABC': { uid:'userABC', displayName:'Beatriz', photoURL:'https://placehold.co/40x40/FFD700/FFFFFF?text=B' }
-      };
     }
 
-    // ==== Render ====
+    async function upsertUserProfile(user){
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: user.displayName || null,
+          email: user.email || null,
+          photoURL: user.photoURL || null,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      } catch(e){ console.error("users setDoc error:", e); }
+    }
+
+    // ===== Friends (local) =====
+    function loadFriends(uid){
+      friendsSet = loadSet('friends', uid);
+    }
+    function saveFriends(uid){
+      saveSet('friends', uid, friendsSet);
+    }
+    function isFriend(uid){ return friendsSet.has(uid); }
+    function addFriend(uid){ friendsSet.add(uid); saveFriends(currentUser.uid); showToast("Agregado a amigos"); refreshFriendsTab(); refreshFeed(); }
+    function removeFriend(uid){ friendsSet.delete(uid); saveFriends(currentUser.uid); showToast("Eliminado de amigos"); refreshFriendsTab(); refreshFeed(); }
+
+    // ===== UI: Feed / Profile =====
     const feedContainer = $("feed-container");
     const postTemplate = $("post-template");
-    const validationTemplate = $("validation-template");
     const commentTemplate = $("comment-template");
-    const userListItemTemplate = $("user-list-item-template");
     const friendsTabContent = $("friends-tab-content");
-    const validationsContainer = $("validations-container");
+    const userListItemTemplate = $("user-list-item-template");
+    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email");
+    const myMosaic = $("my-mosaic");
 
     function shouldUnlockForUser(ch){
       if (!mockUser) return false;
-      if (ch.authorId === mockUser.uid) return true;
-      if (solvedByUser.has(ch.id)) return true;
-      if (ch.submission?.status === 'approved' && ch.submission.userId === mockUser.uid) return true;
+      if (ch.authorId === mockUser.uid) return true;                // autor ve desbloqueado
+      const solvedSet = loadSet('solved', currentUser.uid);
+      if (solvedSet.has(ch.id)) return true;
       return false;
     }
     function unlockPostElement(postEl){
@@ -469,45 +470,74 @@
       postEl.querySelector('.lock-overlay')?.classList.add('hidden');
     }
 
+    function mergeClientState(base){
+      const id = base.id;
+      const ls = likeState[id];
+      const comments = (commentState[id] || []);
+      return {
+        ...base,
+        likes: (ls?.count ?? base.likes ?? 0),
+        likedByMe: (ls?.liked ?? false),
+        commentsCount: comments.length
+      };
+    }
+
     function renderPost(ch){
+      const chMerged = mergeClientState(ch);
       const frag = document.importNode(postTemplate.content, true);
       const card = frag.querySelector('.post-card');
-      card.dataset.challengeId = ch.id;
+      card.dataset.challengeId = chMerged.id;
 
-      frag.querySelector('.author-img').src = ch.authorImg;
-      frag.querySelector('.author-name').textContent = ch.authorName;
-
-      let dt = new Date();
-      if (ch.createdAt?.toDate) dt = ch.createdAt.toDate();
-      else if (ch.createdAt instanceof Date) dt = ch.createdAt;
-
-      frag.querySelector('.post-time').textContent = dt.toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
-      frag.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
-      frag.querySelector('.likes-count').textContent = ch.likes ?? 0;
-      frag.querySelector('.comments-count').textContent = ch.comments?.length ?? ch.commentsCount ?? 0;
-      if (ch.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
+      frag.querySelector('.author-img').src = chMerged.authorImg || '';
+      frag.querySelector('.author-name').textContent = chMerged.authorName || 'Usuario';
+      const dt = chMerged.createdAt?.toDate?.() || new Date();
+      frag.querySelector('.post-time').textContent = new Date(dt).toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
+      frag.querySelector('.content-img').src = chMerged.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      frag.querySelector('.likes-count').textContent = chMerged.likes ?? 0;
+      frag.querySelector('.comments-count').textContent = chMerged.commentsCount ?? 0;
+      if (chMerged.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
+      if (chMerged.likedByMe) frag.querySelector('.like-icon').classList.add('liked');
 
       const img = frag.querySelector('.content-img');
       const overlay = frag.querySelector('.lock-overlay');
       img.classList.add('blur-locked'); overlay.classList.remove('hidden');
-      if (shouldUnlockForUser(ch)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
+      if (shouldUnlockForUser(chMerged)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
 
       feedContainer.append(frag);
     }
 
-    function loadFeedUI(){
-      $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
+    function refreshFeed(){
+      // filtro: solo retos de amigos
+      const friendsIds = new Set(friendsSet);
+      const items = challengesData.filter(c => friendsIds.has(c.authorId));
       feedContainer.innerHTML = '';
-      challengesData.forEach(renderPost);
+      $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
+      items.forEach(renderPost);
     }
 
-    // ==== Firestore Feed ====
+    function refreshProfile(){
+      profilePic.src = mockUser.photoURL;
+      profileName.textContent = mockUser.displayName;
+      profileEmail.textContent = mockUser.email;
+      // mosaico de mis retos
+      const mine = challengesData.filter(c => c.authorId === mockUser.uid);
+      myMosaic.innerHTML = '';
+      mine.forEach(ch=>{
+        const img = document.createElement('img');
+        img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
+        img.className = 'mosaic-item';
+        myMosaic.appendChild(img);
+      });
+    }
+
+    // ===== Firestore Feed =====
     function startFeedSubscription(){
       if (feedUnsub) feedUnsub();
       const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
       feedUnsub = onSnapshot(q, (snap) => {
         challengesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        loadFeedUI();
+        refreshFeed();
+        refreshProfile();
       }, (err) => {
         console.error("Feed snapshot error:", err);
         showToast("No se pudo cargar el feed","error");
@@ -515,81 +545,58 @@
     }
     function stopFeedSubscription(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
 
-    // ==== Perfil / Validaciones (mock) ====
-    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email"), createdCount = $("created-count");
-    function updateProfileUI(){
-      if (!mockUser) return;
-      profilePic.src = mockUser.photoURL;
-      profileName.textContent = mockUser.displayName;
-      profileEmail.textContent = mockUser.email;
-      createdCount.textContent = challengesData.filter(c=>c.authorId===mockUser.uid).length;
-      loadPendingValidations();
-    }
-    function loadPendingValidations(){
-      validationsContainer.innerHTML = '';
-      const pending = challengesData.filter(c => c.authorId===mockUser.uid && c.submission?.status==='pending');
-      if (pending.length===0) return;
-      const header = document.createElement('h3');
-      header.className = 'text-xl font-bold text-slate-800 mb-4';
-      header.textContent = 'Validaciones Pendientes';
-      validationsContainer.appendChild(header);
-      pending.forEach(ch=>{
-        const el = document.importNode(validationTemplate.content, true);
-        el.querySelector('.validation-card').dataset.challengeId = ch.id;
-        el.querySelector('.submitter-name').textContent = ch.submission.userName;
-        el.querySelector('.submission-img').src = ch.submission.submissionUrl;
-        validationsContainer.appendChild(el);
-      });
-    }
-    function handleValidation(challengeId, isApproved){
-      const ch = challengesData.find(c => c.id === challengeId);
-      if (!ch) return;
-      ch.submission.status = isApproved ? 'approved' : 'rejected';
-      if (isApproved && ch.submission?.userId){
-        const submitterKey = solvedKeyFor(ch.submission.userId);
-        const prev = new Set(JSON.parse(localStorage.getItem(submitterKey) || '[]'));
-        prev.add(ch.id);
-        localStorage.setItem(submitterKey, JSON.stringify([...prev]));
-      }
-      showToast(`Reto ${isApproved ? 'aprobado' : 'rechazado'}.`);
-      loadPendingValidations();
-    }
-
-    // ==== Comentarios (mock) ====
+    // ===== Comentarios (local)
     const commentForm = $("comment-form"), commentInput = $("comment-input"),
           commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
           commentsModalBody = $("comments-modal-body");
+    let openCommentsChallengeId = null;
+
     function openCommentsModal(chId){
-      const ch = challengesData.find(c => c.id===chId); if (!ch) return;
-      commentUserImg.src = mockUser.photoURL; commentForm.dataset.challengeId = chId; renderComments(ch);
+      openCommentsChallengeId = chId;
+      commentUserImg.src = mockUser.photoURL;
+      commentForm.dataset.challengeId = chId;
+      renderComments(chId);
       commentsModal.classList.remove('hidden');
     }
-    function renderComments(ch){
+    function closeComments(){
+      commentsModal.classList.add('hidden');
+      openCommentsChallengeId = null;
+    }
+    function renderComments(chId){
+      const list = commentState[chId] || [];
       commentsModalBody.innerHTML = '';
-      (ch.comments || []).sort((a,b)=> (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0)).forEach(cm=>{
+      list.forEach(cm=>{
         const el = document.importNode(commentTemplate.content, true);
         el.querySelector('.comment-author-img').src = cm.userImg;
         el.querySelector('.comment-author-name').textContent = cm.userName;
         el.querySelector('.comment-text').textContent = cm.text;
-        const date = cm.createdAt?.toDate?.() || new Date();
-        el.querySelector('.comment-time').textContent = date.toLocaleString('es-AR',{ timeStyle:'short' });
+        el.querySelector('.comment-time').textContent = new Date(cm.createdAt).toLocaleString('es-AR',{ timeStyle:'short' });
         commentsModalBody.appendChild(el);
       });
     }
     $("comment-form")?.addEventListener('submit', (e)=>{
       e.preventDefault();
-      const id = e.target.dataset.challengeId;
-      const ch = challengesData.find(c=>c.id===id);
+      const challengeId = e.target.dataset.challengeId;
       const text = commentInput.value.trim();
-      if (!ch || !text) return;
-      ch.comments = ch.comments || [];
-      ch.comments.push({ userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text, createdAt: new Date() });
-      commentInput.value=''; renderComments(ch);
-      const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${id}"]`);
-      if (cardEl) cardEl.querySelector('.comments-count').textContent = ch.comments.length;
+      if (!text || !challengeId) return;
+      commentState[challengeId] = commentState[challengeId] || [];
+      commentState[challengeId].push({
+        userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text, createdAt: new Date().toISOString()
+      });
+      saveObj('comments', currentUser.uid, commentState);
+      commentInput.value='';
+      renderComments(challengeId);
+      // actualizar contador en card
+      const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
+      if (cardEl) cardEl.querySelector('.comments-count').textContent = (commentState[challengeId] || []).length;
     });
+    $("close-comments-modal")?.addEventListener('click', closeComments);
+    // cerrar por overlay click
+    $("comments-modal")?.addEventListener('click',(e)=>{ if (e.target.id === 'comments-modal') closeComments(); });
+    // cerrar por ESC
+    document.addEventListener('keydown',(e)=>{ if (e.key === 'Escape' && !commentsModal.classList.contains('hidden')) closeComments(); });
 
-    // ==== Cámara / Crear (sin Storage) ====
+    // ===== Cámara / Crear (sin Storage)
     const cameraModal = $("camera-modal"),
           cameraStreamEl = $("camera-stream"),
           cameraCanvas = $("camera-canvas");
@@ -631,11 +638,7 @@
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/png');
       if (currentPhotoChallengeId){
-        const ch = challengesData.find(c=>c.id===currentPhotoChallengeId);
-        if (ch){
-          ch.submission = { userId: mockUser.uid, userName: mockUser.displayName, submissionUrl: dataUrl, status: 'pending' };
-          showToast("Prueba enviada para validación.");
-        }
+        showToast("Prueba enviada (mock).");
         currentPhotoChallengeId = null;
       } else {
         createViewElements.imagePreview.src = dataUrl;
@@ -668,7 +671,7 @@
       steps[step].classList.remove('hidden');
     }
 
-    // ==== Publicar reto (Firestore) ====
+    // ===== Publicar reto (Firestore)
     async function publishChallenge(challengeDetails){
       if (!mockUser) return;
       try{
@@ -679,7 +682,6 @@
           createdAt: serverTimestamp(),
           contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
           likes: 0,
-          commentsCount: 0,
           ...challengeDetails
         });
         showToast("¡Reto publicado!");
@@ -690,7 +692,7 @@
       }
     }
 
-    // ==== Trivia (desbloqueo local) ====
+    // ===== Trivia (desbloqueo local)
     const triviaModal = $("trivia-modal");
     function openTriviaModal(ch, postElement){
       $("trivia-modal-question").textContent = ch.question;
@@ -709,8 +711,8 @@
     function checkAnswer(isCorrect, postElement, challengeId){
       if (isCorrect){
         triviaModal.classList.add('hidden');
-        solvedByUser.add(challengeId);
-        saveSolvedFor(mockUser.uid, solvedByUser);
+        const solved = loadSet('solved', currentUser.uid);
+        solved.add(challengeId); saveSet('solved', currentUser.uid, solved);
         unlockPostElement(postElement);
         showToast("¡Correcto! Desbloqueado 👌");
       } else {
@@ -719,46 +721,81 @@
       }
     }
 
-    // ==== Friends (mock) ====
+    // ===== Friends (UI)
     const friendsTabButtons = document.querySelectorAll('.friends-tab');
-    function renderFriendsTab(tab){
-      friendsTabContent.innerHTML = '';
+    function refreshFriendsTab(tab = document.querySelector('.friends-tab.active')?.dataset.tab || 'my-friends'){
       friendsTabButtons.forEach(btn=>{
         btn.classList.toggle('active', btn.dataset.tab===tab);
         btn.classList.toggle('text-slate-500', btn.dataset.tab!==tab);
       });
+      friendsTabContent.innerHTML = '';
       if (tab==='my-friends'){
-        if (friends.length===0){ friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`; return; }
-        friends.forEach(friendId=>{
-          const user = allUsers[friendId];
-          const item = userListItemTemplate.content.cloneNode(true);
-          item.querySelector('.user-img').src = user.photoURL;
-          item.querySelector('.user-name').textContent = user.displayName;
-          friendsTabContent.appendChild(item);
+        if (friendsSet.size===0){
+          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`; return;
+        }
+        [...friendsSet].forEach(async (uid)=>{
+          const usersQ = query(collection(db,'users'), where('__name__','==', uid), limit(1));
+          const snap = await getDocs(usersQ);
+          snap.forEach(docu=>{
+            const u = { uid: docu.id, ...docu.data() };
+            renderUserRow(u, true);
+          });
         });
-      } else {
-        if (friendRequests.length===0){ friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No tienes solicitudes pendientes.</p>`; return; }
-        friendRequests.forEach(userId=>{
-          const user = allUsers[userId];
-          const item = userListItemTemplate.content.cloneNode(true);
-          item.querySelector('.user-img').src = user.photoURL;
-          item.querySelector('.user-name').textContent = user.displayName;
-          const actions = item.querySelector('.user-actions');
-          actions.innerHTML = `
-            <button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-user-id="${userId}" data-action="accept">Aceptar</button>
-            <button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full ml-2" data-user-id="${userId}" data-action="reject">Rechazar</button>`;
-          friendsTabContent.appendChild(item);
-        });
+      } else if (tab==='discover'){
+        // Traigo algunos usuarios (primeros 30) y filtro por texto en cliente (simple para Fase 1)
+        renderDiscover();
       }
     }
-    function handleFriendRequest(userId, accepted){
-      friendRequests = friendRequests.filter(id=>id!==userId);
-      if (accepted){ friends.push(userId); showToast("Solicitud de amistad aceptada."); }
-      else { showToast("Solicitud rechazada."); }
-      renderFriendsTab('requests');
+
+    function renderUserRow(user, isFriend){
+      const item = userListItemTemplate.content.cloneNode(true);
+      item.querySelector('.user-img').src = user.photoURL || '';
+      item.querySelector('.user-name').textContent = user.displayName || '(Sin nombre)';
+      item.querySelector('.user-email').textContent = user.email || '';
+      const actions = item.querySelector('.user-actions');
+      if (user.uid === currentUser.uid){
+        actions.innerHTML = `<span class="text-xs text-slate-400">Vos</span>`;
+      } else if (isFriend){
+        actions.innerHTML = `<button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full" data-action="remove-friend" data-uid="${user.uid}">Eliminar</button>`;
+      } else {
+        actions.innerHTML = `<button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-action="add-friend" data-uid="${user.uid}">Agregar</button>`;
+      }
+      friendsTabContent.appendChild(item);
     }
 
-    // ==== Navegación ====
+    async function renderDiscover(){
+      const qUsers = query(collection(db,'users'), orderBy('displayName'), limit(30));
+      const snap = await getDocs(qUsers);
+      const term = ($("user-search-input").value || '').toLowerCase();
+      const list = [];
+      snap.forEach(d=>{
+        const u = { uid:d.id, ...d.data() };
+        if (u.uid === currentUser.uid) return;
+        const match = (u.displayName||'').toLowerCase().includes(term) || (u.email||'').toLowerCase().includes(term);
+        if (match) list.push(u);
+      });
+      if (list.length===0){
+        friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return;
+      }
+      list.forEach(u=>renderUserRow(u, isFriend(u.uid)));
+    }
+
+    $("user-search-input")?.addEventListener('input', ()=>{
+      const active = document.querySelector('.friends-tab.active')?.dataset.tab;
+      if (active === 'discover') renderDiscover();
+    });
+    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=> refreshFriendsTab(btn.dataset.tab)));
+
+    // Delegación acciones amigos
+    friendsTabContent.addEventListener('click',(e)=>{
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const uid = btn.dataset.uid;
+      if (btn.dataset.action === 'add-friend') addFriend(uid);
+      if (btn.dataset.action === 'remove-friend') removeFriend(uid);
+    });
+
+    // ===== Navegación y eventos globales =====
     const views = {
       'feed-view': $("feed-view"),
       'friends-view': $("friends-view"),
@@ -772,68 +809,69 @@
         btn.classList.toggle('text-indigo-500', btn.dataset.view===viewName);
         btn.classList.toggle('text-slate-500', btn.dataset.view!==viewName);
       });
-      if (viewName==='profile-view') updateProfileUI();
+      if (viewName==='profile-view') refreshProfile();
       if (viewName==='create-view') resetCreateFlow();
-      if (viewName==='friends-view') renderFriendsTab('my-friends');
+      if (viewName==='friends-view') refreshFriendsTab('my-friends');
     }
 
-    // ==== Listeners globales ====
     document.addEventListener('click', (e)=>{
-      const card = e.target.closest('.validation-card');
-      if (card && (e.target.closest('.approve-btn') || e.target.closest('.reject-btn'))) {
-        handleValidation(card.dataset.challengeId, !!e.target.closest('.approve-btn'));
-        return;
-      }
+      // Tip
       if (e.target.closest('.challenge-container')){
         localStorage.setItem("tereto_tip_seen","1");
         $("feed-tip")?.classList.add("hidden");
       }
+      // Post actions
       const postCard = e.target.closest('.post-card');
       if (postCard && postCard.dataset.challengeId){
         const challengeId = postCard.dataset.challengeId;
         const ch = challengesData.find(c=>c.id===challengeId);
         if (!ch) return;
 
+        // Like (local estable)
         if (e.target.closest('.like-button')){
-          const hasLiked = (ch.likedBy || []).includes(mockUser.uid);
-          ch.likes = (ch.likes || 0) + (hasLiked ? -1 : 1);
-          ch.likedBy = hasLiked ? ch.likedBy.filter(uid=>uid!==mockUser.uid) : [...(ch.likedBy||[]), mockUser.uid];
-          postCard.querySelector('.likes-count').textContent = ch.likes;
-          postCard.querySelector('.like-icon').classList.toggle('liked', !hasLiked);
+          likeState[challengeId] = likeState[challengeId] || { liked:false, count: ch.likes||0 };
+          const curr = likeState[challengeId];
+          curr.liked = !curr.liked;
+          curr.count = (curr.count || 0) + (curr.liked ? 1 : -1);
+          const icon = postCard.querySelector('.like-icon');
+          const cnt = postCard.querySelector('.likes-count');
+          icon.classList.toggle('liked', curr.liked);
+          cnt.textContent = curr.count;
+          saveObj('likes', currentUser.uid, likeState);
           return;
         }
+
+        // Comentarios
         if (e.target.closest('.comment-button')) { openCommentsModal(challengeId); return; }
 
+        // Abrir reto
         if (e.target.closest('.challenge-container')){
           if (shouldUnlockForUser(ch)) return;
           if (ch.type==='trivia') openTriviaModal(ch, postCard);
           else if (ch.type==='photo'){
-            $("photo-challenge-description").textContent = ch.question;
+            $("photo-challenge-description").textContent = ch.question || 'Cumplí el desafío para desbloquear';
             $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
             $("photo-challenge-modal").classList.remove('hidden');
           }
         }
       }
     });
-    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', ()=>switchView(btn.dataset.view)));
-    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=>renderFriendsTab(btn.dataset.tab)));
 
-    // Crear flujo (file input y formularios)
+    $("open-camera-btn")?.addEventListener('click', () => openCamera(null));
+    $("capture-btn")?.addEventListener('click', capturePhoto);
+    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
+    $("close-photo-challenge-modal")?.addEventListener('click', () => $("photo-challenge-modal").classList.add('hidden'));
+
+    // Crear flujo
     $("file-upload")?.addEventListener('change', (e)=>{
       if (e.target.files.length>0){
         const file = e.target.files[0]; const reader = new FileReader();
-        $("file-name").textContent = file.name;
-        $("goto-step-2").disabled = false;
-        reader.onload = (ev)=>{
-          $("goto-step-2").dataset.fileUrl = ev.target.result;
-          $("image-preview").src = ev.target.result;
-          $("image-preview-container").classList.remove('hidden');
-        };
+        $("file-name").textContent = file.name; $("goto-step-2").disabled = false;
+        reader.onload = (ev)=>{ $("goto-step-2").dataset.fileUrl = ev.target.result; $("image-preview").src = ev.target.result; $("image-preview-container").classList.remove('hidden'); };
         reader.readAsDataURL(file);
       } else {
-        $("file-name").textContent = '';
-        $("goto-step-2").disabled = true;
-        $("image-preview-container").classList.add('hidden');
+        $("file-name").textContent = ''; $("goto-step-2").disabled = true; $("image-preview-container").classList.add('hidden');
       }
     });
     $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
@@ -853,31 +891,23 @@
       publishChallenge({ type:'photo', question:$("photo-challenge-task").value });
     });
 
-    // ==== users upsert ====
-    async function upsertUserProfile(user){
-      try {
-        await setDoc(doc(db, "users", user.uid), {
-          displayName: user.displayName || null,
-          email: user.email || null,
-          photoURL: user.photoURL || null,
-          createdAt: serverTimestamp()
-        }, { merge: true });
-      } catch(e){ console.error("users setDoc error:", e); }
-    }
-
-    // ==== Auth state ====
+    // ===== Auth state =====
     onAuthStateChanged(auth, async (user)=>{
       currentUser = user || null;
       if (currentUser){
-        solvedByUser = loadSolvedFor(currentUser.uid);
         seedUsersFor(currentUser);
         await upsertUserProfile(currentUser);
+
+        // cargar estados locales por usuario
+        friendsSet = loadSet('friends', currentUser.uid);
+        likeState = loadObj('likes', currentUser.uid);
+        commentState = loadObj('comments', currentUser.uid);
 
         loginScreen.classList.add("hidden");
         appScreen.classList.remove("hidden");
 
         startFeedSubscription();
-        updateProfileUI();
+        refreshProfile();
         switchView('feed-view');
       } else {
         stopFeedSubscription();
@@ -885,6 +915,9 @@
         loginScreen.classList.remove("hidden");
       }
     });
+
+    // ===== Descubrir por defecto usa pestaña discover si buscan
+    // (ya resuelto en input listener)
   </script>
 </body>
 </html>
