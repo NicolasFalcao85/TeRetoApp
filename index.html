@@ -27,7 +27,9 @@
     .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.75); }
     .tip-chip { font-size:10px; padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.5); }
     .grid-mosaic { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
-    .mosaic-item { aspect-ratio:1/1; object-fit:cover; border-radius:.5rem; }
+    .mosaic-item { position:relative; aspect-ratio:1/1; }
+    .mosaic-img { width:100%; height:100%; object-fit:cover; border-radius:.5rem; }
+    .mosaic-del { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.6); color:#fff; border-radius:.5rem; padding:.15rem .4rem; font-size:.8rem; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -49,8 +51,8 @@
       <div class="flex items-center justify-center mb-4">
         <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-          <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-          <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+          <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+          <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
         </svg>
         <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
@@ -75,8 +77,8 @@
           <div class="flex items-center space-x-2">
             <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs><linearGradient id="logoGradientHeader2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
-              <path d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
+              <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
+              <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
             </svg>
             <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs><linearGradient id="logoTextGradient2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
@@ -118,15 +120,26 @@
           </div>
 
           <div id="create-step-2" class="hidden text-center">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 2: Elige el tipo de reto</h3>
-            <div class="space-y-4">
+            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 2: Configurá el reto</h3>
+            <div class="space-y-4 text-left">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Vigencia</label>
+                <select id="challenge-expiry" class="w-full border rounded-md px-3 py-2">
+                  <option value="none">Sin vencimiento</option>
+                  <option value="24">24 horas</option>
+                  <option value="48">48 horas</option>
+                </select>
+                <p class="text-xs text-slate-500 mt-1">El feed ocultará retos vencidos automáticamente.</p>
+              </div>
+            </div>
+            <div class="space-y-4 mt-6">
               <button id="select-trivia-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
                 <span class="text-3xl mr-4">🧠</span>
-                <div><p class="font-bold text-slate-800">Trivia</p><p class="text-sm text-slate-500">Crea una pregunta de opción múltiple.</p></div>
+                <div><p class="font-bold text-slate-800">Trivia</p><p class="text-sm text-slate-500">Pregunta de opción múltiple.</p></div>
               </button>
               <button id="select-photo-challenge-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
                 <span class="text-3xl mr-4">📸</span>
-                <div><p class="font-bold text-slate-800">Reto con Foto / Video</p><p class="text-sm text-slate-500">Pide que cumplan un desafío.</p></div>
+                <div><p class="font-bold text-slate-800">Reto con Foto / Video</p><p class="text-sm text-slate-500">Pedí que cumplan una consigna.</p></div>
               </button>
             </div>
           </div>
@@ -198,7 +211,6 @@
             </div>
           </div>
         </div>
-        <div id="validations-container" class="p-4"></div>
       </div>
     </main>
 
@@ -303,7 +315,7 @@
               <span class="likes-count">0</span>
             </button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               <span class="comments-count">0</span>
             </button>
           </div>
@@ -345,7 +357,8 @@
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
       getFirestore, collection, addDoc, setDoc, doc,
-      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where
+      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
+      startAt, endAt, deleteDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // ==== Firebase config (PROD) ====
@@ -411,7 +424,7 @@
 
     let friendsSet = new Set();           // uids de amigos
     let likeState = {};                   // { challengeId: { liked:boolean, count:number } }
-    let commentState = {};                // { challengeId: [{userId, userName, userImg, text, createdAt}] }
+    let commentState = {};                // { challengeId: [{...}] }
 
     // feed
     let challengesData = [];
@@ -428,10 +441,14 @@
     }
 
     async function upsertUserProfile(user){
+      const dn = user.displayName || '';
+      const em = user.email || '';
       try {
         await setDoc(doc(db, "users", user.uid), {
-          displayName: user.displayName || null,
-          email: user.email || null,
+          displayName: dn || null,
+          displayNameLower: dn.toLowerCase() || null,
+          email: em || null,
+          emailLower: em.toLowerCase() || null,
           photoURL: user.photoURL || null,
           createdAt: serverTimestamp()
         }, { merge: true });
@@ -449,7 +466,7 @@
     function addFriend(uid){ friendsSet.add(uid); saveFriends(currentUser.uid); showToast("Agregado a amigos"); refreshFriendsTab(); refreshFeed(); }
     function removeFriend(uid){ friendsSet.delete(uid); saveFriends(currentUser.uid); showToast("Eliminado de amigos"); refreshFriendsTab(); refreshFeed(); }
 
-    // ===== UI: Feed / Profile =====
+    // ===== UI refs =====
     const feedContainer = $("feed-container");
     const postTemplate = $("post-template");
     const commentTemplate = $("comment-template");
@@ -458,9 +475,10 @@
     const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email");
     const myMosaic = $("my-mosaic");
 
+    // ===== Unlock helpers =====
     function shouldUnlockForUser(ch){
       if (!mockUser) return false;
-      if (ch.authorId === mockUser.uid) return true;                // autor ve desbloqueado
+      if (ch.authorId === mockUser.uid) return true; // autor ve desbloqueado
       const solvedSet = loadSet('solved', currentUser.uid);
       if (solvedSet.has(ch.id)) return true;
       return false;
@@ -470,6 +488,7 @@
       postEl.querySelector('.lock-overlay')?.classList.add('hidden');
     }
 
+    // ===== Feed render =====
     function mergeClientState(base){
       const id = base.id;
       const ls = likeState[id];
@@ -480,6 +499,12 @@
         likedByMe: (ls?.liked ?? false),
         commentsCount: comments.length
       };
+    }
+
+    function isExpired(ch){
+      if (!ch.expiresAt) return false;
+      const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
+      return exp && exp < new Date();
     }
 
     function renderPost(ch){
@@ -516,9 +541,11 @@
     }
 
     function refreshFeed(){
-      // filtro: solo retos de amigos
+      // filtro: solo retos de amigos y no vencidos
       const friendsIds = new Set(friendsSet);
-      const items = challengesData.filter(c => friendsIds.has(c.authorId));
+      const items = challengesData
+        .filter(c => friendsIds.has(c.authorId))
+        .filter(c => !isExpired(c));
       feedContainer.innerHTML = '';
       $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
       if (items.length === 0) { renderEmptyFeedHint(); return; }
@@ -533,18 +560,51 @@
       const mine = challengesData.filter(c => c.authorId === mockUser.uid);
       myMosaic.innerHTML = '';
       mine.forEach(ch=>{
+        const wrap = document.createElement('div');
+        wrap.className = 'mosaic-item';
+        wrap.dataset.id = ch.id;
+
         const img = document.createElement('img');
         img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
-        img.className = 'mosaic-item';
-        myMosaic.appendChild(img);
+        img.className = 'mosaic-img';
+        wrap.appendChild(img);
+
+        const del = document.createElement('button');
+        del.className = 'mosaic-del';
+        del.textContent = '🗑️';
+        del.title = 'Eliminar reto';
+        del.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          if (!confirm('¿Eliminar este reto? Esta acción no se puede deshacer.')) return;
+          try{
+            await deleteDoc(doc(db,'challenges', ch.id));
+            showToast('Reto eliminado');
+          }catch(err){
+            console.error('delete error', err);
+            showToast('No se pudo eliminar','error');
+          }
+        });
+        wrap.appendChild(del);
+
+        // badge de vencimiento
+        if (isExpired(ch)){
+          const badge = document.createElement('div');
+          badge.style.position='absolute'; badge.style.bottom='.25rem'; badge.style.left='.25rem';
+          badge.style.background='rgba(0,0,0,.6)'; badge.style.color='#fff'; badge.style.fontSize='.7rem';
+          badge.style.padding='.1rem .35rem'; badge.style.borderRadius='.35rem';
+          badge.textContent='Vencido';
+          wrap.appendChild(badge);
+        }
+
+        myMosaic.appendChild(wrap);
       });
     }
 
     // ===== Firestore Feed =====
     function startFeedSubscription(){
       if (feedUnsub) feedUnsub();
-      const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
-      feedUnsub = onSnapshot(q, (snap) => {
+      const qRef = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
+      feedUnsub = onSnapshot(qRef, (snap) => {
         challengesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         refreshFeed();
         refreshProfile();
@@ -596,14 +656,11 @@
       saveObj('comments', currentUser.uid, commentState);
       commentInput.value='';
       renderComments(challengeId);
-      // actualizar contador en card
       const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
       if (cardEl) cardEl.querySelector('.comments-count').textContent = (commentState[challengeId] || []).length;
     });
     $("close-comments-modal")?.addEventListener('click', closeComments);
-    // cerrar por overlay click
     $("comments-modal")?.addEventListener('click',(e)=>{ if (e.target.id === 'comments-modal') closeComments(); });
-    // cerrar por ESC
     document.addEventListener('keydown',(e)=>{ if (e.key === 'Escape' && !commentsModal.classList.contains('hidden')) closeComments(); });
 
     // ===== Cámara / Crear (sin Storage)
@@ -620,7 +677,8 @@
       selectTriviaBtn: $("select-trivia-btn"),
       selectPhotoChallengeBtn: $("select-photo-challenge-btn"),
       triviaForm: $("trivia-form"),
-      photoChallengeForm: $("photo-challenge-form")
+      photoChallengeForm: $("photo-challenge-form"),
+      expirySelect: $("challenge-expiry")
     };
 
     let cameraStream = null, currentPhotoChallengeId = null;
@@ -681,7 +739,14 @@
       steps[step].classList.remove('hidden');
     }
 
-    // ===== Publicar reto (Firestore)
+    // ===== Publicar reto (Firestore) con vigencia
+    function calcExpiresAt(){
+      const v = createViewElements.expirySelect.value;
+      if (v === '24') return new Date(Date.now() + 24*3600*1000);
+      if (v === '48') return new Date(Date.now() + 48*3600*1000);
+      return null; // sin vencimiento
+    }
+
     async function publishChallenge(challengeDetails){
       if (!mockUser) return;
       try{
@@ -690,6 +755,7 @@
           authorName: mockUser.displayName,
           authorImg: mockUser.photoURL,
           createdAt: serverTimestamp(),
+          expiresAt: calcExpiresAt(),
           contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
           likes: 0,
           ...challengeDetails
@@ -731,8 +797,64 @@
       }
     }
 
-    // ===== Friends (UI)
+    // ===== Friends (UI + búsqueda eficiente)
     const friendsTabButtons = document.querySelectorAll('.friends-tab');
+
+    function renderUserRow(user, isFriendFlag){
+      const item = userListItemTemplate.content.cloneNode(true);
+      item.querySelector('.user-img').src = user.photoURL || '';
+      item.querySelector('.user-name').textContent = user.displayName || '(Sin nombre)';
+      item.querySelector('.user-email').textContent = user.email || '';
+      const actions = item.querySelector('.user-actions');
+      if (user.uid === currentUser.uid){
+        actions.innerHTML = `<span class="text-xs text-slate-400">Vos</span>`;
+      } else if (isFriendFlag){
+        actions.innerHTML = `<button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full" data-action="remove-friend" data-uid="${user.uid}">Eliminar</button>`;
+      } else {
+        actions.innerHTML = `<button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-action="add-friend" data-uid="${user.uid}">Agregar</button>`;
+      }
+      friendsTabContent.appendChild(item);
+    }
+
+    async function renderDiscover(){
+      const termRaw = ($("user-search-input").value || '').trim();
+      const term = termRaw.toLowerCase();
+      friendsTabContent.innerHTML = '';
+      const results = new Map();
+
+      try {
+        if (term && term.includes('@')) {
+          // búsqueda exacta por email
+          const qEmail = query(collection(db,'users'), where('emailLower','==', term), limit(5));
+          const snapEmail = await getDocs(qEmail);
+          snapEmail.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        } else if (term) {
+          // prefix search por nombre (requiere displayNameLower)
+          const qName = query(
+            collection(db,'users'),
+            orderBy('displayNameLower'),
+            startAt(term), endAt(term + '\uf8ff'),
+            limit(50)
+          );
+          const snapName = await getDocs(qName);
+          snapName.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        } else {
+          // sin término: últimos 50 por nombre (UX simple)
+          const qUsers = query(collection(db,'users'), orderBy('displayNameLower'), limit(50));
+          const snap = await getDocs(qUsers);
+          snap.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        }
+      } catch (e) {
+        console.error('search users error', e);
+      }
+
+      if (results.size === 0){
+        friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
+        return;
+      }
+      [...results.values()].forEach(u=>renderUserRow(u, isFriend(u.uid)));
+    }
+
     function refreshFriendsTab(tab = document.querySelector('.friends-tab.active')?.dataset.tab || 'my-friends'){
       friendsTabButtons.forEach(btn=>{
         btn.classList.toggle('active', btn.dataset.tab===tab);
@@ -743,51 +865,20 @@
         if (friendsSet.size===0){
           friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`; return;
         }
+        // listar amigos (con fetch de datos)
         [...friendsSet].forEach(async (uid)=>{
-          const usersQ = query(collection(db,'users'), where('__name__','==', uid), limit(1));
-          const snap = await getDocs(usersQ);
-          snap.forEach(docu=>{
-            const u = { uid: docu.id, ...docu.data() };
-            renderUserRow(u, true);
-          });
+          try{
+            const qOne = query(collection(db,'users'), where('__name__','==', uid), limit(1));
+            const snap = await getDocs(qOne);
+            snap.forEach(docu=>{
+              const u = { uid: docu.id, ...docu.data() };
+              renderUserRow(u, true);
+            });
+          } catch(e){ console.error(e); }
         });
       } else if (tab==='discover'){
         renderDiscover();
       }
-    }
-
-    function renderUserRow(user, isFriend){
-      const item = userListItemTemplate.content.cloneNode(true);
-      item.querySelector('.user-img').src = user.photoURL || '';
-      item.querySelector('.user-name').textContent = user.displayName || '(Sin nombre)';
-      item.querySelector('.user-email').textContent = user.email || '';
-      const actions = item.querySelector('.user-actions');
-      if (user.uid === currentUser.uid){
-        actions.innerHTML = `<span class="text-xs text-slate-400">Vos</span>`;
-      } else if (isFriend){
-        actions.innerHTML = `<button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full" data-action="remove-friend" data-uid="${user.uid}">Eliminar</button>`;
-      } else {
-        actions.innerHTML = `<button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-action="add-friend" data-uid="${user.uid}">Agregar</button>`;
-      }
-      friendsTabContent.appendChild(item);
-    }
-
-    async function renderDiscover(){
-      // Trae hasta 30 usuarios y filtra por cliente
-      const qUsers = query(collection(db,'users'), orderBy('displayName'), limit(30));
-      const snap = await getDocs(qUsers);
-      const term = ($("user-search-input").value || '').toLowerCase();
-      const list = [];
-      snap.forEach(d=>{
-        const u = { uid:d.id, ...d.data() };
-        if (u.uid === currentUser.uid) return;
-        const match = (u.displayName||'').toLowerCase().includes(term) || (u.email||'').toLowerCase().includes(term);
-        if (match) list.push(u);
-      });
-      if (list.length===0){
-        friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return;
-      }
-      list.forEach(u=>renderUserRow(u, isFriend(u.uid)));
     }
 
     $("user-search-input")?.addEventListener('input', ()=>{
@@ -824,7 +915,7 @@
       if (viewName==='friends-view') refreshFriendsTab('my-friends');
     }
 
-    // 🔧 Delegador global (fix barra inferior)
+    // 🔧 Delegador global (fix barra inferior + posts + tip)
     document.addEventListener('click', (e) => {
       // Navegación inferior
       const navBtn = e.target.closest('.nav-button');
@@ -917,7 +1008,6 @@
         seedUsersFor(currentUser);
         await upsertUserProfile(currentUser);
 
-        // cargar estados locales por usuario
         loadFriends(currentUser.uid);
         likeState = loadObj('likes', currentUser.uid);
         commentState = loadObj('comments', currentUser.uid);
