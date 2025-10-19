@@ -10,22 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; }
-    .blur-locked { filter: blur(20px); transition: filter .25s ease-in-out; }
-    .animate-fade-in-up { animation: fadeInUp .5s ease-out forwards; }
-    @keyframes fadeInUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
-    .answer-btn:hover { transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
-    .like-icon.liked { fill:#ec4899; color:#ec4899; }
-    .like-button:active { transform: scale(.9); }
-    .image-preview { max-height: 200px; object-fit: cover; }
-    .comments-modal-body { height: calc(100vh - 12rem); }
     .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55);}
     .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
     .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite; }
     @keyframes spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
-    .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
-    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); transition:all .3s ease; }
-    .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.75); }
-    .tip-chip { font-size:10px; padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.5); }
+    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); color:#fff; border-radius:.625rem; padding:.5rem .875rem; font-weight:700; }
+    .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.6); }
     .grid-mosaic { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
     .mosaic-item { position:relative; aspect-ratio:1/1; }
     .mosaic-img { width:100%; height:100%; object-fit:cover; border-radius:.5rem; }
@@ -51,13 +41,13 @@
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
         <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-          <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
-          <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+          <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+          <circle cx="16" cy="16" r="12" stroke="url(#lg1)" stroke-width="3"/>
+          <circle cx="16" cy="16" r="4" stroke="url(#lg1)" stroke-width="3"/>
         </svg>
         <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-          <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient)">TeReto</text>
+          <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+          <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#lg2)">TeReto</text>
         </svg>
       </div>
       <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
@@ -77,20 +67,20 @@
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
           <div class="flex items-center space-x-2">
             <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoGradientHeader2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
-              <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
-              <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
+              <defs><linearGradient id="lg3" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+              <circle cx="16" cy="16" r="12" stroke="url(#lg3)" stroke-width="3"/>
+              <circle cx="16" cy="16" r="4" stroke="url(#lg3)" stroke-width="3"/>
             </svg>
             <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="logoTextGradient2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
-              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient2)">TeReto</text>
+              <defs><linearGradient id="lg4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#lg4)">TeReto</text>
             </svg>
           </div>
           <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
         </header>
         <div class="px-3 pt-3 pb-1">
           <div id="feed-tip" class="hidden text-[12px] text-slate-600">
-            <span class="tip-chip">Consejo</span> Tocá la imagen “bloqueada” para aceptar el desafío. Si acertás, se desbloquea para vos. 😉
+            <span class="px-2 py-[2px] rounded-full border text-[10px]">Consejo</span> Tocá la imagen “bloqueada” para aceptar el desafío. Si acertás, se desbloquea para vos. 😉
           </div>
         </div>
         <div id="feed-container" class="p-2 space-y-4"></div>
@@ -101,31 +91,33 @@
         <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
 
+          <!-- Paso 1 -->
           <div id="create-step-1" class="text-center">
-            <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agrega el contenido a bloquear</h3>
+            <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agregá el contenido</h3>
             <div id="image-preview-container" class="hidden my-4">
-              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg image-preview mx-auto"/>
+              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg max-h-60 object-cover mx-auto"/>
             </div>
             <div class="grid grid-cols-2 gap-4 my-4">
               <label for="file-upload" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
                 <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                <span class="text-sm font-semibold">Subir Archivo</span>
-                <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
+                <span class="text-sm font-semibold">Subir archivo</span>
+                <input id="file-upload" type="file" class="sr-only" accept="image/*">
               </label>
               <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
                 <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-sm font-semibold">Usar Cámara</span>
+                <span class="text-sm font-semibold">Usar cámara</span>
               </button>
             </div>
             <p id="file-name" class="mt-2 text-sm text-slate-500"></p>
-            <button id="goto-step-2" class="mt-4 w-full text-white font-bold py-2 px-4 rounded-md btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>Siguiente</button>
+            <button id="goto-step-2" class="mt-4 w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>Siguiente</button>
           </div>
 
+          <!-- Paso 2 -->
           <div id="create-step-2" class="hidden">
             <h3 class="font-semibold text-lg mb-3 text-slate-700">Paso 2: Configurá el reto</h3>
             <div class="space-y-3">
               <label class="block text-sm font-medium text-slate-700">Descripción (opcional)</label>
-              <textarea id="challenge-caption" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" placeholder="Escribe un pie de foto..."></textarea>
+              <textarea id="challenge-caption" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" placeholder="Escribí un pie de foto..."></textarea>
 
               <label class="block text-sm font-medium text-slate-700 mt-2">Vigencia</label>
               <select id="challenge-expiry" class="w-full border rounded-md px-3 py-2">
@@ -149,27 +141,29 @@
             </div>
           </div>
 
+          <!-- Paso 3 - Trivia -->
           <div id="create-step-3-trivia" class="hidden">
-            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Configura la Trivia</h3>
+            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Configurá la Trivia</h3>
             <form id="trivia-form" class="space-y-4">
               <div>
                 <label for="trivia-question" class="block text-sm font-medium text-slate-700">Pregunta</label>
-                <input type="text" id="trivia-question" class="mt-1 block w-full input-style" required>
+                <input type="text" id="trivia-question" class="mt-1 block w-full border rounded-md px-3 py-2" required>
               </div>
               <div>
                 <label for="correct-answer" class="block text-sm font-medium text-green-700">Respuesta Correcta</label>
-                <input type="text" id="correct-answer" class="mt-1 block w-full input-style border-green-400 border-2" required>
+                <input type="text" id="correct-answer" class="mt-1 block w-full border rounded-md px-3 py-2 border-green-400" required>
               </div>
               <div>
                 <label class="block text-sm font-medium text-red-700">Respuestas Incorrectas</label>
-                <input type="text" id="wrong-answer-1" class="mt-1 block w-full input-style" required placeholder="Opción 1">
-                <input type="text" id="wrong-answer-2" class="mt-2 block w-full input-style" required placeholder="Opción 2">
-                <input type="text" id="wrong-answer-3" class="mt-2 block w-full input-style" required placeholder="Opción 3">
+                <input type="text" id="wrong-answer-1" class="mt-1 block w-full border rounded-md px-3 py-2" required placeholder="Opción 1">
+                <input type="text" id="wrong-answer-2" class="mt-2 block w-full border rounded-md px-3 py-2" required placeholder="Opción 2">
+                <input type="text" id="wrong-answer-3" class="mt-2 block w-full border rounded-md px-3 py-2" required placeholder="Opción 3">
               </div>
-              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
+              <button type="submit" class="w-full btn-primary">Publicar Reto</button>
             </form>
           </div>
 
+          <!-- Paso 3 - Foto -->
           <div id="create-step-3-photo" class="hidden">
             <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Describe el Desafío</h3>
             <form id="photo-challenge-form" class="space-y-4">
@@ -177,7 +171,7 @@
                 <label for="photo-challenge-task" class="block text-sm font-medium text-slate-700">Consigna</label>
                 <textarea id="photo-challenge-task" rows="4" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
               </div>
-              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
+              <button type="submit" class="w-full btn-primary">Publicar Reto</button>
             </form>
           </div>
         </div>
@@ -193,13 +187,7 @@
               <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
           </div>
-          <div class="border-b border-slate-200">
-            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-tab="my-friends">Mis Amigos</button>
-              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="discover">Descubrir</button>
-            </nav>
-          </div>
-          <div id="friends-tab-content" class="mt-4"></div>
+          <div id="friends-results" class="space-y-2"></div>
         </div>
       </div>
 
@@ -231,25 +219,37 @@
     </nav>
   </div>
 
-  <!-- MODALES: comentarios, trivia, cámara (idénticos a versiones anteriores si los necesitás) -->
+  <!-- COMMENTS MODAL -->
   <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
       <header class="flex items-center justify-between p-4 border-b">
         <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
         <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800" aria-label="Cerrar comentarios">✖</button>
       </header>
-      <div id="comments-modal-body" class="comments-modal-body flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
+      <div id="comments-modal-body" class="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
       <footer class="p-4 border-t bg-white">
         <form id="comment-form" class="flex items-center space-x-2">
           <img id="comment-user-img" src="" class="w-8 h-8 rounded-full" alt="">
           <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <button type="submit" class="btn-primary text-white rounded-full px-3 py-2" aria-label="Enviar comentario">➤</button>
+          <button type="submit" class="btn-primary px-3 py-2" aria-label="Enviar comentario">➤</button>
         </form>
       </footer>
     </div>
   </div>
 
-  <!-- Templates -->
+  <!-- CAMERA MODAL -->
+  <div id="camera-modal" class="hidden fixed inset-0 bg-black/80 z-[100]">
+    <video id="cam-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
+    <canvas id="cam-canvas" class="hidden"></canvas>
+    <div class="absolute top-3 left-3">
+      <button id="cam-close" class="bg-white/20 text-white px-3 py-1 rounded-lg">Cerrar</button>
+    </div>
+    <div class="absolute bottom-6 left-0 right-0 flex items-center justify-center">
+      <button id="cam-capture" class="w-20 h-20 rounded-full bg-white border-4 border-slate-400 hover:border-white focus:outline-none"></button>
+    </div>
+  </div>
+
+  <!-- TEMPLATES -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -259,26 +259,16 @@
           <p class="text-[11px] text-slate-500 post-time"></p>
         </div>
       </div>
-      <div class="relative cursor-pointer group challenge-container">
-        <img class="w-full h-96 object-cover content-img" src="" alt="Contenido del reto">
-        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
-          <div class="tip-chip mb-2 hidden md:block">Consejo: tocá para aceptar</div>
-          <div class="text-5xl mb-2 lock-icon">🔒</div>
-          <h3 class="font-bold text-lg">Reto Bloqueado</h3>
-          <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
-        </div>
-      </div>
+      <img class="w-full h-80 object-cover content-img" src="" alt="Contenido del reto">
       <div class="p-4">
         <p class="text-sm text-slate-700 caption mt-1"></p>
         <div class="flex items-center justify-between mt-2 text-slate-500">
           <div class="flex space-x-4">
             <button class="like-button flex items-center space-x-1 cursor-pointer">
-              <span>❤</span>
-              <span class="likes-count">0</span>
+              <span>❤</span><span class="likes-count">0</span>
             </button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer">
-              <span>💬</span>
-              <span class="comments-count">0</span>
+              <span>💬</span><span class="comments-count">0</span>
             </button>
           </div>
           <span class="text-[11px] post-time-secondary"></span>
@@ -287,19 +277,19 @@
     </div>
   </template>
 
-  <template id="comment-template">
+  <template id="comment-item-template">
     <div class="flex items-start space-x-3">
-      <img class="w-8 h-8 rounded-full comment-author-img" src="">
+      <img class="w-8 h-8 rounded-full cmt-img" src="">
       <div class="flex-1 bg-slate-100 rounded-xl p-3">
-        <p class="text-sm"><strong class="comment-author-name text-slate-800"></strong> <span class="text-slate-600 comment-text"></span></p>
-        <p class="text-xs text-slate-400 mt-1 comment-time"></p>
+        <p class="text-sm"><strong class="cmt-name text-slate-800"></strong> <span class="cmt-text text-slate-600"></span></p>
+        <p class="text-xs text-slate-400 mt-1 cmt-time"></p>
       </div>
     </div>
   </template>
 
-  <!-- Firebase + App -->
+  <!-- APP SCRIPT -->
   <script type="module">
-    // ==== Firebase SDKs v11.0.1 ====
+    // SDKs v11.0.1
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut,
@@ -308,10 +298,10 @@
     import {
       getFirestore, collection, addDoc, setDoc, doc, updateDoc,
       serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
-      startAt, endAt, deleteDoc, getDoc, writeBatch, increment
+      startAt, endAt, deleteDoc, writeBatch, increment
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ==== Firebase config (tu proyecto prod) ====
+    // Config (prod)
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -321,30 +311,53 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
 
-    // ==== Init ====
+    // Init
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence);
+    setPersistence(auth, browserLocalPersistence).catch(()=>{});
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     const db = getFirestore(app);
 
-    // ==== UI helpers ====
+    // UI helpers
     const $ = (id) => document.getElementById(id);
-    const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
-    const loginScreen = $("login-screen"), appScreen = $("app-screen");
-    const loadingSpinner = $("loading-spinner");
-    function showToast(message, type='success') {
-      toastMessage.textContent = message;
-      toastIcon.innerHTML = type === 'success' ? '✅' : '❌';
-      toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 2600);
+    function showToast(message, type='success'){
+      $("toast-message").textContent = message;
+      $("toast-icon").innerHTML = type==='success' ? '✅' : '❌';
+      const t = $("toast"); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2600);
+    }
+    function isExpired(ch){
+      if (!ch.expiresAt) return false;
+      const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
+      return exp && exp < new Date();
     }
 
-    // === Utils de imagen (compresión cliente) ===
-    async function fileToCompressedDataURL(file, maxW = 960, quality = 0.7) {
-      if (!file || !file.type?.startsWith('image/')) {
-        return 'https://placehold.co/600x400/333/FFF?text=TeReto';
-      }
+    // Camera
+    let camStream = null;
+    const camModal = $("camera-modal"), camVideo = $("cam-video"), camCanvas = $("cam-canvas");
+    async function openCamera(){
+      try{
+        if (camStream) camStream.getTracks().forEach(t=>t.stop());
+        camStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+        camVideo.srcObject = camStream;
+        camModal.classList.remove('hidden');
+      }catch(e){ console.error(e); showToast('No se pudo acceder a la cámara. Usá HTTPS o localhost y permití la cámara.','error'); }
+    }
+    function closeCamera(){
+      if (camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
+      camModal.classList.add('hidden');
+    }
+    function capturePhotoToDataURL(){
+      if (!camStream || !camVideo.videoWidth) return null;
+      const w = camVideo.videoWidth, h = camVideo.videoHeight;
+      camCanvas.width = w; camCanvas.height = h;
+      camCanvas.getContext('2d').drawImage(camVideo, 0, 0, w, h);
+      return camCanvas.toDataURL('image/jpeg', 0.8);
+    }
+
+    // Image compress
+    async function fileToCompressedDataURL(file, maxW=960, quality=0.7){
+      if (!file || !file.type?.startsWith('image/')) return 'https://placehold.co/600x400/333/FFF?text=TeReto';
       const bitmap = await createImageBitmap(file);
       const ratio = bitmap.width / bitmap.height;
       const targetW = Math.min(bitmap.width, maxW);
@@ -358,243 +371,211 @@
       return dataUrl;
     }
 
-    // ==== Auth ====
-    $("google-btn")?.addEventListener("click", async () => {
-      try {
-        loadingSpinner.classList.remove("hidden");
+    // Auth
+    $("google-btn")?.addEventListener("click", async ()=>{
+      try{
+        $("loading-spinner").classList.remove("hidden");
         try { await signInWithPopup(auth, provider); }
-        catch (e) {
-          if (e?.code === "auth/popup-blocked") { await signInWithRedirect(auth, provider); }
-          else throw e;
-        }
-      } catch (err) {
-        console.error(err);
-        const msg = err?.code?.replace("auth/","") || err?.message || "Error al iniciar sesión";
-        showToast(msg, "error");
-      } finally { loadingSpinner.classList.add("hidden"); }
+        catch(e){ if (e?.code === "auth/popup-blocked") await signInWithRedirect(auth, provider); else throw e; }
+      }catch(err){
+        console.error(err); showToast((err?.code||'auth_error').replace('auth/',''), 'error');
+      }finally{ $("loading-spinner").classList.add("hidden"); }
     });
-    $("signout-btn")?.addEventListener("click", async ()=>{ try{ await signOut(auth); showToast("Sesión cerrada."); }catch(e){ showToast("No se pudo cerrar sesión","error"); } });
+    $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>showToast('No se pudo cerrar sesión','error')));
 
-    // ==== State ====
+    // State & subs
     let currentUser = null;
-    let followingSet = new Set();
-    let followingUnsub = null;
     let feedUnsub = null;
-
-    // Mis retos (perfil)
-    let myChallenges = [];
     let myChallengesUnsub = null;
-    function clearMyChallengesSub(){ if (myChallengesUnsub){ myChallengesUnsub(); myChallengesUnsub=null; } }
-    function startMyChallengesSub(){
-      clearMyChallengesSub();
+    let commentsUnsub = null;
+    let myChallenges = [];
+
+    function clearSubs(){
+      if (feedUnsub){ feedUnsub(); feedUnsub=null; }
+      if (myChallengesUnsub){ myChallengesUnsub(); myChallengesUnsub=null; }
+      if (commentsUnsub){ commentsUnsub(); commentsUnsub=null; }
+    }
+
+    async function upsertUser(user){
+      const dn = user.displayName || null, em = user.email || null;
+      try{
+        await setDoc(doc(db,"users",user.uid), {
+          displayName: dn, displayNameLower: dn?.toLowerCase()||null,
+          email: em, emailLower: em?.toLowerCase()||null,
+          photoURL: user.photoURL || null,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      }catch(e){ console.error('upsert users', e); }
+    }
+
+    function startFeed(){
+      if (feedUnsub) { feedUnsub(); feedUnsub=null; }
+      const qRef = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(120));
+      feedUnsub = onSnapshot(qRef, (snap)=>{
+        const items = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+          .filter(ch => (!currentUser || ch.authorId !== currentUser.uid)) // no mostrar propios
+          .filter(ch => !isExpired(ch));
+        renderFeed(items);
+      }, (err)=>{ console.error('feed sub', err); showToast('No se pudo cargar el feed','error'); });
+    }
+
+    function startMyChallenges(){
       if (!currentUser) return;
-      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), orderBy('createdAt','desc'), limit(200));
+      if (myChallengesUnsub) { myChallengesUnsub(); myChallengesUnsub=null; }
+      const qRef = query(collection(db,'challenges'), where('authorId','==',currentUser.uid), orderBy('createdAt','desc'), limit(200));
       myChallengesUnsub = onSnapshot(qRef, (snap)=>{
         myChallenges = snap.docs.map(d=>({ id:d.id, ...d.data() }));
         refreshProfile();
       }, (err)=> console.error('myChallenges sub', err));
     }
 
-    // Users: upsert perfil
-    async function upsertUserProfile(user){
-      const dn = user.displayName || '';
-      const em = user.email || '';
-      try {
-        await setDoc(doc(db, "users", user.uid), {
-          displayName: dn || null,
-          displayNameLower: dn.toLowerCase() || null,
-          email: em || null,
-          emailLower: em.toLowerCase() || null,
-          photoURL: user.photoURL || null,
-          createdAt: serverTimestamp()
-        }, { merge: true });
-      } catch(e){ console.error("users setDoc error:", e); }
-    }
-
-    // Following
-    function clearFollowingSub(){ if (followingUnsub){ followingUnsub(); followingUnsub=null; } }
-    function startFollowingSub(){
-      clearFollowingSub();
-      if (!currentUser) return;
-      const qRef = collection(db, 'users', currentUser.uid, 'following');
-      followingUnsub = onSnapshot(qRef, (snap)=>{
-        followingSet = new Set(snap.docs.map(d=>d.id));
-        restartFeedSubscription();
-        refreshFriendsTab();
-      });
-    }
-
-    // Feed
-    let challengesData = [];
-    function clearFeedSub(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
-    function restartFeedSubscription(){
-      clearFeedSub();
-      if (!currentUser) return;
-      const ids = [...followingSet];
-      if (ids.length === 0){
-        challengesData = []; refreshFeed(); return;
-      }
-      if (ids.length <= 10){
-        const qRef = query(collection(db,'challenges'), where('authorId','in', ids), orderBy('createdAt','desc'));
-        feedUnsub = onSnapshot(qRef, (snap)=>{
-          challengesData = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-          refreshFeed();
-        }, (err)=>{ console.error('feed in[]', err); showToast('No se pudo cargar el feed','error'); });
+    onAuthStateChanged(auth, async (user)=>{
+      clearSubs();
+      if (!user){
+        currentUser = null;
+        $("app-screen").classList.add("hidden");
+        $("login-screen").classList.remove("hidden");
         return;
       }
-      const qRef = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(120));
-      feedUnsub = onSnapshot(qRef, (snap)=>{
-        const set = new Set(ids);
-        challengesData = snap.docs.map(d=>({ id:d.id, ...d.data() })).filter(d=> set.has(d.authorId));
-        refreshFeed();
-      }, (err)=>{ console.error('feed fallback', err); showToast('No se pudo cargar el feed','error'); });
-    }
+      currentUser = user;
+      $("login-screen").classList.add("hidden");
+      $("app-screen").classList.remove("hidden");
+      await upsertUser(user);
+      startFeed();
+      startMyChallenges();
+      refreshProfile();
+      switchView('feed-view');
+    });
 
-    // Render helpers
+    // Feed render
     const feedContainer = $("feed-container");
     const postTemplate = $("post-template");
-    const commentTemplate = $("comment-template");
-    function isExpired(ch){
-      if (!ch.expiresAt) return false;
-      const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
-      return exp && exp < new Date();
-    }
     function renderPost(ch){
-      if (isExpired(ch)) return; // ocultar vencidos
       const frag = document.importNode(postTemplate.content, true);
-      const card = frag.querySelector('.post-card');
-      card.dataset.challengeId = ch.id;
-
+      const card = frag.querySelector('.post-card'); card.dataset.challengeId = ch.id;
       frag.querySelector('.author-img').src = ch.authorImg || '';
       frag.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
       const dt = ch.createdAt?.toDate?.() || new Date();
-      frag.querySelector('.post-time').textContent = new Date(dt).toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
+      frag.querySelector('.post-time').textContent = new Date(dt).toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' });
       frag.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
       frag.querySelector('.caption').textContent = ch.caption || '';
       frag.querySelector('.likes-count').textContent = ch.likesCount ?? 0;
       frag.querySelector('.comments-count').textContent = ch.commentsCount ?? 0;
-
-      feedContainer.append(frag);
+      feedContainer.appendChild(frag);
     }
-    function renderEmptyFeedHint(){
-      const div = document.createElement('div');
-      div.className = 'mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600';
-      div.innerHTML = `<p class="font-semibold text-slate-800 mb-1">Tu feed está vacío</p>
-        <p class="text-sm">Seguí usuarios en <span class="font-semibold">Amigos → Descubrir</span> para ver sus retos.</p>`;
-      feedContainer.appendChild(div);
-    }
-    function refreshFeed(){
+    function renderFeed(items){
       feedContainer.innerHTML = '';
       $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
-      const items = challengesData.filter(c => !isExpired(c));
-      if (items.length === 0) { renderEmptyFeedHint(); return; }
+      if (!items.length){
+        const div = document.createElement('div');
+        div.className = 'mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600';
+        div.innerHTML = `<p class="font-semibold text-slate-800 mb-1">Tu feed está vacío</p>
+          <p class="text-sm">Pedile a alguien que publique o buscá gente en <span class="font-semibold">Amigos</span>.</p>`;
+        feedContainer.appendChild(div);
+        return;
+      }
       items.forEach(renderPost);
     }
 
-    // Perfil
-    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email");
-    const myMosaic = $("my-mosaic"), myRetosCount = $("my-retos-count");
-    function refreshProfile(){
-      if (!currentUser) return;
-      profilePic.src = currentUser.photoURL;
-      profileName.textContent = currentUser.displayName || 'Usuario';
-      profileEmail.textContent = currentUser.email || '';
-      myMosaic.innerHTML = '';
-      myRetosCount.textContent = `${myChallenges.length} retos`;
-      myChallenges.forEach(ch=>{
-        const wrap = document.createElement('div');
-        wrap.className = 'mosaic-item'; wrap.dataset.id = ch.id;
-        const img = document.createElement('img');
-        img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
-        img.className = 'mosaic-img'; wrap.appendChild(img);
+    // Comentarios
+    const commentsModal = $("comments-modal"), commentsModalBody = $("comments-modal-body");
+    const commentForm = $("comment-form"), commentInput = $("comment-input"), commentUserImg = $("comment-user-img");
+    const commentItemTemplate = $("comment-item-template");
 
-        const bar = document.createElement('div');
-        bar.style.position='absolute'; bar.style.left='.25rem'; bar.style.bottom='.25rem'; bar.style.display='flex'; bar.style.gap='.25rem';
-        const bLikes = document.createElement('span'); bLikes.className='badge'; bLikes.style.background='rgba(0,0,0,.6)'; bLikes.style.color='#fff'; bLikes.textContent = `❤ ${ch.likesCount||0}`;
-        const bComments = document.createElement('span'); bComments.className='badge'; bComments.style.background='rgba(0,0,0,.6)'; bComments.style.color='#fff'; bComments.textContent = `💬 ${ch.commentsCount||0}`;
-        bar.appendChild(bLikes); bar.appendChild(bComments);
-        if (isExpired(ch)){ const exp = document.createElement('span'); exp.className='badge'; exp.style.background='rgba(255,0,0,.7)'; exp.style.color='#fff'; exp.textContent='Vencido'; bar.appendChild(exp); }
-        wrap.appendChild(bar);
-
-        const del = document.createElement('button');
-        del.className = 'mosaic-del'; del.textContent = '🗑️'; del.title = 'Eliminar reto';
-        del.addEventListener('click', async (e)=>{
-          e.stopPropagation();
-          if (!confirm('¿Eliminar este reto? Esta acción no se puede deshacer.')) return;
-          try{ await deleteDoc(doc(db,'challenges', ch.id)); showToast('Reto eliminado'); }
-          catch(err){ console.error('delete error', err); showToast(err?.code==='permission-denied'?'No tenés permiso para borrar este reto':'No se pudo eliminar','error'); }
-        });
-        wrap.appendChild(del);
-
-        myMosaic.appendChild(wrap);
-      });
-    }
-
-    // Comentarios (modal simple)
-    const commentForm = $("comment-form"), commentInput = $("comment-input"),
-          commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
-          commentsModalBody = $("comments-modal-body");
-    let commentsUnsub = null;
-    function clearCommentsSub(){ if (commentsUnsub){ commentsUnsub(); commentsUnsub=null; } }
-    function openCommentsModal(chId){
+    function openComments(chId){
       if (!currentUser) return;
       commentUserImg.src = currentUser.photoURL || '';
       commentForm.dataset.challengeId = chId;
       commentsModal.classList.remove('hidden');
-      clearCommentsSub();
-      const qRef = query(collection(db, 'challenges', chId, 'comments'), orderBy('createdAt','asc'), limit(200));
+      if (commentsUnsub){ commentsUnsub(); commentsUnsub=null; }
+      const qRef = query(collection(db,'challenges',chId,'comments'), orderBy('createdAt','asc'), limit(200));
       commentsUnsub = onSnapshot(qRef, (snap)=>{
         commentsModalBody.innerHTML = '';
         snap.forEach(d=>{
           const c = d.data();
-          const el = document.importNode(commentTemplate.content, true);
-          el.querySelector('.comment-author-img').src = c.authorImg || '';
-          el.querySelector('.comment-author-name').textContent = c.authorName || 'Usuario';
-          el.querySelector('.comment-text').textContent = c.text || '';
+          const el = document.importNode(commentItemTemplate.content, true);
+          el.querySelector('.cmt-img').src = c.authorImg || '';
+          el.querySelector('.cmt-name').textContent = c.authorName || 'Usuario';
+          el.querySelector('.cmt-text').textContent = c.text || '';
           const dt = c.createdAt?.toDate?.() || new Date();
-          el.querySelector('.comment-time').textContent = new Date(dt).toLocaleString('es-AR',{ timeStyle:'short' });
+          el.querySelector('.cmt-time').textContent = new Date(dt).toLocaleString('es-AR', { timeStyle:'short' });
           commentsModalBody.appendChild(el);
         });
       });
     }
-    function closeComments(){ commentsModal.classList.add('hidden'); clearCommentsSub(); }
+    function closeComments(){ commentsModal.classList.add('hidden'); if (commentsUnsub){ commentsUnsub(); commentsUnsub=null; } }
     $("close-comments-modal")?.addEventListener('click', closeComments);
-    $("comment-form")?.addEventListener('submit', async (e)=>{
+    commentForm?.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const chId = e.target.dataset.challengeId;
+      const chId = commentForm.dataset.challengeId;
       const text = (commentInput.value||'').trim();
       if (!text) return;
       try{
         const batch = writeBatch(db);
-        const ref = doc(collection(db,'challenges', chId, 'comments'));
-        batch.set(ref, { authorId: currentUser.uid, authorName: currentUser.displayName, authorImg: currentUser.photoURL, text, createdAt: serverTimestamp() });
-        batch.update(doc(db,'challenges', chId), { commentsCount: increment(1) });
+        const cRef = doc(collection(db,'challenges',chId,'comments'));
+        batch.set(cRef, { authorId: currentUser.uid, authorName: currentUser.displayName, authorImg: currentUser.photoURL, text, createdAt: serverTimestamp() });
+        batch.update(doc(db,'challenges',chId), { commentsCount: increment(1) });
         await batch.commit();
         commentInput.value = '';
-      }catch(err){ console.error(err); showToast('No se pudo comentar','error'); }
+      }catch(e){ console.error(e); showToast('No se pudo comentar','error'); }
     });
+
+    // Perfil
+    function refreshProfile(){
+      if (!currentUser) return;
+      $("profile-pic").src = currentUser.photoURL || '';
+      $("profile-name").textContent = currentUser.displayName || 'Usuario';
+      $("profile-email").textContent = currentUser.email || '';
+      const grid = $("my-mosaic"); grid.innerHTML = '';
+      $("my-retos-count").textContent = `${myChallenges.length} retos`;
+      myChallenges.forEach(ch=>{
+        const wrap = document.createElement('div'); wrap.className='mosaic-item'; wrap.dataset.id = ch.id;
+        const img = document.createElement('img'); img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto'; img.className = 'mosaic-img'; wrap.appendChild(img);
+        const bar = document.createElement('div'); bar.style.position='absolute'; bar.style.left='.25rem'; bar.style.bottom='.25rem'; bar.style.display='flex'; bar.style.gap='.25rem';
+        const b1 = document.createElement('span'); b1.className='badge'; b1.style.background='rgba(0,0,0,.6)'; b1.style.color='#fff'; b1.textContent = `❤ ${ch.likesCount||0}`;
+        const b2 = document.createElement('span'); b2.className='badge'; b2.style.background='rgba(0,0,0,.6)'; b2.style.color='#fff'; b2.textContent = `💬 ${ch.commentsCount||0}`;
+        bar.appendChild(b1); bar.appendChild(b2);
+        if (isExpired(ch)){ const ex = document.createElement('span'); ex.className='badge'; ex.style.background='rgba(255,0,0,.7)'; ex.style.color='#fff'; ex.textContent='Vencido'; bar.appendChild(ex); }
+        wrap.appendChild(bar);
+        const del = document.createElement('button'); del.className='mosaic-del'; del.title='Eliminar'; del.textContent='🗑️';
+        del.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          if (!confirm('¿Eliminar este reto?')) return;
+          try{ await deleteDoc(doc(db,'challenges', ch.id)); showToast('Reto eliminado'); }
+          catch(err){ console.error(err); showToast('No se pudo eliminar','error'); }
+        });
+        wrap.appendChild(del);
+        grid.appendChild(wrap);
+      });
+    }
 
     // Crear reto
     function calcExpiresAt(){
       const v = $("challenge-expiry").value;
-      if (v === '24') return new Date(Date.now() + 24*3600*1000);
-      if (v === '48') return new Date(Date.now() + 48*3600*1000);
+      if (v==='24') return new Date(Date.now() + 24*3600*1000);
+      if (v==='48') return new Date(Date.now() + 48*3600*1000);
       return null;
     }
-    $("file-upload")?.addEventListener('change', async (e) => {
+    $("file-upload")?.addEventListener('change', async (e)=>{
       const file = e.target.files?.[0];
-      if (!file) {
-        $("file-name").textContent = '';
-        $("goto-step-2").disabled = true;
-        $("image-preview-container").classList.add('hidden');
-        return;
-      }
+      if (!file){ $("file-name").textContent=''; $("goto-step-2").disabled=true; $("image-preview-container").classList.add('hidden'); return; }
       $("file-name").textContent = file.name;
       const dataUrl = await fileToCompressedDataURL(file);
       $("goto-step-2").dataset.fileUrl = dataUrl;
       $("image-preview").src = dataUrl;
       $("image-preview-container").classList.remove('hidden');
       $("goto-step-2").disabled = false;
+    });
+    $("open-camera-btn")?.addEventListener('click', openCamera);
+    $("cam-close")?.addEventListener('click', closeCamera);
+    $("cam-capture")?.addEventListener('click', ()=>{
+      const dataUrl = capturePhotoToDataURL();
+      if (!dataUrl){ showToast('No se pudo capturar la foto','error'); return; }
+      $("image-preview").src = dataUrl;
+      $("image-preview-container").classList.remove('hidden');
+      const btn = $("goto-step-2"); btn.dataset.fileUrl = dataUrl; btn.disabled = false;
+      $("file-name").textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.jpg`;
+      closeCamera();
     });
     function showCreateStep(step){
       ["create-step-1","create-step-2","create-step-3-trivia","create-step-3-photo"].forEach(id=>$(id).classList.add("hidden"));
@@ -607,9 +588,9 @@
     async function publishChallenge(payload){
       if (!currentUser) return;
       let contentUrl = $("goto-step-2").dataset.fileUrl;
-      if (!contentUrl || contentUrl.length > 900_000) { contentUrl = 'https://placehold.co/600x400/333/FFF?text=TeReto'; }
+      if (!contentUrl || contentUrl.length>900000) contentUrl = 'https://placehold.co/600x400/333/FFF?text=TeReto';
       try{
-        await addDoc(collection(db, "challenges"), {
+        await addDoc(collection(db,'challenges'), {
           authorId: currentUser.uid,
           authorName: currentUser.displayName,
           authorImg: currentUser.photoURL,
@@ -621,14 +602,14 @@
           commentsCount: 0,
           ...payload
         });
-        showToast("¡Reto publicado!");
+        showToast('¡Reto publicado!');
         switchView('feed-view');
-      } catch(e){
-        console.error("addDoc challenge error:", e);
-        const msg = (e?.code || e?.message || '').toString();
-        if (msg.includes('permission-denied')) showToast("Permisos denegados (revisá reglas y dominios).","error");
-        else if (msg.includes('INVALID_ARGUMENT') || msg.includes('FAILED_PRECONDITION')) showToast("Contenido muy grande. Probá con imagen más liviana.","error");
-        else showToast("No se pudo publicar el reto","error");
+      }catch(e){
+        console.error(e);
+        const msg = (e?.code||e?.message||'').toString();
+        if (msg.includes('permission-denied')) showToast('Permisos denegados (reglas/domino).','error');
+        else if (msg.includes('FAILED_PRECONDITION')||msg.includes('INVALID_ARGUMENT')) showToast('Imagen muy pesada. Probá otra.','error');
+        else showToast('No se pudo publicar el reto','error');
       }
     }
     $("trivia-form")?.addEventListener('submit', (e)=>{
@@ -645,7 +626,7 @@
       publishChallenge({ type:'photo', question:$("photo-challenge-task").value });
     });
 
-    // Likes + abrir comentarios desde feed
+    // Likes y comentarios desde feed
     document.addEventListener('click', (e)=>{
       const navBtn = e.target.closest('.nav-button');
       if (navBtn && navBtn.dataset.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
@@ -654,13 +635,12 @@
       if (!card) return;
       const chId = card.dataset.challengeId;
 
-      if (e.target.closest('.comment-button')) { openCommentsModal(chId); return; }
+      if (e.target.closest('.comment-button')) { openComments(chId); return; }
 
       if (e.target.closest('.like-button')) {
         (async ()=>{
           try{
-            const chRef = doc(db,'challenges', chId);
-            await updateDoc(chRef, { likesCount: increment(1) }); // simple toggle-free (fase 1)
+            await updateDoc(doc(db,'challenges',chId), { likesCount: increment(1) });
             const span = card.querySelector('.likes-count');
             span.textContent = String((parseInt(span.textContent||'0',10))+1);
           }catch(err){ console.error(err); showToast('No se pudo actualizar el like','error'); }
@@ -668,62 +648,40 @@
       }
     });
 
-    // Friends (Descubrir) – búsqueda simple
-    const friendsTabContent = $("friends-tab-content");
-    const friendsTabButtons = document.querySelectorAll('.friends-tab');
-    function renderUserRow(user){
-      const row = document.createElement('div');
-      row.className = 'flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-      row.innerHTML = `<div class="flex items-center space-x-3">
-          <img class="w-10 h-10 rounded-full" src="${user.photoURL||''}">
-          <div class="flex flex-col">
-            <p class="font-semibold text-slate-700">${user.displayName||'(Sin nombre)'}</p>
-            <p class="text-xs text-slate-500">${user.email||''}</p>
-          </div>
-        </div>`;
-      friendsTabContent.appendChild(row);
-    }
-    async function renderDiscover(){
+    // Friends (búsqueda simple)
+    async function searchUsers(){
       const term = ($("user-search-input").value||'').toLowerCase().trim();
-      friendsTabContent.innerHTML = '';
+      const cont = $("friends-results"); cont.innerHTML = '';
       const results = new Map();
-      try {
+      try{
         if (term && term.includes('@')) {
-          const qEmail = query(collection(db,'users'), where('emailLower','==', term), limit(5));
-          const snapEmail = await getDocs(qEmail);
-          snapEmail.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+          const qEmail = query(collection(db,'users'), where('emailLower','==',term), limit(10));
+          (await getDocs(qEmail)).forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         } else if (term) {
-          const qName = query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term + '\uf8ff'), limit(50));
-          const snapName = await getDocs(qName);
-          snapName.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+          const qName = query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(30));
+          (await getDocs(qName)).forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         } else {
-          const qUsers = query(collection(db,'users'), orderBy('displayNameLower'), limit(50));
-          const snap = await getDocs(qUsers);
-          snap.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+          const qUsers = query(collection(db,'users'), orderBy('displayNameLower'), limit(30));
+          (await getDocs(qUsers)).forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         }
-      } catch (e) { console.error('search users error', e); }
-      if (results.size === 0){
-        friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
-        return;
-      }
-      [...results.values()].forEach(renderUserRow);
-    }
-    function refreshFriendsTab(tab = document.querySelector('.friends-tab.active')?.dataset.tab || 'my-friends'){
-      friendsTabButtons.forEach(btn=>{
-        btn.classList.toggle('active', btn.dataset.tab===tab);
-        btn.classList.toggle('text-slate-500', btn.dataset.tab!==tab);
+      }catch(e){ console.error('search users', e); }
+      if (results.size===0){ cont.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return; }
+      [...results.values()].forEach(u=>{
+        const row = document.createElement('div');
+        row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
+        row.innerHTML = `<div class="flex items-center space-x-3">
+            <img class="w-10 h-10 rounded-full" src="${u.photoURL||''}">
+            <div class="flex flex-col">
+              <p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p>
+              <p class="text-xs text-slate-500">${u.email||''}</p>
+            </div>
+          </div>`;
+        cont.appendChild(row);
       });
-      friendsTabContent.innerHTML = '';
-      if (tab==='discover'){ renderDiscover(); }
-      else { friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">En breve: lista de seguidos.</p>`; }
     }
-    $("user-search-input")?.addEventListener('input', ()=>{
-      const active = document.querySelector('.friends-tab.active')?.dataset.tab;
-      if (active === 'discover') renderDiscover();
-    });
-    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=> refreshFriendsTab(btn.dataset.tab)));
+    $("user-search-input")?.addEventListener('input', ()=>searchUsers());
 
-    // Navegación
+    // Nav views
     const views = { 'feed-view': $("feed-view"), 'friends-view': $("friends-view"), 'create-view': $("create-view"), 'profile-view': $("profile-view") };
     function switchView(viewName){
       Object.values(views).forEach(v=>v.classList.add('hidden'));
@@ -733,30 +691,8 @@
         btn.classList.toggle('text-slate-500', btn.dataset.view!==viewName);
       });
       if (viewName==='profile-view') refreshProfile();
-      if (viewName==='create-view') { /* reset minimal */ }
-      if (viewName==='friends-view') refreshFriendsTab('discover');
+      if (viewName==='friends-view') searchUsers();
     }
-
-    // Auth state
-    function clearAllSubs(){ clearFeedSub(); clearFollowingSub(); clearCommentsSub(); clearMyChallengesSub(); }
-    onAuthStateChanged(auth, async (user)=>{
-      clearAllSubs();
-      if (!user){
-        currentUser = null;
-        appScreen.classList.add("hidden");
-        loginScreen.classList.remove("hidden");
-        return;
-      }
-      currentUser = user;
-      loginScreen.classList.add("hidden");
-      appScreen.classList.remove("hidden");
-      await upsertUserProfile(currentUser);
-      startFollowingSub();
-      startMyChallengesSub();
-      restartFeedSubscription();
-      refreshProfile();
-      switchView('feed-view');
-    });
   </script>
 </body>
 </html>
