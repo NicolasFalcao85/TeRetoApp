@@ -129,7 +129,7 @@
                   <option value="24">24 horas</option>
                   <option value="48">48 horas</option>
                 </select>
-                <p class="text-xs text-slate-500 mt-1">El feed ocultará retos vencidos automáticamente.</p>
+                <p class="text-xs text-slate-500 mt-1">El feed oculta retos vencidos automáticamente.</p>
               </div>
             </div>
             <div class="space-y-4 mt-6">
@@ -356,9 +356,9 @@
       setPersistence, browserLocalPersistence, signInWithRedirect
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, setDoc, doc,
+      getFirestore, collection, addDoc, setDoc, doc, updateDoc,
       serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
-      startAt, endAt, deleteDoc
+      startAt, endAt, deleteDoc, getDoc, writeBatch, increment
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // ==== Firebase config (PROD) ====
@@ -422,15 +422,11 @@
     const loadObj = (k, uid) => JSON.parse(localStorage.getItem(lsKey(k, uid)) || '{}');
     const saveObj = (k, uid, obj) => localStorage.setItem(lsKey(k, uid), JSON.stringify(obj));
 
-    let friendsSet = new Set();           // uids de amigos
-    let likeState = {};                   // { challengeId: { liked:boolean, count:number } }
-    let commentState = {};                // { challengeId: [{...}] }
-
-    // feed
+    let friendsSet = new Set(); // amigos locales
     let challengesData = [];
     let feedUnsub = null;
 
-    // ===== Users helpers =====
+    // ===== Users =====
     function seedUsersFor(user){
       mockUser = {
         uid: user.uid,
@@ -439,7 +435,6 @@
         photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0]||'U'}`
       };
     }
-
     async function upsertUserProfile(user){
       const dn = user.displayName || '';
       const em = user.email || '';
@@ -456,12 +451,8 @@
     }
 
     // ===== Friends (local) =====
-    function loadFriends(uid){
-      friendsSet = loadSet('friends', uid);
-    }
-    function saveFriends(uid){
-      saveSet('friends', uid, friendsSet);
-    }
+    function loadFriends(uid){ friendsSet = loadSet('friends', uid); }
+    function saveFriends(uid){ saveSet('friends', uid, friendsSet); }
     function isFriend(uid){ return friendsSet.has(uid); }
     function addFriend(uid){ friendsSet.add(uid); saveFriends(currentUser.uid); showToast("Agregado a amigos"); refreshFriendsTab(); refreshFeed(); }
     function removeFriend(uid){ friendsSet.delete(uid); saveFriends(currentUser.uid); showToast("Eliminado de amigos"); refreshFriendsTab(); refreshFeed(); }
@@ -480,53 +471,47 @@
       if (!mockUser) return false;
       if (ch.authorId === mockUser.uid) return true; // autor ve desbloqueado
       const solvedSet = loadSet('solved', currentUser.uid);
-      if (solvedSet.has(ch.id)) return true;
-      return false;
+      return solvedSet.has(ch.id);
     }
     function unlockPostElement(postEl){
       postEl.querySelector('.content-img')?.classList.remove('blur-locked');
       postEl.querySelector('.lock-overlay')?.classList.add('hidden');
     }
 
-    // ===== Feed render =====
-    function mergeClientState(base){
-      const id = base.id;
-      const ls = likeState[id];
-      const comments = (commentState[id] || []);
-      return {
-        ...base,
-        likes: (ls?.count ?? base.likes ?? 0),
-        likedByMe: (ls?.liked ?? false),
-        commentsCount: comments.length
-      };
-    }
-
+    // ===== Expiration helper =====
     function isExpired(ch){
       if (!ch.expiresAt) return false;
       const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
       return exp && exp < new Date();
     }
 
+    // ===== Render feed =====
     function renderPost(ch){
-      const chMerged = mergeClientState(ch);
       const frag = document.importNode(postTemplate.content, true);
       const card = frag.querySelector('.post-card');
-      card.dataset.challengeId = chMerged.id;
+      card.dataset.challengeId = ch.id;
 
-      frag.querySelector('.author-img').src = chMerged.authorImg || '';
-      frag.querySelector('.author-name').textContent = chMerged.authorName || 'Usuario';
-      const dt = chMerged.createdAt?.toDate?.() || new Date();
+      frag.querySelector('.author-img').src = ch.authorImg || '';
+      frag.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
+      const dt = ch.createdAt?.toDate?.() || new Date();
       frag.querySelector('.post-time').textContent = new Date(dt).toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
-      frag.querySelector('.content-img').src = chMerged.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
-      frag.querySelector('.likes-count').textContent = chMerged.likes ?? 0;
-      frag.querySelector('.comments-count').textContent = chMerged.commentsCount ?? 0;
-      if (chMerged.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
-      if (chMerged.likedByMe) frag.querySelector('.like-icon').classList.add('liked');
+      frag.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      frag.querySelector('.likes-count').textContent = ch.likesCount ?? 0;
+      frag.querySelector('.comments-count').textContent = ch.commentsCount ?? 0;
+      if (ch.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
 
       const img = frag.querySelector('.content-img');
       const overlay = frag.querySelector('.lock-overlay');
       img.classList.add('blur-locked'); overlay.classList.remove('hidden');
-      if (shouldUnlockForUser(chMerged)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
+      if (shouldUnlockForUser(ch)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
+
+      // set estado "liked" del corazón consultando likes/{uid} (lazy)
+      if (currentUser){
+        const likeDocRef = doc(db, 'challenges', ch.id, 'likes', currentUser.uid);
+        getDoc(likeDocRef).then(s=>{
+          if (s.exists()) card.querySelector('.like-icon').classList.add('liked');
+        }).catch(()=>{});
+      }
 
       feedContainer.append(frag);
     }
@@ -541,7 +526,6 @@
     }
 
     function refreshFeed(){
-      // filtro: solo retos de amigos y no vencidos
       const friendsIds = new Set(friendsSet);
       const items = challengesData
         .filter(c => friendsIds.has(c.authorId))
@@ -556,51 +540,33 @@
       profilePic.src = mockUser.photoURL;
       profileName.textContent = mockUser.displayName;
       profileEmail.textContent = mockUser.email;
-      // mosaico de mis retos
       const mine = challengesData.filter(c => c.authorId === mockUser.uid);
       myMosaic.innerHTML = '';
       mine.forEach(ch=>{
         const wrap = document.createElement('div');
-        wrap.className = 'mosaic-item';
-        wrap.dataset.id = ch.id;
-
+        wrap.className = 'mosaic-item'; wrap.dataset.id = ch.id;
         const img = document.createElement('img');
         img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
-        img.className = 'mosaic-img';
-        wrap.appendChild(img);
-
+        img.className = 'mosaic-img'; wrap.appendChild(img);
         const del = document.createElement('button');
-        del.className = 'mosaic-del';
-        del.textContent = '🗑️';
-        del.title = 'Eliminar reto';
+        del.className = 'mosaic-del'; del.textContent = '🗑️'; del.title = 'Eliminar reto';
         del.addEventListener('click', async (e)=>{
           e.stopPropagation();
           if (!confirm('¿Eliminar este reto? Esta acción no se puede deshacer.')) return;
-          try{
-            await deleteDoc(doc(db,'challenges', ch.id));
-            showToast('Reto eliminado');
-          }catch(err){
-            console.error('delete error', err);
-            showToast('No se pudo eliminar','error');
-          }
+          try{ await deleteDoc(doc(db,'challenges', ch.id)); showToast('Reto eliminado'); }
+          catch(err){ console.error('delete error', err); showToast(err?.code==='permission-denied'?'No tenés permiso para borrar este reto':'No se pudo eliminar','error'); }
         });
         wrap.appendChild(del);
-
-        // badge de vencimiento
         if (isExpired(ch)){
           const badge = document.createElement('div');
-          badge.style.position='absolute'; badge.style.bottom='.25rem'; badge.style.left='.25rem';
-          badge.style.background='rgba(0,0,0,.6)'; badge.style.color='#fff'; badge.style.fontSize='.7rem';
-          badge.style.padding='.1rem .35rem'; badge.style.borderRadius='.35rem';
-          badge.textContent='Vencido';
-          wrap.appendChild(badge);
+          Object.assign(badge.style,{position:'absolute',bottom:'.25rem',left:'.25rem',background:'rgba(0,0,0,.6)',color:'#fff',fontSize:'.7rem',padding:'.1rem .35rem',borderRadius:'.35rem'});
+          badge.textContent='Vencido'; wrap.appendChild(badge);
         }
-
         myMosaic.appendChild(wrap);
       });
     }
 
-    // ===== Firestore Feed =====
+    // ===== Firestore feed subscription =====
     function startFeedSubscription(){
       if (feedUnsub) feedUnsub();
       const qRef = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
@@ -615,49 +581,63 @@
     }
     function stopFeedSubscription(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
 
-    // ===== Comentarios (local)
+    // ===== Comentarios (Firestore)
     const commentForm = $("comment-form"), commentInput = $("comment-input"),
           commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
           commentsModalBody = $("comments-modal-body");
     let openCommentsChallengeId = null;
+    let commentsUnsub = null;
 
+    function clearCommentsSub(){
+      if (commentsUnsub){ commentsUnsub(); commentsUnsub = null; }
+    }
     function openCommentsModal(chId){
       openCommentsChallengeId = chId;
       commentUserImg.src = mockUser.photoURL;
       commentForm.dataset.challengeId = chId;
-      renderComments(chId);
       commentsModal.classList.remove('hidden');
+      // suscripción a subcolección
+      clearCommentsSub();
+      const qRef = query(collection(db, 'challenges', chId, 'comments'), orderBy('createdAt','asc'), limit(200));
+      commentsUnsub = onSnapshot(qRef, (snap)=>{
+        commentsModalBody.innerHTML = '';
+        snap.forEach(docu=>{
+          const cm = docu.data();
+          const el = document.importNode(commentTemplate.content, true);
+          el.querySelector('.comment-author-img').src = cm.authorImg || '';
+          el.querySelector('.comment-author-name').textContent = cm.authorName || 'Usuario';
+          el.querySelector('.comment-text').textContent = cm.text || '';
+          const dt = cm.createdAt?.toDate?.() || new Date();
+          el.querySelector('.comment-time').textContent = new Date(dt).toLocaleString('es-AR',{ timeStyle:'short' });
+          commentsModalBody.appendChild(el);
+        });
+      },(err)=>{ console.error('comments onSnapshot',err); });
     }
     function closeComments(){
       commentsModal.classList.add('hidden');
       openCommentsChallengeId = null;
+      clearCommentsSub();
     }
-    function renderComments(chId){
-      const list = commentState[chId] || [];
-      commentsModalBody.innerHTML = '';
-      list.forEach(cm=>{
-        const el = document.importNode(commentTemplate.content, true);
-        el.querySelector('.comment-author-img').src = cm.userImg;
-        el.querySelector('.comment-author-name').textContent = cm.userName;
-        el.querySelector('.comment-text').textContent = cm.text;
-        el.querySelector('.comment-time').textContent = new Date(cm.createdAt).toLocaleString('es-AR',{ timeStyle:'short' });
-        commentsModalBody.appendChild(el);
-      });
-    }
-    $("comment-form")?.addEventListener('submit', (e)=>{
+    $("comment-form")?.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const challengeId = e.target.dataset.challengeId;
+      const chId = e.target.dataset.challengeId;
       const text = commentInput.value.trim();
-      if (!text || !challengeId) return;
-      commentState[challengeId] = commentState[challengeId] || [];
-      commentState[challengeId].push({
-        userId: mockUser.uid, userName: mockUser.displayName, userImg: mockUser.photoURL, text, createdAt: new Date().toISOString()
-      });
-      saveObj('comments', currentUser.uid, commentState);
-      commentInput.value='';
-      renderComments(challengeId);
-      const cardEl = feedContainer.querySelector(`.post-card[data-challenge-id="${challengeId}"]`);
-      if (cardEl) cardEl.querySelector('.comments-count').textContent = (commentState[challengeId] || []).length;
+      if (!text || !chId) return;
+      try{
+        const batch = writeBatch(db);
+        const commentRef = doc(collection(db,'challenges', chId, 'comments'));
+        batch.set(commentRef, {
+          authorId: mockUser.uid,
+          authorName: mockUser.displayName,
+          authorImg: mockUser.photoURL,
+          text,
+          createdAt: serverTimestamp()
+        });
+        const chRef = doc(db,'challenges', chId);
+        batch.update(chRef, { commentsCount: increment(1) });
+        await batch.commit();
+        commentInput.value = '';
+      } catch(e){ console.error('add comment',e); showToast('No se pudo comentar','error'); }
     });
     $("close-comments-modal")?.addEventListener('click', closeComments);
     $("comments-modal")?.addEventListener('click',(e)=>{ if (e.target.id === 'comments-modal') closeComments(); });
@@ -739,7 +719,6 @@
       steps[step].classList.remove('hidden');
     }
 
-    // ===== Publicar reto (Firestore) con vigencia
     function calcExpiresAt(){
       const v = createViewElements.expirySelect.value;
       if (v === '24') return new Date(Date.now() + 24*3600*1000);
@@ -757,11 +736,12 @@
           createdAt: serverTimestamp(),
           expiresAt: calcExpiresAt(),
           contentUrl: createViewElements.gotoStep2Btn.dataset.fileUrl,
-          likes: 0,
+          likesCount: 0,
+          commentsCount: 0,
           ...challengeDetails
         });
         showToast("¡Reto publicado!");
-        switchView('feed-view'); // onSnapshot refresca
+        switchView('feed-view');
       } catch(e){
         console.error("addDoc challenge error:", e);
         showToast("No se pudo publicar el reto","error");
@@ -797,7 +777,7 @@
       }
     }
 
-    // ===== Friends (UI + búsqueda eficiente)
+    // ===== Friends (UI + búsqueda)
     const friendsTabButtons = document.querySelectorAll('.friends-tab');
 
     function renderUserRow(user, isFriendFlag){
@@ -824,12 +804,10 @@
 
       try {
         if (term && term.includes('@')) {
-          // búsqueda exacta por email
           const qEmail = query(collection(db,'users'), where('emailLower','==', term), limit(5));
           const snapEmail = await getDocs(qEmail);
           snapEmail.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         } else if (term) {
-          // prefix search por nombre (requiere displayNameLower)
           const qName = query(
             collection(db,'users'),
             orderBy('displayNameLower'),
@@ -839,14 +817,11 @@
           const snapName = await getDocs(qName);
           snapName.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         } else {
-          // sin término: últimos 50 por nombre (UX simple)
           const qUsers = query(collection(db,'users'), orderBy('displayNameLower'), limit(50));
           const snap = await getDocs(qUsers);
           snap.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
         }
-      } catch (e) {
-        console.error('search users error', e);
-      }
+      } catch (e) { console.error('search users error', e); }
 
       if (results.size === 0){
         friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
@@ -865,7 +840,6 @@
         if (friendsSet.size===0){
           friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Aún no tienes amigos.</p>`; return;
         }
-        // listar amigos (con fetch de datos)
         [...friendsSet].forEach(async (uid)=>{
           try{
             const qOne = query(collection(db,'users'), where('__name__','==', uid), limit(1));
@@ -876,9 +850,7 @@
             });
           } catch(e){ console.error(e); }
         });
-      } else if (tab==='discover'){
-        renderDiscover();
-      }
+      } else if (tab==='discover'){ renderDiscover(); }
     }
 
     $("user-search-input")?.addEventListener('input', ()=>{
@@ -886,17 +858,42 @@
       if (active === 'discover') renderDiscover();
     });
     document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=> refreshFriendsTab(btn.dataset.tab)));
-
-    // Delegación acciones amigos
     friendsTabContent.addEventListener('click',(e)=>{
-      const btn = e.target.closest('button');
-      if (!btn) return;
+      const btn = e.target.closest('button'); if (!btn) return;
       const uid = btn.dataset.uid;
       if (btn.dataset.action === 'add-friend') addFriend(uid);
       if (btn.dataset.action === 'remove-friend') removeFriend(uid);
     });
 
-    // ===== Navegación y eventos globales =====
+    // ===== Likes (Firestore)
+    async function toggleLike(chId, ui){
+      if (!currentUser) return;
+      const likeRef = doc(db,'challenges', chId, 'likes', currentUser.uid);
+      const chRef = doc(db,'challenges', chId);
+      try{
+        const snap = await getDoc(likeRef);
+        const batch = writeBatch(db);
+        if (snap.exists()){
+          batch.delete(likeRef);
+          batch.update(chRef, { likesCount: increment(-1) });
+        } else {
+          batch.set(likeRef, { createdAt: serverTimestamp() });
+          batch.update(chRef, { likesCount: increment(1) });
+        }
+        await batch.commit();
+        // UI optimista
+        if (ui){
+          const icon = ui.querySelector('.like-icon');
+          const span = ui.querySelector('.likes-count');
+          const likedNow = !icon.classList.contains('liked');
+          icon.classList.toggle('liked', likedNow);
+          const curr = parseInt(span.textContent||'0',10);
+          span.textContent = String(curr + (likedNow?1:-1));
+        }
+      } catch(e){ console.error('toggle like', e); showToast('No se pudo actualizar el like','error'); }
+    }
+
+    // ===== Navegación + acciones globales =====
     const views = {
       'feed-view': $("feed-view"),
       'friends-view': $("friends-view"),
@@ -915,15 +912,10 @@
       if (viewName==='friends-view') refreshFriendsTab('my-friends');
     }
 
-    // 🔧 Delegador global (fix barra inferior + posts + tip)
     document.addEventListener('click', (e) => {
       // Navegación inferior
       const navBtn = e.target.closest('.nav-button');
-      if (navBtn && navBtn.dataset.view) {
-        e.preventDefault();
-        switchView(navBtn.dataset.view);
-        return;
-      }
+      if (navBtn && navBtn.dataset.view) { e.preventDefault(); switchView(navBtn.dataset.view); return; }
 
       // Tip del feed
       if (e.target.closest('.challenge-container')){
@@ -934,24 +926,15 @@
       // Acciones en posts
       const postCard = e.target.closest('.post-card');
       if (postCard && postCard.dataset.challengeId){
-        const challengeId = postCard.dataset.challengeId;
-        const ch = challengesData.find(c=>c.id===challengeId);
+        const chId = postCard.dataset.challengeId;
+        const ch = challengesData.find(c=>c.id===chId);
         if (!ch) return;
 
-        // Like (local)
-        if (e.target.closest('.like-button')){
-          likeState[challengeId] = likeState[challengeId] || { liked:false, count: ch.likes||0 };
-          const curr = likeState[challengeId];
-          curr.liked = !curr.liked;
-          curr.count = (curr.count || 0) + (curr.liked ? 1 : -1);
-          postCard.querySelector('.like-icon').classList.toggle('liked', curr.liked);
-          postCard.querySelector('.likes-count').textContent = curr.count;
-          saveObj('likes', currentUser.uid, likeState);
-          return;
-        }
+        // Like persistente
+        if (e.target.closest('.like-button')){ toggleLike(chId, postCard); return; }
 
         // Comentarios
-        if (e.target.closest('.comment-button')) { openCommentsModal(challengeId); return; }
+        if (e.target.closest('.comment-button')) { openCommentsModal(chId); return; }
 
         // Abrir reto
         if (e.target.closest('.challenge-container')){
@@ -1009,8 +992,6 @@
         await upsertUserProfile(currentUser);
 
         loadFriends(currentUser.uid);
-        likeState = loadObj('likes', currentUser.uid);
-        commentState = loadObj('comments', currentUser.uid);
 
         loginScreen.classList.add("hidden");
         appScreen.classList.remove("hidden");
