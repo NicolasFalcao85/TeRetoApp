@@ -1,50 +1,1176 @@
-// Firestore Security Rules (DEV)
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TeReto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .blur-locked { filter: blur(20px); transition: filter .25s ease-in-out; }
+    .animate-fade-in-up { animation: fadeInUp .5s ease-out forwards; }
+    @keyframes fadeInUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+    .answer-btn:hover { transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .like-icon.liked { fill:#ec4899; color:#ec4899; }
+    .like-button:active { transform: scale(.9); }
+    .image-preview { max-height: 200px; object-fit: cover; }
+    .comments-modal-body { height: calc(100vh - 12rem); }
+    .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55);}
+    .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
+    .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite; }
+    @keyframes spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
+    .friends-tab.active { border-bottom-color:#6366f1; color:#6366f1; font-weight:600; }
+    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); transition:all .3s ease; }
+    .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.75); }
+    .tip-chip { font-size:10px; padding:2px 8px; border-radius:9999px; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.5); }
+    .grid-mosaic { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .mosaic-item { position:relative; aspect-ratio:1/1; }
+    .mosaic-img { width:100%; height:100%; object-fit:cover; border-radius:.5rem; }
+    .mosaic-del { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.6); color:#fff; border-radius:.5rem; padding:.15rem .4rem; font-size:.8rem; }
+    .badge { font-size:.7rem; padding:.1rem .35rem; border-radius:.35rem; }
+  </style>
+</head>
+<body class="bg-slate-100 h-screen">
 
-    // Perfiles
-    match /users/{uid} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
+  <!-- SPINNER -->
+  <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
+    <div class="spinner"></div>
+  </div>
 
-      // Following persistente
-      match /following/{targetUid} {
-        allow read: if request.auth != null;
-        // crear/borrar follow solo el dueño del /users/{uid}
-        allow create, delete: if request.auth != null && request.auth.uid == uid;
-      }
+  <!-- TOAST -->
+  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]" role="alert">
+    <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
+    <div id="toast-message" class="ml-3 text-sm font-normal"></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center justify-center mb-4">
+        <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+          <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+          <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader)" stroke-width="3"/>
+        </svg>
+        <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="logoTextGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+          <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient)">TeReto</text>
+        </svg>
+      </div>
+      <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
+      <button id="google-btn" class="w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50">
+        <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+        <span class="font-semibold text-slate-700">Continuar con Google</span>
+      </button>
+      <p class="text-[11px] text-center text-slate-400 mt-4">Al continuar aceptás los Términos y la Política de Privacidad.</p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app-screen" class="h-full flex flex-col hidden">
+    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
+      <!-- FEED -->
+      <div id="feed-view">
+        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
+          <div class="flex items-center space-x-2">
+            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="logoGradientHeader2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs>
+              <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16s5.373 12 12 12Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
+              <path d="M16 20a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="url(#logoGradientHeader2)" stroke-width="3"/>
+            </svg>
+            <svg class="h-7" viewBox="0 0 90 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="logoTextGradient2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+              <text x="0" y="20" font-family="Poppins, sans-serif" font-size="24" font-weight="700" fill="url(#logoTextGradient2)">TeReto</text>
+            </svg>
+          </div>
+          <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
+        </header>
+        <div class="px-3 pt-3 pb-1">
+          <div id="feed-tip" class="hidden text-[12px] text-slate-600">
+            <span class="tip-chip">Consejo</span> Tocá la imagen “bloqueada” para aceptar el desafío. Si acertás, se desbloquea para vos. 😉
+          </div>
+        </div>
+        <div id="feed-container" class="p-2 space-y-4"></div>
+      </div>
+
+      <!-- CREATE -->
+      <div id="create-view" class="hidden p-4">
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
+          <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
+          <div id="create-step-1" class="text-center">
+            <h3 class="font-semibold text-lg mb-2 text-slate-700">Paso 1: Agrega el contenido a bloquear</h3>
+            <div id="image-preview-container" class="hidden my-4">
+              <img id="image-preview" src="#" alt="Previsualización" class="rounded-lg image-preview mx-auto"/>
+            </div>
+            <div class="grid grid-cols-2 gap-4 my-4">
+              <label for="file-upload" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
+                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <span class="text-sm font-semibold">Subir Archivo</span>
+                <input id="file-upload" type="file" class="sr-only" accept="image/*,video/*">
+              </label>
+              <button id="open-camera-btn" type="button" class="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg hover:bg-slate-50 text-slate-500 hover:text-indigo-500">
+                <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-sm font-semibold">Usar Cámara</span>
+              </button>
+            </div>
+            <p id="file-name" class="mt-2 text-sm text-slate-500"></p>
+            <button id="goto-step-2" class="mt-4 w-full text-white font-bold py-2 px-4 rounded-md btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>Siguiente</button>
+          </div>
+
+          <div id="create-step-2" class="hidden">
+            <h3 class="font-semibold text-lg mb-3 text-slate-700">Paso 2: Configurá el reto</h3>
+            <div class="space-y-3">
+              <label class="block text-sm font-medium text-slate-700">Descripción (opcional)</label>
+              <textarea id="challenge-caption" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" placeholder="Escribe un pie de foto..."></textarea>
+
+              <label class="block text-sm font-medium text-slate-700 mt-2">Vigencia</label>
+              <select id="challenge-expiry" class="w-full border rounded-md px-3 py-2">
+                <option value="none">Sin vencimiento</option>
+                <option value="24">24 horas</option>
+                <option value="48">48 horas</option>
+              </select>
+              <p class="text-xs text-slate-500">El feed oculta retos vencidos automáticamente.</p>
+            </div>
+
+            <h3 class="font-semibold text-lg mt-5 mb-3 text-slate-700">Elegí el tipo</h3>
+            <div class="space-y-4">
+              <button id="select-trivia-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
+                <span class="text-3xl mr-4">🧠</span>
+                <div><p class="font-bold text-slate-800">Trivia</p><p class="text-sm text-slate-500">Pregunta de opción múltiple.</p></div>
+              </button>
+              <button id="select-photo-challenge-btn" class="w-full text-left p-4 border rounded-lg hover:bg-slate-50 flex items-center">
+                <span class="text-3xl mr-4">📸</span>
+                <div><p class="font-bold text-slate-800">Foto / Video</p><p class="text-sm text-slate-500">Pedí que cumplan una consigna.</p></div>
+              </button>
+            </div>
+          </div>
+
+          <div id="create-step-3-trivia" class="hidden">
+            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Configura la Trivia</h3>
+            <form id="trivia-form" class="space-y-4">
+              <div>
+                <label for="trivia-question" class="block text-sm font-medium text-slate-700">Pregunta</label>
+                <input type="text" id="trivia-question" class="mt-1 block w-full input-style" required>
+              </div>
+              <div>
+                <label for="correct-answer" class="block text-sm font-medium text-green-700">Respuesta Correcta</label>
+                <input type="text" id="correct-answer" class="mt-1 block w-full input-style border-green-400 border-2" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-red-700">Respuestas Incorrectas</label>
+                <input type="text" id="wrong-answer-1" class="mt-1 block w-full input-style" required placeholder="Opción 1">
+                <input type="text" id="wrong-answer-2" class="mt-2 block w-full input-style" required placeholder="Opción 2">
+                <input type="text" id="wrong-answer-3" class="mt-2 block w-full input-style" required placeholder="Opción 3">
+              </div>
+              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
+            </form>
+          </div>
+
+          <div id="create-step-3-photo" class="hidden">
+            <h3 class="font-semibold text-lg mb-4 text-slate-700">Paso 3: Describe el Desafío</h3>
+            <form id="photo-challenge-form" class="space-y-4">
+              <div>
+                <label for="photo-challenge-task" class="block text-sm font-medium text-slate-700">Consigna</label>
+                <textarea id="photo-challenge-task" rows="4" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
+              </div>
+              <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">Publicar Reto</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- FRIENDS -->
+      <div id="friends-view" class="hidden">
+        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40"><h1 class="text-3xl font-bold text-slate-800">Amigos</h1></header>
+        <div class="p-4">
+          <div class="relative mb-4">
+            <input type="search" id="user-search-input" placeholder="Buscar por nombre o email..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
+              <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+          </div>
+          <div class="border-b border-slate-200">
+            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active" data-tab="my-friends">Mis Amigos</button>
+              <button class="friends-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="discover">Descubrir</button>
+            </nav>
+          </div>
+          <div id="friends-tab-content" class="mt-4"></div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div id="profile-view" class="hidden">
+        <div class="p-4 bg-white shadow-lg">
+          <div class="flex flex-col items-center">
+            <img id="profile-pic" src="" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
+            <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
+            <p id="profile-email" class="text-slate-500"></p>
+            <div class="w-full mt-6">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-lg font-semibold text-slate-700">Mis retos</h3>
+                <span id="my-retos-count" class="text-xs text-slate-500"></span>
+              </div>
+              <div id="my-mosaic" class="grid-mosaic"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- NAV -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
+      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+        <span class="text-xs font-semibold">Inicio</span>
+      </button>
+      <button data-view="friends-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0z"/></svg>
+        <span class="text-xs font-semibold">Amigos</span>
+      </button>
+      <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+        <span class="text-xs font-semibold">Crear</span>
+      </button>
+      <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0012 11z" clip-rule="evenodd"/></svg>
+        <span class="text-xs font-semibold">Perfil</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODALES -->
+  <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
+      <button id="close-trivia-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" aria-label="Cerrar trivia">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <h2 id="trivia-modal-question" class="text-2xl font-bold text-slate-800 mb-6"></h2>
+      <div id="trivia-modal-answers" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <p id="trivia-feedback" class="mt-4 text-red-500 font-semibold h-6"></p>
+    </div>
+  </div>
+
+  <div id="photo-challenge-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-lg w-full text-center relative animate-fade-in-up">
+      <button id="close-photo-challenge-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" aria-label="Cerrar reto foto">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <div class="text-5xl mb-4">📸</div>
+      <h2 class="text-2xl font-bold text-slate-800 mb-2">¡Acepta el Desafío!</h2>
+      <p id="photo-challenge-description" class="text-slate-600 mb-6"></p>
+      <button id="submit-photo-challenge-btn" class="w-full text-white font-bold py-3 px-4 rounded-lg btn-primary">Cumplir Reto</button>
+    </div>
+  </div>
+
+  <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+      <header class="flex items-center justify-between p-4 border-b">
+        <h2 class="text-xl font-bold text-slate-800">Comentarios</h2>
+        <button id="close-comments-modal" class="text-slate-500 hover:text-slate-800" aria-label="Cerrar comentarios">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </header>
+      <div id="comments-modal-body" class="comments-modal-body flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
+      <footer class="p-4 border-t bg-white">
+        <form id="comment-form" class="flex items-center space-x-2">
+          <img id="comment-user-img" src="" class="w-8 h-8 rounded-full" alt="">
+          <input id="comment-input" type="text" placeholder="Añade un comentario..." class="flex-grow bg-slate-100 border-slate-200 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button type="submit" class="btn-primary text-white rounded-full p-2" aria-label="Enviar comentario">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          </button>
+        </form>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Insights modal -->
+  <div id="insights-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+      <header class="flex items-center justify-between p-4 border-b">
+        <h2 class="text-xl font-bold text-slate-800">Detalles del reto</h2>
+        <button id="close-insights-modal" class="text-slate-500 hover:text-slate-800" aria-label="Cerrar detalles">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </header>
+      <div id="insights-body" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50"></div>
+    </div>
+  </div>
+
+  <div id="camera-modal" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+    <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
+    <canvas id="camera-canvas" class="hidden"></canvas>
+    <button id="cancel-camera-btn" class="absolute top-4 left-4 text-white bg-black/50 rounded-full p-2" aria-label="Cerrar cámara">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+    <div class="absolute bottom-10 flex flex-col items-center">
+      <button id="capture-btn" class="w-20 h-20 rounded-full bg-white border-4 border-slate-400 hover:border-white focus:outline-none"></button>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <template id="post-template">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
+      <div class="p-4 flex items-center space-x-3">
+        <img class="w-10 h-10 rounded-full author-img" src="" alt="Author">
+        <div>
+          <p class="font-semibold text-slate-800 author-name"></p>
+          <p class="text-[11px] text-slate-500 post-time"></p>
+        </div>
+      </div>
+      <div class="relative cursor-pointer group challenge-container">
+        <img class="w-full h-96 object-cover content-img" src="" alt="Contenido del reto">
+        <div class="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center p-4 lock-overlay">
+          <div class="tip-chip mb-2 hidden md:block">Consejo: tocá para aceptar</div>
+          <div class="text-5xl mb-2 lock-icon">🔒</div>
+          <h3 class="font-bold text-lg">Reto Bloqueado</h3>
+          <p class="text-sm mt-1 group-hover:underline">Toca para aceptar el desafío</p>
+        </div>
+      </div>
+      <div class="p-4">
+        <p class="text-sm text-slate-700 caption mt-1"></p>
+        <div class="flex items-center justify-between mt-2 text-slate-500">
+          <div class="flex space-x-4">
+            <button class="like-button flex items-center space-x-1 cursor-pointer">
+              <svg class="w-6 h-6 like-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+              <span class="likes-count">0</span>
+            </button>
+            <button class="comment-button flex items-center space-x-1 cursor-pointer">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <span class="comments-count">0</span>
+            </button>
+          </div>
+          <span class="text-[11px] post-time-secondary"></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="comment-template">
+    <div class="flex items-start space-x-3">
+      <img class="w-8 h-8 rounded-full comment-author-img" src="">
+      <div class="flex-1 bg-slate-100 rounded-xl p-3">
+        <p class="text-sm"><strong class="comment-author-name text-slate-800"></strong> <span class="text-slate-600 comment-text"></span></p>
+        <p class="text-xs text-slate-400 mt-1 comment-time"></p>
+      </div>
+    </div>
+  </template>
+
+  <template id="user-list-item-template">
+    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100">
+      <div class="flex items-center space-x-3">
+        <img class="w-10 h-10 rounded-full user-img" src="">
+        <div class="flex flex-col">
+          <p class="font-semibold user-name text-slate-700"></p>
+          <p class="text-xs text-slate-500 user-email"></p>
+        </div>
+      </div>
+      <div class="user-actions"></div>
+    </div>
+  </template>
+
+  <!-- Firebase + App -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+      setPersistence, browserLocalPersistence, signInWithRedirect
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, setDoc, doc, updateDoc,
+      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
+      startAt, endAt, deleteDoc, getDoc, writeBatch, increment
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // ==== Firebase config (PROD) ====
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+      authDomain: "tereto-prod.firebaseapp.com",
+      projectId: "tereto-prod",
+      storageBucket: "tereto-prod.firebasestorage.app",
+      messagingSenderId: "914605096619",
+      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+    };
+
+    // ==== Init ====
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const db = getFirestore(app);
+
+    // ==== UI helpers ====
+    const $ = (id) => document.getElementById(id);
+    const loginScreen = $("login-screen");
+    const appScreen = $("app-screen");
+    const toastEl = $("toast"), toastMessage = $("toast-message"), toastIcon = $("toast-icon");
+    const loadingSpinner = $("loading-spinner");
+    function showToast(message, type='success') {
+      toastMessage.textContent = message;
+      toastIcon.innerHTML = type === 'success'
+        ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`
+        : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
+      toastIcon.className = `inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}`;
+      toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 2800);
     }
 
-    // Retos
-    match /challenges/{id} {
-      allow read: if true;
+    // ==== Auth buttons ====
+    $("google-btn")?.addEventListener("click", async () => {
+      try {
+        loadingSpinner.classList.remove("hidden");
+        try { await signInWithPopup(auth, provider); }
+        catch (e) { if (e?.code === "auth/popup-blocked") await signInWithRedirect(auth, provider); else throw e; }
+      } catch (err) {
+        console.error(err);
+        showToast(err.code?.replace("auth/", "") || "Error al iniciar sesión", "error");
+      } finally { loadingSpinner.classList.add("hidden"); }
+    });
+    $("signout-btn")?.addEventListener("click", async () => {
+      try { await signOut(auth); showToast("Sesión cerrada."); }
+      catch (err) { console.error(err); showToast("No se pudo cerrar sesión","error"); }
+    });
 
-      // Crear: autor autenticado
-      allow create: if request.auth != null
-                    && request.resource.data.authorId == request.auth.uid;
+    // ==== State ====
+    let currentUser = null;
+    let mockUser = null;
 
-      // Update/Delete:
-      // - autor del reto puede editar/borrar
-      // - DEV: permitimos updates que solo toquen likesCount/commentsCount (para increments)
-      allow update, delete: if request.auth != null && (
-          resource.data.authorId == request.auth.uid ||
-          (request.resource.data.diff(resource.data).changedKeys().hasOnly(['likesCount','commentsCount']))
-      );
+    // Persistencia local por usuario (para unlocks locales)
+    const lsKey = (k, uid) => `tereto_${k}_${uid}`;
+    const loadSet = (k, uid) => new Set(JSON.parse(localStorage.getItem(lsKey(k, uid)) || '[]'));
+    const saveSet = (k, uid, set) => localStorage.setItem(lsKey(k, uid), JSON.stringify([...set]));
 
-      match /likes/{uid} {
-        allow read: if true;
-        allow create, delete: if request.auth != null && request.auth.uid == uid;
+    // Following (persistente)
+    let followingSet = new Set();
+    let followingUnsub = null;
+
+    // Feed
+    let challengesData = [];
+    let feedUnsub = null;
+
+    // ===== Users =====
+    function seedUsersFor(user){
+      mockUser = {
+        uid: user.uid,
+        displayName: user.displayName || "Usuario",
+        email: user.email || "",
+        photoURL: user.photoURL || `https://placehold.co/100x100/A0A0FF/FFFFFF?text=${(user.displayName||'U')[0]||'U'}`
+      };
+    }
+    async function upsertUserProfile(user){
+      const dn = user.displayName || '';
+      const em = user.email || '';
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: dn || null,
+          displayNameLower: dn.toLowerCase() || null,
+          email: em || null,
+          emailLower: em.toLowerCase() || null,
+          photoURL: user.photoURL || null,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      } catch(e){ console.error("users setDoc error:", e); }
+    }
+
+    // ===== Following =====
+    function clearFollowingSub(){ if (followingUnsub){ followingUnsub(); followingUnsub=null; } }
+    function setFollowing(setIds){ followingSet = new Set(setIds); restartFeedSubscription(); }
+
+    async function follow(uid){
+      if (!currentUser || uid===currentUser.uid) return;
+      try{
+        await setDoc(doc(db,'users', currentUser.uid, 'following', uid), { createdAt: serverTimestamp() });
+        showToast('Ahora seguís a este usuario');
+      } catch(e){ console.error(e); showToast('No se pudo seguir','error'); }
+    }
+    async function unfollow(uid){
+      if (!currentUser || uid===currentUser.uid) return;
+      try{
+        await deleteDoc(doc(db,'users', currentUser.uid, 'following', uid));
+        showToast('Dejaste de seguir');
+      } catch(e){ console.error(e); showToast('No se pudo dejar de seguir','error'); }
+    }
+
+    function startFollowingSub(){
+      clearFollowingSub();
+      if (!currentUser) return;
+      const qRef = collection(db, 'users', currentUser.uid, 'following');
+      followingUnsub = onSnapshot(qRef, (snap)=>{
+        const ids = snap.docs.map(d=>d.id);
+        setFollowing(ids);
+        refreshFriendsTab(); // para que botones reflejen seguir / dejar de seguir
+      });
+    }
+
+    // ===== UI refs =====
+    const feedContainer = $("feed-container");
+    const postTemplate = $("post-template");
+    const commentTemplate = $("comment-template");
+    const friendsTabContent = $("friends-tab-content");
+    const userListItemTemplate = $("user-list-item-template");
+    const profilePic = $("profile-pic"), profileName = $("profile-name"), profileEmail = $("profile-email");
+    const myMosaic = $("my-mosaic");
+    const myRetosCount = $("my-retos-count");
+
+    // ===== Unlock helpers =====
+    function shouldUnlockForUser(ch){
+      if (!mockUser) return false;
+      if (ch.authorId === mockUser.uid) return true; // autor ve desbloqueado
+      const solvedSet = loadSet('solved', currentUser.uid);
+      return solvedSet.has(ch.id);
+    }
+    function unlockPostElement(postEl){
+      postEl.querySelector('.content-img')?.classList.remove('blur-locked');
+      postEl.querySelector('.lock-overlay')?.classList.add('hidden');
+    }
+
+    // ===== Expiration helper =====
+    function isExpired(ch){
+      if (!ch.expiresAt) return false;
+      const exp = ch.expiresAt?.toDate?.() || new Date(ch.expiresAt);
+      return exp && exp < new Date();
+    }
+
+    // ===== Render feed =====
+    function renderPost(ch){
+      const frag = document.importNode(postTemplate.content, true);
+      const card = frag.querySelector('.post-card');
+      card.dataset.challengeId = ch.id;
+
+      frag.querySelector('.author-img').src = ch.authorImg || '';
+      frag.querySelector('.author-name').textContent = ch.authorName || 'Usuario';
+      const dt = ch.createdAt?.toDate?.() || new Date();
+      frag.querySelector('.post-time').textContent = new Date(dt).toLocaleString('es-AR',{ dateStyle:'short', timeStyle:'short' });
+      frag.querySelector('.content-img').src = ch.contentUrl || 'https://placehold.co/600x400/333/FFF?text=TeReto';
+      frag.querySelector('.caption').textContent = ch.caption || '';
+      frag.querySelector('.likes-count').textContent = ch.likesCount ?? 0;
+      frag.querySelector('.comments-count').textContent = ch.commentsCount ?? 0;
+      if (ch.type === 'photo') frag.querySelector('.lock-icon').textContent = '📸';
+
+      const img = frag.querySelector('.content-img');
+      const overlay = frag.querySelector('.lock-overlay');
+      img.classList.add('blur-locked'); overlay.classList.remove('hidden');
+      if (shouldUnlockForUser(ch)) { img.classList.remove('blur-locked'); overlay.classList.add('hidden'); }
+
+      // estado liked (lazy)
+      if (currentUser){
+        const likeDocRef = doc(db, 'challenges', ch.id, 'likes', currentUser.uid);
+        getDoc(likeDocRef).then(s=>{
+          if (s.exists()) card.querySelector('.like-icon').classList.add('liked');
+        }).catch(()=>{});
       }
 
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if request.auth != null;
-        allow delete: if request.auth != null && (
-          resource.data.authorId == request.auth.uid ||
-          get(/databases/$(database)/documents/challenges/$(id)).data.authorId == request.auth.uid
-        );
+      feedContainer.append(frag);
+    }
+
+    function renderEmptyFeedHint(){
+      const div = document.createElement('div');
+      div.className = 'mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600';
+      div.innerHTML = `
+        <p class="font-semibold text-slate-800 mb-1">Tu feed está vacío</p>
+        <p class="text-sm">Seguí usuarios en <span class="font-semibold">Amigos → Descubrir</span> para ver sus retos.</p>`;
+      feedContainer.appendChild(div);
+    }
+
+    function refreshFeed(){
+      const items = challengesData.filter(c => !isExpired(c));
+      feedContainer.innerHTML = '';
+      $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
+      if (items.length === 0) { renderEmptyFeedHint(); return; }
+      items.forEach(renderPost);
+    }
+
+    function refreshProfile(){
+      profilePic.src = mockUser.photoURL;
+      profileName.textContent = mockUser.displayName;
+      profileEmail.textContent = mockUser.email;
+      const mine = challengesData.filter(c => c.authorId === mockUser.uid);
+      myRetosCount.textContent = `${mine.length} retos`;
+      myMosaic.innerHTML = '';
+      mine.forEach(ch=>{
+        const wrap = document.createElement('div');
+        wrap.className = 'mosaic-item'; wrap.dataset.id = ch.id;
+
+        const img = document.createElement('img');
+        img.src = ch.contentUrl || 'https://placehold.co/600x600/333/FFF?text=Reto';
+        img.className = 'mosaic-img'; wrap.appendChild(img);
+
+        // Badges
+        const bar = document.createElement('div');
+        bar.style.position='absolute'; bar.style.left='.25rem'; bar.style.bottom='.25rem'; bar.style.display='flex'; bar.style.gap='.25rem';
+        const bLikes = document.createElement('span'); bLikes.className='badge'; bLikes.style.background='rgba(0,0,0,.6)'; bLikes.style.color='#fff'; bLikes.textContent = `❤ ${ch.likesCount||0}`;
+        const bComments = document.createElement('span'); bComments.className='badge'; bComments.style.background='rgba(0,0,0,.6)'; bComments.style.color='#fff'; bComments.textContent = `💬 ${ch.commentsCount||0}`;
+        bar.appendChild(bLikes); bar.appendChild(bComments);
+        if (isExpired(ch)){ const exp = document.createElement('span'); exp.className='badge'; exp.style.background='rgba(255,0,0,.7)'; exp.style.color='#fff'; exp.textContent='Vencido'; bar.appendChild(exp); }
+        wrap.appendChild(bar);
+
+        // Delete
+        const del = document.createElement('button');
+        del.className = 'mosaic-del'; del.textContent = '🗑️'; del.title = 'Eliminar reto';
+        del.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          if (!confirm('¿Eliminar este reto? Esta acción no se puede deshacer.')) return;
+          try{ await deleteDoc(doc(db,'challenges', ch.id)); showToast('Reto eliminado'); }
+          catch(err){ console.error('delete error', err); showToast(err?.code==='permission-denied'?'No tenés permiso para borrar este reto':'No se pudo eliminar','error'); }
+        });
+        wrap.appendChild(del);
+
+        // Insights
+        wrap.addEventListener('click', ()=> openInsights(ch.id));
+        myMosaic.appendChild(wrap);
+      });
+    }
+
+    // ===== Feed subscription (siguiendo)
+    function clearFeedSub(){ if (feedUnsub){ feedUnsub(); feedUnsub=null; } }
+    function restartFeedSubscription(){
+      clearFeedSub();
+      if (!currentUser) return;
+
+      const ids = [...followingSet];
+      if (ids.length === 0){
+        // nada seguido → feed vacío
+        challengesData = [];
+        refreshFeed(); refreshProfile();
+        return;
+      }
+
+      // Caso A: hasta 10 seguidos → query server-side con IN
+      if (ids.length <= 10){
+        const qRef = query(collection(db,'challenges'), where('authorId','in', ids));
+        feedUnsub = onSnapshot(qRef, (snap)=>{
+          challengesData = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+            .sort((a,b)=> (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+          refreshFeed(); refreshProfile();
+        }, (err)=>{ console.error('feed in[]', err); showToast('No se pudo cargar el feed','error'); });
+        return;
+      }
+
+      // Caso B: +10 seguidos → traemos últimos N y filtramos client-side
+      const qRef = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(120));
+      feedUnsub = onSnapshot(qRef, (snap)=>{
+        const set = new Set(ids);
+        challengesData = snap.docs.map(d=>({ id:d.id, ...d.data() })).filter(d=> set.has(d.authorId));
+        refreshFeed(); refreshProfile();
+      }, (err)=>{ console.error('feed fallback', err); showToast('No se pudo cargar el feed','error'); });
+    }
+
+    // ===== Comentarios (Firestore)
+    const commentForm = $("comment-form"), commentInput = $("comment-input"),
+          commentUserImg = $("comment-user-img"), commentsModal = $("comments-modal"),
+          commentsModalBody = $("comments-modal-body");
+    let commentsUnsub = null;
+
+    function clearCommentsSub(){ if (commentsUnsub){ commentsUnsub(); commentsUnsub = null; } }
+    function openCommentsModal(chId){
+      commentUserImg.src = mockUser.photoURL;
+      commentForm.dataset.challengeId = chId;
+      commentsModal.classList.remove('hidden');
+      clearCommentsSub();
+      const qRef = query(collection(db, 'challenges', chId, 'comments'), orderBy('createdAt','asc'), limit(200));
+      commentsUnsub = onSnapshot(qRef, (snap)=>{
+        commentsModalBody.innerHTML = '';
+        snap.forEach(docu=>{
+          const cm = docu.data();
+          const el = document.importNode(commentTemplate.content, true);
+          el.querySelector('.comment-author-img').src = cm.authorImg || '';
+          el.querySelector('.comment-author-name').textContent = cm.authorName || 'Usuario';
+          el.querySelector('.comment-text').textContent = cm.text || '';
+          const dt = cm.createdAt?.toDate?.() || new Date();
+          el.querySelector('.comment-time').textContent = new Date(dt).toLocaleString('es-AR',{ timeStyle:'short' });
+          commentsModalBody.appendChild(el);
+        });
+      },(err)=>{ console.error('comments onSnapshot',err); });
+    }
+    function closeComments(){
+      commentsModal.classList.add('hidden');
+      clearCommentsSub();
+    }
+    $("comment-form")?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const chId = e.target.dataset.challengeId;
+      const text = commentInput.value.trim();
+      if (!text || !chId) return;
+      try{
+        const batch = writeBatch(db);
+        const commentRef = doc(collection(db,'challenges', chId, 'comments'));
+        batch.set(commentRef, {
+          authorId: mockUser.uid,
+          authorName: mockUser.displayName,
+          authorImg: mockUser.photoURL,
+          text,
+          createdAt: serverTimestamp()
+        });
+        const chRef = doc(db,'challenges', chId);
+        batch.update(chRef, { commentsCount: increment(1) });
+        await batch.commit();
+        commentInput.value = '';
+      } catch(e){ console.error('add comment',e); showToast('No se pudo comentar','error'); }
+    });
+    $("close-comments-modal")?.addEventListener('click', closeComments);
+    $("comments-modal")?.addEventListener('click',(e)=>{ if (e.target.id === 'comments-modal') closeComments(); });
+    document.addEventListener('keydown',(e)=>{ if (e.key === 'Escape' && !commentsModal.classList.contains('hidden')) closeComments(); });
+
+    // ===== Insights (likes + comments de mi reto)
+    const insightsModal = $("insights-modal");
+    const insightsBody = $("insights-body");
+    let insightsUnsubLikes = null, insightsUnsubComments = null;
+
+    function clearInsightsSubs(){
+      if (insightsUnsubLikes){ insightsUnsubLikes(); insightsUnsubLikes=null; }
+      if (insightsUnsubComments){ insightsUnsubComments(); insightsUnsubComments=null; }
+    }
+
+    async function openInsights(chId){
+      insightsModal.classList.remove('hidden');
+      insightsBody.innerHTML = `<div class="p-4 text-slate-500">Cargando...</div>`;
+      clearInsightsSubs();
+
+      // Cargamos el reto
+      const chSnap = await getDoc(doc(db,'challenges', chId));
+      const ch = chSnap.exists() ? { id: chSnap.id, ...chSnap.data() } : null;
+
+      insightsBody.innerHTML = `
+        <div class="bg-white rounded-xl p-4 shadow">
+          <div class="flex items-center space-x-3 mb-3">
+            <img class="w-10 h-10 rounded-full" src="${ch?.authorImg||''}"/>
+            <div class="flex-1">
+              <p class="font-semibold text-slate-800">${ch?.authorName||'Usuario'}</p>
+              <p class="text-[11px] text-slate-500">${new Date((ch?.createdAt?.toDate?.()||new Date())).toLocaleString('es-AR',{dateStyle:'short', timeStyle:'short'})}</p>
+            </div>
+            ${isExpired(ch) ? '<span class="badge bg-red-500 text-white">Vencido</span>' : ''}
+          </div>
+          <img class="w-full rounded-lg mb-3" src="${ch?.contentUrl||''}"/>
+          ${ch?.caption ? `<p class="text-sm text-slate-700 mb-4">${ch.caption}</p>` : ''}
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold text-slate-800 mb-2">❤ Likes</h4>
+              <div id="likes-list" class="space-y-2"></div>
+            </div>
+            <div>
+              <h4 class="font-semibold text-slate-800 mb-2">💬 Comentarios</h4>
+              <div id="comments-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Subs a likes
+      const likesRef = collection(db,'challenges', chId, 'likes');
+      insightsUnsubLikes = onSnapshot(likesRef, async (snap)=>{
+        const likesList = document.getElementById('likes-list');
+        likesList.innerHTML = '';
+        if (snap.empty){ likesList.innerHTML = `<p class="text-slate-500 text-sm">Sin likes.</p>`; return; }
+        // Traer perfiles por lote
+        const ids = snap.docs.map(d=>d.id);
+        const users = [];
+        // chunks de 10 por limitación de 'in'
+        for (let i=0; i<ids.length; i+=10){
+          const chunk = ids.slice(i,i+10);
+          const qUsers = query(collection(db,'users'), where('__name__','in', chunk));
+          const res = await getDocs(qUsers);
+          res.forEach(u=> users.push({ uid:u.id, ...u.data() }));
+        }
+        users.forEach(u=>{
+          const row = document.createElement('div');
+          row.className = 'flex items-center space-x-2';
+          row.innerHTML = `<img class="w-7 h-7 rounded-full" src="${u.photoURL||''}"/><span class="text-sm text-slate-700">${u.displayName||u.email||u.uid}</span>`;
+          likesList.appendChild(row);
+        });
+      });
+
+      // Subs a comments
+      const commentsRef = query(collection(db,'challenges', chId, 'comments'), orderBy('createdAt','desc'), limit(50));
+      insightsUnsubComments = onSnapshot(commentsRef, (snap)=>{
+        const cmList = document.getElementById('comments-list');
+        cmList.innerHTML = '';
+        if (snap.empty){ cmList.innerHTML = `<p class="text-slate-500 text-sm">Sin comentarios.</p>`; return; }
+        snap.forEach(d=>{
+          const c = d.data();
+          const row = document.createElement('div');
+          row.className='flex items-start space-x-2';
+          row.innerHTML = `
+            <img class="w-7 h-7 rounded-full mt-0.5" src="${c.authorImg||''}"/>
+            <div class="bg-slate-100 rounded-lg p-2 flex-1">
+              <p class="text-[13px]"><strong class="text-slate-800">${c.authorName||'Usuario'}</strong> <span class="text-slate-700">${c.text||''}</span></p>
+              <p class="text-[11px] text-slate-500 mt-0.5">${new Date((c.createdAt?.toDate?.()||new Date())).toLocaleString('es-AR',{timeStyle:'short'})}</p>
+            </div>`;
+          cmList.appendChild(row);
+        });
+      });
+    }
+    function closeInsights(){
+      insightsModal.classList.add('hidden');
+      clearInsightsSubs();
+    }
+    $("close-insights-modal")?.addEventListener('click', closeInsights);
+    $("insights-modal")?.addEventListener('click', (e)=>{ if (e.target.id === 'insights-modal') closeInsights(); });
+
+    // ===== Likes (Firestore)
+    async function toggleLike(chId, ui){
+      if (!currentUser) return;
+      const likeRef = doc(db,'challenges', chId, 'likes', currentUser.uid);
+      const chRef = doc(db,'challenges', chId);
+      try{
+        const snap = await getDoc(likeRef);
+        const batch = writeBatch(db);
+        if (snap.exists()){
+          batch.delete(likeRef);
+          batch.update(chRef, { likesCount: increment(-1) });
+        } else {
+          batch.set(likeRef, { createdAt: serverTimestamp() });
+          batch.update(chRef, { likesCount: increment(1) });
+        }
+        await batch.commit();
+        // UI optimista
+        if (ui){
+          const icon = ui.querySelector('.like-icon');
+          const span = ui.querySelector('.likes-count');
+          const likedNow = !icon.classList.contains('liked');
+          icon.classList.toggle('liked', likedNow);
+          const curr = parseInt(span.textContent||'0',10);
+          span.textContent = String(curr + (likedNow?1:-1));
+        }
+      } catch(e){ console.error('toggle like', e); showToast('No se pudo actualizar el like','error'); }
+    }
+
+    // ===== Friends (UI + búsqueda + follow)
+    const friendsTabButtons = document.querySelectorAll('.friends-tab');
+
+    function renderUserRow(user){
+      const item = userListItemTemplate.content.cloneNode(true);
+      item.querySelector('.user-img').src = user.photoURL || '';
+      item.querySelector('.user-name').textContent = user.displayName || '(Sin nombre)';
+      item.querySelector('.user-email').textContent = user.email || '';
+      const actions = item.querySelector('.user-actions');
+
+      if (user.uid === currentUser.uid){
+        actions.innerHTML = `<span class="text-xs text-slate-400">Vos</span>`;
+      } else if (followingSet.has(user.uid)){
+        actions.innerHTML = `<button class="bg-slate-200 text-slate-700 px-3 py-1 text-sm rounded-full" data-action="unfollow" data-uid="${user.uid}">Siguiendo</button>`;
+      } else {
+        actions.innerHTML = `<button class="btn-primary text-white px-3 py-1 text-sm rounded-full" data-action="follow" data-uid="${user.uid}">Seguir</button>`;
+      }
+      friendsTabContent.appendChild(item);
+    }
+
+    async function renderDiscover(){
+      const termRaw = ($("user-search-input").value || '').trim();
+      const term = termRaw.toLowerCase();
+      friendsTabContent.innerHTML = '';
+      const results = new Map();
+
+      try {
+        if (term && term.includes('@')) {
+          const qEmail = query(collection(db,'users'), where('emailLower','==', term), limit(5));
+          const snapEmail = await getDocs(qEmail);
+          snapEmail.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        } else if (term) {
+          const qName = query(
+            collection(db,'users'),
+            orderBy('displayNameLower'),
+            startAt(term), endAt(term + '\uf8ff'),
+            limit(50)
+          );
+          const snapName = await getDocs(qName);
+          snapName.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        } else {
+          const qUsers = query(collection(db,'users'), orderBy('displayNameLower'), limit(50));
+          const snap = await getDocs(qUsers);
+          snap.forEach(d=>results.set(d.id, { uid:d.id, ...d.data() }));
+        }
+      } catch (e) { console.error('search users error', e); }
+
+      if (results.size === 0){
+        friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
+        return;
+      }
+      [...results.values()].forEach(u=>renderUserRow({ uid:u.uid||u.id, ...u }));
+    }
+
+    function refreshFriendsTab(tab = document.querySelector('.friends-tab.active')?.dataset.tab || 'my-friends'){
+      friendsTabButtons.forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.tab===tab);
+        btn.classList.toggle('text-slate-500', btn.dataset.tab!==tab);
+      });
+      friendsTabContent.innerHTML = '';
+      if (tab==='my-friends'){
+        if (followingSet.size===0){
+          friendsTabContent.innerHTML = `<p class="text-slate-500 text-center mt-4">Todavía no seguís a nadie.</p>`; return;
+        }
+        // Traer perfiles de seguidos
+        const ids = [...followingSet];
+        (async ()=>{
+          for (let i=0;i<ids.length;i+=10){
+            const chunk = ids.slice(i,i+10);
+            const qProf = query(collection(db,'users'), where('__name__','in', chunk));
+            const snap = await getDocs(qProf);
+            snap.forEach(docu=> renderUserRow({ uid:docu.id, ...docu.data() }));
+          }
+        })();
+      } else if (tab==='discover'){ renderDiscover(); }
+    }
+
+    $("user-search-input")?.addEventListener('input', ()=>{
+      const active = document.querySelector('.friends-tab.active')?.dataset.tab;
+      if (active === 'discover') renderDiscover();
+    });
+    document.querySelectorAll('.friends-tab').forEach(btn => btn.addEventListener('click', ()=> refreshFriendsTab(btn.dataset.tab)));
+    friendsTabContent.addEventListener('click',(e)=>{
+      const btn = e.target.closest('button'); if (!btn) return;
+      const uid = btn.dataset.uid;
+      if (btn.dataset.action === 'follow') follow(uid);
+      if (btn.dataset.action === 'unfollow') unfollow(uid);
+    });
+
+    // ===== Navegación + acciones globales =====
+    const views = {
+      'feed-view': $("feed-view"),
+      'friends-view': $("friends-view"),
+      'create-view': $("create-view"),
+      'profile-view': $("profile-view")
+    };
+    function switchView(viewName){
+      Object.values(views).forEach(v=>v.classList.add('hidden'));
+      if (views[viewName]) views[viewName].classList.remove('hidden');
+      document.querySelectorAll('.nav-button').forEach(btn=>{
+        btn.classList.toggle('text-indigo-500', btn.dataset.view===viewName);
+        btn.classList.toggle('text-slate-500', btn.dataset.view!==viewName);
+      });
+      if (viewName==='profile-view') refreshProfile();
+      if (viewName==='create-view') resetCreateFlow();
+      if (viewName==='friends-view') refreshFriendsTab('my-friends');
+    }
+
+    document.addEventListener('click', (e) => {
+      // Navegación inferior
+      const navBtn = e.target.closest('.nav-button');
+      if (navBtn && navBtn.dataset.view) { e.preventDefault(); switchView(navBtn.dataset.view); return; }
+
+      // Tip del feed
+      if (e.target.closest('.challenge-container')){
+        localStorage.setItem("tereto_tip_seen","1");
+        $("feed-tip")?.classList.add("hidden");
+      }
+
+      // Acciones en posts
+      const postCard = e.target.closest('.post-card');
+      if (postCard && postCard.dataset.challengeId){
+        const chId = postCard.dataset.challengeId;
+        const ch = challengesData.find(c=>c.id===chId);
+        if (!ch) return;
+
+        // Like persistente
+        if (e.target.closest('.like-button')){ toggleLike(chId, postCard); return; }
+
+        // Comentarios
+        if (e.target.closest('.comment-button')) { openCommentsModal(chId); return; }
+
+        // Abrir reto (desbloqueo local)
+        if (e.target.closest('.challenge-container')){
+          if (shouldUnlockForUser(ch)) return;
+          if (ch.type==='trivia') openTriviaModal(ch, postCard);
+          else if (ch.type==='photo'){
+            $("photo-challenge-description").textContent = ch.question || 'Cumplí el desafío para desbloquear';
+            $("submit-photo-challenge-btn").dataset.challengeId = ch.id;
+            $("photo-challenge-modal").classList.remove('hidden');
+          }
+        }
+      }
+    });
+
+    // Cámara
+    const cameraModal = $("camera-modal"),
+          cameraStreamEl = $("camera-stream"),
+          cameraCanvas = $("camera-canvas");
+    let cameraStream = null, currentPhotoChallengeId = null;
+
+    async function openCamera(challengeId=null){
+      currentPhotoChallengeId = challengeId;
+      try{
+        if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+        cameraStreamEl.srcObject = cameraStream;
+        cameraModal.classList.remove('hidden');
+      } catch(err){
+        console.error("Cam error:", err);
+        showToast("No se pudo acceder a la cámara. Revisa permisos.", "error");
       }
     }
-  }
-}
+    function closeCamera(){
+      if (cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
+      cameraStream = null;
+      cameraModal.classList.add('hidden');
+    }
+    function capturePhoto(){
+      const video = cameraStreamEl, canvas = cameraCanvas;
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      if (currentPhotoChallengeId){
+        showToast("Prueba enviada (mock).");
+        currentPhotoChallengeId = null;
+      } else {
+        $("image-preview").src = dataUrl;
+        $("image-preview-container").classList.remove('hidden');
+        $("file-name").textContent = `Foto capturada - ${new Date().toLocaleTimeString()}.png`;
+        $("goto-step-2").dataset.fileUrl = dataUrl;
+        $("goto-step-2").disabled = false;
+      }
+      closeCamera();
+    }
+    $("open-camera-btn")?.addEventListener('click', () => openCamera(null));
+    $("capture-btn")?.addEventListener('click', capturePhoto);
+    $("cancel-camera-btn")?.addEventListener('click', closeCamera);
+
+    // Crear flujo
+    function resetCreateFlow(){
+      $("trivia-form")?.reset();
+      $("photo-challenge-form")?.reset();
+      $("challenge-caption").value = '';
+      $("file-upload").value = '';
+      $("file-name").textContent = '';
+      $("goto-step-2").disabled = true;
+      $("image-preview").src = '#';
+      $("image-preview-container").classList.add('hidden');
+      showCreateStep('create-step-1');
+    }
+    function showCreateStep(step){
+      const steps = {
+        'create-step-1': $("create-step-1"),
+        'create-step-2': $("create-step-2"),
+        'create-step-3-trivia': $("create-step-3-trivia"),
+        'create-step-3-photo': $("create-step-3-photo")
+      };
+      Object.values(steps).forEach(s=>s.classList.add('hidden'));
+      steps[step].classList.remove('hidden');
+    }
+    $("file-upload")?.addEventListener('change', (e)=>{
+      if (e.target.files.length>0){
+        const file = e.target.files[0]; const reader = new FileReader();
+        $("file-name").textContent = file.name; $("goto-step-2").disabled = false;
+        reader.onload = (ev)=>{ $("goto-step-2").dataset.fileUrl = ev.target.result; $("image-preview").src = ev.target.result; $("image-preview-container").classList.remove('hidden'); };
+        reader.readAsDataURL(file);
+      } else {
+        $("file-name").textContent = ''; $("goto-step-2").disabled = true; $("image-preview-container").classList.add('hidden');
+      }
+    });
+    $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
+    $("select-trivia-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-trivia'));
+    $("select-photo-challenge-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-photo'));
+
+    function calcExpiresAt(){
+      const v = $("challenge-expiry").value;
+      if (v === '24') return new Date(Date.now() + 24*3600*1000);
+      if (v === '48') return new Date(Date.now() + 48*3600*1000);
+      return null;
+    }
+
+    async function publishChallenge(challengeDetails){
+      if (!mockUser) return;
+      try{
+        await addDoc(collection(db, "challenges"), {
+          authorId: mockUser.uid,
+          authorName: mockUser.displayName,
+          authorImg: mockUser.photoURL,
+          createdAt: serverTimestamp(),
+          expiresAt: calcExpiresAt(),
+          contentUrl: $("goto-step-2").dataset.fileUrl,
+          caption: $("challenge-caption").value.trim() || null,
+          likesCount: 0,
+          commentsCount: 0,
+          ...challengeDetails
+        });
+        showToast("¡Reto publicado!");
+        switchView('feed-view');
+      } catch(e){
+        console.error("addDoc challenge error:", e);
+        showToast("No se pudo publicar el reto","error");
+      }
+    }
+    $("trivia-form")?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      publishChallenge({
+        type:'trivia',
+        question:$("trivia-question").value,
+        correctAnswer:$("correct-answer").value,
+        wrongAnswers:[ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ]
+      });
+    });
+    $("photo-challenge-form")?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      publishChallenge({ type:'photo', question:$("photo-challenge-task").value });
+    });
+
+    // Trivia (unlock local)
+    const triviaModal = $("trivia-modal");
+    function openTriviaModal(ch, postElement){
+      $("trivia-modal-question").textContent = ch.question;
+      const answersContainer = $("trivia-modal-answers");
+      answersContainer.innerHTML = '';
+      const options = [...(ch.wrongAnswers||[]), (ch.correctAnswer ?? '')].map(String).sort(()=>Math.random()-0.5);
+      options.forEach(answer=>{
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn bg-slate-100 hover:bg-indigo-100 text-slate-800 font-semibold py-3 px-4 border border-slate-300 rounded-lg shadow-sm';
+        btn.textContent = answer;
+        btn.addEventListener('click', ()=>checkAnswer(answer === String(ch.correctAnswer), postElement, ch.id));
+        answersContainer.appendChild(btn);
+      });
+      triviaModal.classList.remove('hidden');
+    }
+    function checkAnswer(isCorrect, postElement, challengeId){
+      if (isCorrect){
+        triviaModal.classList.add('hidden');
+        const solved = loadSet('solved', currentUser.uid);
+        solved.add(challengeId); saveSet('solved', currentUser.uid, solved);
+        unlockPostElement(postElement);
+        showToast("¡Correcto! Desbloqueado 👌");
+      } else {
+        $("trivia-feedback").textContent = 'Respuesta incorrecta. ¡Inténtalo de nuevo!';
+        setTimeout(()=>{$("trivia-feedback").textContent='';},1500);
+      }
+    }
+    $("close-trivia-modal")?.addEventListener('click', () => $("trivia-modal").classList.add('hidden'));
+    $("close-photo-challenge-modal")?.addEventListener('click', () => $("photo-challenge-modal").classList.add('hidden'));
+
+    // Global clicks (likes/comments & open comments)
+    document.addEventListener('click', (e) => {
+      const postCard = e.target.closest('.post-card');
+      if (postCard && postCard.dataset.challengeId){
+        const chId = postCard.dataset.challengeId;
+
+        if (e.target.closest('.like-button')){ toggleLike(chId, postCard); return; }
+        if (e.target.closest('.comment-button')){ openCommentsModal(chId); return; }
+      }
+    });
+
+    // ==== Auth state ====
+    function clearAllSubs(){ clearFeedSub(); clearFollowingSub(); clearCommentsSub(); clearInsightsSubs(); }
+
+    onAuthStateChanged(auth, async (user)=>{
+      clearAllSubs();
+      if (!user){
+        currentUser = null;
+        appScreen.classList.add("hidden");
+        loginScreen.classList.remove("hidden");
+        return;
+      }
+      currentUser = user;
+      seedUsersFor(currentUser);
+      await upsertUserProfile(currentUser);
+
+      loginScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+
+      startFollowingSub();
+      restartFeedSubscription();
+      refreshProfile();
+      switchView('feed-view');
+    });
+  </script>
+</body>
+</html>
