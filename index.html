@@ -49,7 +49,7 @@
       </div>
       <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
 
-      <!-- SIN inline onclick -->
+      <!-- sin onclick inline -->
       <button id="google-btn" type="button" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
         <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" draggable="false">
         <span class="font-semibold text-slate-700">Continuar con Google</span>
@@ -62,8 +62,7 @@
   <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-      <!-- FEED / CREATE / FRIENDS / PROFILE… (igual que tenías) -->
-      <!-- --- para ahorrar espacio: dejé solo los contenedores vacíos que llenamos por JS --- -->
+      <!-- Tus vistas completas (feed/create/friends/profile) pueden quedarse tal cual aquí -->
       <div id="feed-view"></div>
       <div id="create-view" class="hidden"></div>
       <div id="friends-view" class="hidden"></div>
@@ -80,95 +79,97 @@
 
   <!-- APP LOGIC -->
   <script type="module">
-    // ===== Guard anti-doble-carga =====
+    // Guard para evitar doble boot
     if (window.__TERETO_BOOTED__) {
-      console.warn("TeReto ya inicializado. Evitá duplicar <script type='module'>.");
+      console.warn("TeReto ya inicializado.");
     } else {
       window.__TERETO_BOOTED__ = true;
 
-      // ---------- Imports ----------
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-      import {
-        getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-        onAuthStateChanged, signOut
-      } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-      import {
-        getFirestore, collection, addDoc, setDoc, doc, updateDoc,
-        serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
-        startAt, endAt, deleteDoc, writeBatch, increment, getDoc
-      } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+      // === Dynamic imports (válido en cualquier bloque) ===
+      (async () => {
+        const appMod = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
+        const authMod = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
+        const fsMod  = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
 
-      // ---------- Utils ----------
-      const $ = (id)=>document.getElementById(id);
-      const toast = (msg,type='success')=>{
-        const t=$("toast"); if(!t) return console.log(msg);
-        $("toast-message").textContent=msg;
-        $("toast-icon").innerHTML= type==='success'?'✅':'❌';
-        t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
-      };
-      window.toast = toast;
+        const { initializeApp } = appMod;
+        const {
+          getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+          getRedirectResult, onAuthStateChanged, signOut
+        } = authMod;
+        const {
+          getFirestore, setDoc, doc, serverTimestamp
+        } = fsMod;
 
-      // ---------- Firebase ----------
-      const firebaseConfig = {
-        apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
-        authDomain: "tereto-prod.firebaseapp.com",
-        projectId: "tereto-prod",
-        storageBucket: "tereto-prod.firebasestorage.app",
-        messagingSenderId: "914605096619",
-        appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
-      };
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db   = getFirestore(app);
+        // Utils
+        const $ = (id)=>document.getElementById(id);
+        const toast = (msg,type='success')=>{
+          const t=$("toast"); if(!t) return console.log(msg);
+          $("toast-message").textContent=msg;
+          $("toast-icon").innerHTML= type==='success'?'✅':'❌';
+          t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
+        };
+        window.toast = toast;
 
-      // ---------- Auth ----------
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
+        // Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+          authDomain: "tereto-prod.firebaseapp.com",
+          projectId: "tereto-prod",
+          storageBucket: "tereto-prod.firebasestorage.app",
+          messagingSenderId: "914605096619",
+          appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getFirestore(app);
 
-      function startGoogle(){
-        // Nada de awaits antes del popup
-        signInWithPopup(auth, provider).catch((e)=>{
-          if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
-            signInWithRedirect(auth, provider);
+        // Auth
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+
+        function startGoogle(){
+          // No awaits antes del popup
+          signInWithPopup(auth, provider).catch((e)=>{
+            if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
+              signInWithRedirect(auth, provider);
+              return;
+            }
+            console.error("[auth]", e);
+            toast((e?.code || 'auth_error').toString().replace('auth/',''), 'error');
+          });
+        }
+        $("google-btn")?.addEventListener("click", startGoogle, {passive:true});
+
+        // Resolver redirect (no bloquea)
+        getRedirectResult(auth).catch((e)=>console.warn("[redirect]", e?.code || e?.message));
+
+        $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>toast('No se pudo cerrar sesión','error')));
+
+        // Sesión
+        onAuthStateChanged(auth, async (user)=>{
+          if(!user){
+            $("app-screen")?.classList.add("hidden");
+            $("login-screen")?.classList.remove("hidden");
             return;
           }
-          console.error("[auth]", e);
-          toast((e?.code || 'auth_error').toString().replace('auth/',''), 'error');
+          $("login-screen")?.classList.add("hidden");
+          $("app-screen")?.classList.remove("hidden");
+
+          // upsert mínimo
+          try {
+            await setDoc(doc(db,"users",user.uid),{
+              displayName:user.displayName||null,
+              displayNameLower:(user.displayName||'').toLowerCase()||null,
+              email:user.email||null,
+              emailLower:(user.email||'').toLowerCase()||null,
+              photoURL:user.photoURL||null,
+              updatedAt:serverTimestamp()
+            },{merge:true});
+          } catch(e){ console.error('upsert users',e); }
         });
-      }
-      // Listener del botón (sin inline)
-      $("google-btn")?.addEventListener("click", startGoogle, {passive:true});
 
-      // Resolver redirect si aplica
-      getRedirectResult(auth).catch((e)=>console.warn("[redirect]", e?.code || e?.message));
-
-      $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>toast('No se pudo cerrar sesión','error')));
-
-      // ---------- Estado de sesión (mínimo para probar login ahora) ----------
-      onAuthStateChanged(auth, async (user)=>{
-        if(!user){
-          $("app-screen")?.classList.add("hidden");
-          $("login-screen")?.classList.remove("hidden");
-          return;
-        }
-        $("login-screen")?.classList.add("hidden");
-        $("app-screen")?.classList.remove("hidden");
-
-        // upsert básico
-        try {
-          await setDoc(doc(db,"users",user.uid),{
-            displayName:user.displayName||null,
-            displayNameLower:(user.displayName||'').toLowerCase()||null,
-            email:user.email||null,
-            emailLower:(user.email||'').toLowerCase()||null,
-            photoURL:user.photoURL||null,
-            updatedAt:serverTimestamp()
-          },{merge:true});
-        } catch(e){ console.error('upsert users',e); }
-      });
-
-      // ---------- (Acá podés reinyectar tu UI/Feed/Amigos/Perfil completo si querés) ----------
-      // Para validar el fix del login no hace falta más.
+        // TODO: reinsertar aquí tu lógica completa de feed/retos/amigos cuando quieras.
+      })();
     }
   </script>
 </body>
