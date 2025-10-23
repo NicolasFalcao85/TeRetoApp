@@ -327,6 +327,13 @@ let myChallenges = [];
 let myChallengesUnsub = null;
 
 
+// === TeReto globals (single source of truth) ===
+
+
+
+
+
+
     /**** Config Firebase (prod) ****/
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
@@ -383,9 +390,8 @@ function toast(msg,type='success'){
     }
 
     /**** State ****/
-    let currentUser=null, solvedSet=new Set();
-    let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
-    let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
+
+
 
     const clearSubs = ()=>{
       [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub]
