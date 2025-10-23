@@ -340,7 +340,11 @@
 
     /**** Utils & UI helpers ****/
     const $ = (id)=>document.getElementById(id);
-    function toast(msg,type='success'){
+    
+// === TeReto globals (single source of truth) ===
+let myChallenges = [];
+let myChallengesUnsub = null;
+function toast(msg,type='success'){
       $("toast-message").textContent=msg;
       $("toast-icon").innerHTML= type==='success'?'✅':'❌';
       const t=$("toast"); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
@@ -521,6 +525,8 @@
       }, (err)=>{ console.error('myChallenges sub', err); toast('No se pudo cargar tus retos','error'); });
     }
     function refreshProfile(){
+  // safeguard
+  if (typeof myChallenges === "undefined" || !Array.isArray(myChallenges)) { myChallenges = []; }
       if(!currentUser) return;
       $("profile-pic").src=currentUser.photoURL||''; $("profile-name").textContent=currentUser.displayName||'Usuario'; $("profile-email").textContent=currentUser.email||'';
       const grid=$("my-mosaic"); grid.innerHTML=''; $("my-retos-count").textContent=`${myChallenges.length} retos`;
