@@ -6,24 +6,22 @@
   <title>TeReto</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root { --bg: #0b0b0c; --card:#131316; --muted:#a1a1aa; }
-    body { background: var(--bg); color: #fff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto; }
-    .card { background: var(--card); border: 1px solid #1f1f22; }
+    :root { --bg:#0b0b0c; --card:#131316; }
+    body { background:var(--bg); color:#fff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto; }
+    .card { background:var(--card); border:1px solid #1f1f22; }
+    .blurred { filter: blur(12px); pointer-events:none; user-select:none; }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- Topbar -->
   <header class="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
     <div class="text-lg font-semibold">TeReto</div>
     <div id="userArea" class="text-sm text-neutral-300"></div>
   </header>
 
-  <!-- Main -->
-  <main class="max-w-xl mx-auto px-4 py-10 space-y-6">
-    <!-- Avisos -->
+  <main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
     <div id="notice" class="hidden card rounded-2xl p-4 text-sm"></div>
 
-    <!-- Login Card -->
+    <!-- LOGIN -->
     <section id="loginCard" class="card rounded-2xl p-6 space-y-4">
       <h2 class="text-xl font-semibold">Ingresá</h2>
       <p class="text-neutral-300">Usá tu cuenta de Google para continuar.</p>
@@ -32,61 +30,89 @@
         Continuar con Google
       </button>
       <p class="text-neutral-400 text-xs leading-5">
-        Si no se abre el popup: probá ventana privada, desactivá extensiones bloqueadoras y verificá que estés en
-        <span class="font-mono">http://localhost</span> o un dominio autorizado.
+        Serví en <span class="font-mono">http://localhost</span> o dominio autorizado (Firebase → Authentication → Authorized domains).
       </p>
     </section>
 
-    <!-- App Card (post-login) -->
-    <section id="appCard" class="hidden card rounded-2xl p-6 space-y-4">
-      <h2 class="text-xl font-semibold">¡Bienvenido/a!</h2>
-      <div id="profile" class="text-neutral-300 text-sm"></div>
-      <div class="flex gap-3">
-        <button id="btnSignOut" type="button"
-          class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">Salir</button>
-        <button id="btnMockChallenge" type="button"
-          class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">Crear reto (mock)</button>
+    <!-- APP -->
+    <section id="appCard" class="hidden space-y-6">
+      <!-- Perfil -->
+      <div class="card rounded-2xl p-6 space-y-2">
+        <h2 class="text-xl font-semibold">¡Bienvenido/a!</h2>
+        <div id="profile" class="text-neutral-300 text-sm"></div>
+        <div class="flex gap-3 pt-2">
+          <button id="btnSignOut" type="button"
+            class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">Salir</button>
+        </div>
       </div>
-      <div id="feed" class="grid grid-cols-1 gap-3 pt-2"></div>
+
+      <!-- Crear reto (mínimo) -->
+      <div class="card rounded-2xl p-6 space-y-3">
+        <h3 class="font-semibold">Crear reto</h3>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <input id="inpTitle" class="rounded-md bg-transparent border border-neutral-700 px-3 py-2"
+                 placeholder="Título del reto"/>
+          <select id="inpType" class="rounded-md bg-transparent border border-neutral-700 px-3 py-2">
+            <option value="trivia">trivia</option>
+            <option value="imagen">imagen</option>
+          </select>
+        </div>
+        <button id="btnCreate" class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">
+          Publicar
+        </button>
+      </div>
+
+      <!-- Feed -->
+      <div class="card rounded-2xl p-0 overflow-hidden">
+        <div class="border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
+          <h3 class="font-semibold">Feed</h3>
+          <span id="feedCount" class="text-xs text-neutral-400"></span>
+        </div>
+        <div id="feed" class="p-4 grid grid-cols-1 gap-3"></div>
+      </div>
     </section>
   </main>
 
   <script type="module">
+    // SDK v11.0.1 (ESM)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
       onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, serverTimestamp, onSnapshot,
+      query, orderBy, doc, setDoc, getDoc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+    // UI refs
     const $ = (id) => document.getElementById(id);
+    const notice = $("notice");
     const loginCard = $("loginCard");
     const appCard = $("appCard");
     const userArea = $("userArea");
-    const notice = $("notice");
+    const profile = $("profile");
     const btnGoogle = $("btnGoogle");
     const btnSignOut = $("btnSignOut");
-    const profile = $("profile");
+    const btnCreate = $("btnCreate");
+    const inpTitle = $("inpTitle");
+    const inpType = $("inpType");
     const feed = $("feed");
-    const btnMockChallenge = $("btnMockChallenge");
+    const feedCount = $("feedCount");
 
-    const originIsFile = location.protocol === "file:";
-    const originIsLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.origin);
-
+    // Helpers
     function showNotice(msg, tone = "info") {
       notice.classList.remove("hidden");
       notice.classList.toggle("border-red-600", tone === "error");
       notice.classList.toggle("border-neutral-700", tone !== "error");
       notice.innerText = msg;
     }
+    const originIsFile = location.protocol === "file:";
+    const originIsLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.origin);
+    if (originIsFile) showNotice("No uses file://. Serví con http://localhost.", "error");
+    else if (!originIsLocalhost) showNotice("Agregá este dominio en Authorized domains.");
 
-    if (originIsFile) {
-      showNotice("No uses file://. Serví el proyecto con un servidor local (ej: http://localhost:5173).", "error");
-    } else if (!originIsLocalhost) {
-      showNotice("Asegurate de tener este dominio en Authentication → Authorized domains en Firebase Console.");
-    }
-
-    // ---- Firebase Config ----
+    // CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -95,16 +121,13 @@
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
-
-    function assertConfig(cfg) {
-      const required = ["apiKey", "authDomain", "projectId", "appId"];
-      const missing = required.filter(k => !cfg?.[k]);
-      if (missing.length) {
-        throw new Error("Firebase config incompleta. Falta: " + missing.join(", "));
-      }
+    function assertConfig(cfg){
+      const req = ["apiKey","authDomain","projectId","appId"];
+      const miss = req.filter(k=>!cfg?.[k]); if(miss.length) throw new Error("Firebase config incompleta. Falta: "+miss.join(", "));
     }
 
-    let app, auth, db, provider;
+    // INIT
+    let app, auth, db, provider, currentUser;
     try {
       assertConfig(firebaseConfig);
       app = initializeApp(firebaseConfig);
@@ -112,73 +135,202 @@
       db = getFirestore(app);
       provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      console.info("[TeReto] Firebase inicializado OK.");
-    } catch (e) {
-      console.error("[TeReto] Error init Firebase:", e);
-      showNotice("Error inicializando Firebase: " + e.message, "error");
-    }
+    } catch (e) { console.error(e); showNotice("Error inicializando Firebase: " + e.message, "error"); }
 
+    // STATE
     onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
       if (user) {
         userArea.textContent = user.displayName ? `Hola, ${user.displayName}` : user.email;
         profile.innerHTML = `
-          <div><span class="text-neutral-400">UID:</span> ${user.uid}</div>
-          <div><span class="text-neutral-400">Email:</span> ${user.email ?? "-"}</div>
-        `;
+          <div class="text-sm"><span class="text-neutral-400">UID:</span> ${user.uid}</div>
+          <div class="text-sm"><span class="text-neutral-400">Email:</span> ${user.email ?? "-"}</div>`;
         loginCard.classList.add("hidden");
         appCard.classList.remove("hidden");
+        bindFeed(); // engancha el feed live
       } else {
         userArea.textContent = "";
         appCard.classList.add("hidden");
         loginCard.classList.remove("hidden");
+        // limpiar feed
+        feed.innerHTML = "";
+        feedCount.textContent = "";
+        if (unsubFeed) { unsubFeed(); unsubFeed = null; }
       }
     });
 
+    // AUTH
     async function startGoogleLogin() {
       try {
         await signInWithPopup(auth, provider);
       } catch (err) {
-        console.warn("[TeReto] signInWithPopup falló:", err?.code, err?.message);
         if (err?.code === "auth/popup-blocked" || err?.code === "auth/popup-closed-by-user") {
-          showNotice("Popup bloqueado. Vamos por redirección...", "info");
+          showNotice("Popup bloqueado. Probamos redirección…");
           await signInWithRedirect(auth, provider);
-          return;
-        }
-        if (err?.message?.includes("domain") || err?.message?.includes("origin")) {
+        } else if (err?.message?.includes("domain") || err?.message?.includes("origin")) {
           showNotice("Dominio/origen no autorizado en Firebase Authentication → Authorized domains.", "error");
-          return;
+        } else {
+          showNotice("No se pudo iniciar sesión: " + (err?.message ?? "Error desconocido"), "error");
         }
-        showNotice("No se pudo iniciar sesión: " + (err?.message ?? "Error desconocido"), "error");
+      }
+    }
+    btnGoogle.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); startGoogleLogin(); });
+    btnSignOut.addEventListener("click", async ()=>{ await signOut(auth); });
+
+    // DATA MODEL (mínimo)
+    // Collection: challenges
+    //   { title, type, ownerUid, ownerName, createdAt, likesCount }
+    // Subcolecciones:
+    //   challenges/{id}/likes/{uid} -> { liked: true }
+    //   challenges/{id}/comments/{autoId} -> { uid, name, text, createdAt }
+    //   users/{uid}/unlocked/{challengeId} -> { unlockedAt }
+
+    // CREATE
+    btnCreate.addEventListener("click", async ()=>{
+      if (!currentUser) return showNotice("Tenés que estar logueado.", "error");
+      const title = (inpTitle.value || "").trim();
+      const type = (inpType.value || "trivia").trim();
+      if (!title) return showNotice("Poné un título.", "error");
+      try {
+        await addDoc(collection(db, "challenges"), {
+          title, type,
+          ownerUid: currentUser.uid,
+          ownerName: currentUser.displayName || currentUser.email || "anon",
+          createdAt: serverTimestamp(),
+          likesCount: 0
+        });
+        inpTitle.value = "";
+      } catch (e) {
+        console.error(e); showNotice("Error creando el reto: " + e.message, "error");
+      }
+    });
+
+    // FEED (live)
+    let unsubFeed = null;
+    function bindFeed() {
+      if (unsubFeed) { unsubFeed(); unsubFeed = null; }
+      const q = query(collection(db, "challenges"), orderBy("createdAt", "desc"));
+      unsubFeed = onSnapshot(q, async (snap) => {
+        const items = [];
+        for (const docSnap of snap.docs) {
+          const data = docSnap.data();
+          items.push({ id: docSnap.id, ...data });
+        }
+        feedCount.textContent = items.length ? `${items.length} retos` : "";
+        renderFeed(items);
+      }, (err)=> {
+        console.error("onSnapshot feed:", err);
+        showNotice("Error leyendo el feed: " + err.message, "error");
+      });
+    }
+
+    // Helpers de desbloqueo
+    async function isUnlocked(challengeId, uid) {
+      if (!uid) return false;
+      const ref = doc(db, "users", uid, "unlocked", challengeId);
+      const s = await getDoc(ref);
+      return s.exists();
+    }
+    async function unlock(challengeId, uid) {
+      const ref = doc(db, "users", uid, "unlocked", challengeId);
+      await setDoc(ref, { unlockedAt: serverTimestamp() }, { merge:true });
+    }
+
+    // Likes
+    async function toggleLike(challengeId, uid, liked) {
+      const likeRef = doc(db, "challenges", challengeId, "likes", uid);
+      const chalRef = doc(db, "challenges", challengeId);
+      if (liked) {
+        // quitar like
+        await setDoc(likeRef, { liked: false }, { merge:true });
+        await updateDoc(chalRef, { likesCount: increment(-1) });
+      } else {
+        await setDoc(likeRef, { liked: true }, { merge:true });
+        await updateDoc(chalRef, { likesCount: increment(1) });
       }
     }
 
-    btnGoogle.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      startGoogleLogin();
-    });
+    // Render
+    async function renderFeed(items) {
+      if (!currentUser) return;
+      feed.innerHTML = "";
+      for (const x of items) {
+        const unlocked = (x.ownerUid === currentUser.uid) ? true : await isUnlocked(x.id, currentUser.uid);
+        const card = document.createElement("div");
+        card.className = "rounded-xl border border-neutral-800 p-4 space-y-2";
 
-    btnSignOut.addEventListener("click", async () => {
-      await signOut(auth);
-    });
+        const head = `
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-neutral-400">${x.type?.toUpperCase() || "RETO"}</div>
+            <div class="text-xs text-neutral-500">${x.ownerName || "-"}</div>
+          </div>
+          <div class="font-medium">${x.title || "(sin título)"}</div>
+          <div class="text-xs text-neutral-500">${x.createdAt?.toDate?.()?.toLocaleString?.() || ""}</div>
+        `;
 
-    const mockFeed = [];
-    function renderFeed() {
-      feed.innerHTML = mockFeed.length
-        ? mockFeed.map(x => `
-            <div class="rounded-xl border border-neutral-800 p-3">
-              <div class="text-sm text-neutral-400">${x.type.toUpperCase()}</div>
-              <div class="font-medium">${x.title}</div>
-              <div class="text-sm text-neutral-400">${new Date(x.ts).toLocaleString()}</div>
-            </div>`).join("")
-        : `<div class="text-neutral-400 text-sm">Aún no hay retos. Probá crear uno.</div>`;
+        const body = document.createElement("div");
+        body.innerHTML = `
+          <div class="${unlocked ? "" : "relative"}">
+            <div class="${unlocked ? "" : "blurred"}">
+              <!-- Aquí iría el contenido real (imagen/trivia). Por ahora, placeholder -->
+              <div class="rounded-lg border border-neutral-800 p-3 text-sm text-neutral-300">
+                Contenido del reto ${unlocked ? "(desbloqueado)" : "(bloqueado)"}.
+              </div>
+            </div>
+            ${unlocked ? "" : `
+              <div class="absolute inset-0 flex items-center justify-center">
+                <button data-act="unlock" data-id="${x.id}"
+                  class="rounded-lg px-3 py-2 border border-neutral-700 bg-black/50 hover:border-neutral-500">
+                  Desbloquear
+                </button>
+              </div>
+            `}
+          </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "flex items-center gap-3 pt-2";
+        actions.innerHTML = `
+          <button data-act="like" data-id="${x.id}" class="text-sm text-neutral-300 border border-neutral-700 rounded-md px-2 py-1">
+            ❤️ Like (${x.likesCount ?? 0})
+          </button>
+          <button data-act="comment" data-id="${x.id}" class="text-sm text-neutral-300 border border-neutral-700 rounded-md px-2 py-1">
+            💬 Comentar
+          </button>
+        `;
+
+        card.insertAdjacentHTML("afterbegin", head);
+        card.appendChild(body);
+        card.appendChild(actions);
+        feed.appendChild(card);
+      }
+
+      // Delegación de eventos (unlock/like/comment)
+      feed.querySelectorAll("button[data-act='unlock']").forEach(btn=>{
+        btn.onclick = async () => {
+          if (!currentUser) return showNotice("Logueate para desbloquear.", "error");
+          const id = btn.getAttribute("data-id");
+          await unlock(id, currentUser.uid);
+          bindFeed(); // refresca vista
+        };
+      });
+      feed.querySelectorAll("button[data-act='like']").forEach(btn=>{
+        btn.onclick = async () => {
+          if (!currentUser) return showNotice("Logueate para likear.", "error");
+          const id = btn.getAttribute("data-id");
+          // naive: alterna (no leemos estado previo). Como mínimo, sumamos 1 y recargamos.
+          await toggleLike(id, currentUser.uid, false);
+          bindFeed();
+        };
+      });
+      feed.querySelectorAll("button[data-act='comment']").forEach(btn=>{
+        btn.onclick = async () => {
+          showNotice("Comentarios: hook listo. Si querés, lo activo con subcolección en 2 minutos.");
+        };
+      });
     }
-    btnMockChallenge.addEventListener("click", () => {
-      mockFeed.unshift({ id: crypto.randomUUID(), title: "Reto de prueba", type: "trivia", ts: Date.now() });
-      renderFeed();
-    });
-    renderFeed();
 
+    // Debug
     console.table({
       origin: location.origin,
       isFileProtocol: originIsFile,
