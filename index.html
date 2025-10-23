@@ -29,18 +29,15 @@
 </head>
 <body class="bg-slate-100 h-screen">
 
-  <!-- SPINNER -->
   <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
     <div class="spinner"></div>
   </div>
 
-  <!-- TOAST -->
   <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]">
     <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
@@ -48,7 +45,7 @@
         <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none"><defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs><text x="0" y="20" font-size="24" font-weight="700" fill="url(#lg2)">TeReto</text></svg>
       </div>
       <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
-      <button id="google-btn" type="button" onclick="_startGoogle()" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
+      <button id="google-btn" type="button" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
         <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" draggable="false">
         <span class="font-semibold text-slate-700">Continuar con Google</span>
       </button>
@@ -56,10 +53,8 @@
     </div>
   </div>
 
-  <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-      <!-- FEED -->
       <div id="feed-view">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
           <div class="flex items-center space-x-2">
@@ -76,7 +71,6 @@
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
 
-      <!-- CREATE -->
       <div id="create-view" class="hidden p-4">
         <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
@@ -156,7 +150,6 @@
         </div>
       </div>
 
-      <!-- FRIENDS -->
       <div id="friends-view" class="hidden">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40">
           <h1 class="text-3xl font-bold text-slate-800">Amigos</h1>
@@ -183,7 +176,6 @@
         </div>
       </div>
 
-      <!-- PROFILE -->
       <div id="profile-view" class="hidden">
         <div class="p-4 bg-white shadow-lg">
           <div class="flex flex-col items-center">
@@ -202,7 +194,6 @@
       </div>
     </main>
 
-    <!-- NAV -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
       <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">🏠<span class="text-xs font-semibold">Inicio</span></button>
       <button data-view="friends-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">👥<span class="text-xs font-semibold">Amigos</span></button>
@@ -211,7 +202,6 @@
     </nav>
   </div>
 
-  <!-- COMMENTS MODAL -->
   <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
       <header class="flex items-center justify-between p-4 border-b">
@@ -229,7 +219,6 @@
     </div>
   </div>
 
-  <!-- TRIVIA MODAL -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 z-[100] p-4 flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
       <div class="flex justify-between items-center mb-3">
@@ -242,7 +231,6 @@
     </div>
   </div>
 
-  <!-- CAMERA MODAL -->
   <div id="camera-modal" class="hidden fixed inset-0 bg-black/80 z-[100]">
     <video id="cam-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
     <canvas id="cam-canvas" class="hidden"></canvas>
@@ -254,7 +242,6 @@
     </div>
   </div>
 
-  <!-- TEMPLATE POST -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -284,7 +271,6 @@
     </div>
   </template>
 
-  <!-- TEMPLATE COMMENT -->
   <template id="comment-item-template">
     <div class="flex items-start space-x-3">
       <img class="w-8 h-8 rounded-full cmt-img">
@@ -360,25 +346,24 @@
     }
 
     // --- Auth: popup + fallback redirect + resolver redirect ---
-    window._startGoogle = async function(){
-      try{
-        $("loading-spinner").classList.remove("hidden");
+    const startGoogleLogin = async () => {
         try {
-          await signInWithPopup(auth, provider);
-        } catch(e){
-          if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
-            await signInWithRedirect(auth, provider);
-          } else { throw e; }
+            $("loading-spinner").classList.remove("hidden");
+            try {
+                await signInWithPopup(auth, provider);
+            } catch(e) {
+                if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
+                    await signInWithRedirect(auth, provider);
+                } else { throw e; }
+            }
+        } catch(err) {
+            console.error(err);
+            showToast((err?.code || 'auth_error').toString().replace('auth/',''), 'error');
+        } finally {
+            $("loading-spinner").classList.add("hidden");
         }
-      }catch(err){
-        console.error(err);
-        showToast((err?.code || 'auth_error').toString().replace('auth/',''), 'error');
-      }finally{
-        $("loading-spinner").classList.add("hidden");
-      }
     };
-    $("google-btn")?.addEventListener("click", ()=>window._startGoogle(), {passive:true});
-    $("google-btn")?.addEventListener("touchend", (e)=>{ e.preventDefault(); window._startGoogle(); }, {passive:false});
+    $("google-btn")?.addEventListener("click", startGoogleLogin);
 
     // Resolver sesión si venimos de redirect
     (async ()=>{
