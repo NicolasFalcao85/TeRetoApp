@@ -880,6 +880,39 @@ function toast(msg,type='success'){
       restartFeed(); startMyChallenges(); refreshProfile();
       switchView('feed-view');
     });
-  </script>
+  
+// --- Wire login button (with debug) ---
+(function wireLogin(){
+  const btn = document.getElementById("google-btn");
+  console.log("[TeReto] Wiring login button. Found:", !!btn);
+  if (btn) {
+    btn.addEventListener("click", () => {
+      console.log("[TeReto] CLICK LOGIN");
+      if (typeof window._startGoogle === "function") {
+        window._startGoogle();
+      } else {
+        console.error("[TeReto] _startGoogle no está definida");
+      }
+    }, { passive: true });
+  }
+})();
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("google-btn");
+  console.log("[TeReto] DOMContentLoaded. Button present:", !!btn);
+  if (btn && !btn.__wired) {
+    btn.__wired = true;
+    btn.addEventListener("click", () => {
+      console.log("[TeReto] CLICK LOGIN (DOMContentLoaded fallback)");
+      if (typeof window._startGoogle === "function") {
+        window._startGoogle();
+      } else {
+        console.error("[TeReto] _startGoogle no está definida (DOMContentLoaded)");
+      }
+    }, { passive: true });
+  }
+});
+
+</script>
 </body>
 </html>
