@@ -325,6 +325,9 @@
     let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
     let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
+    
+    // --> INICIO DEL CAMBIO: Envoltorio DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
 
     const clearSubs = ()=>{ [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub].forEach(u=>{ if(u){u();} }); unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesUnsub=commentsUnsub=null; };
 
@@ -793,6 +796,9 @@
       restartFeed(); startMyChallenges(); refreshProfile();
       switchView('feed-view');
     });
+
+    // --> FIN DEL CAMBIO: Cierre del envoltorio
+    }); 
   </script>
 </body>
 </html>
