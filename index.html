@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TeReto</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,691 +10,97 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; }
-    .toast { visibility:hidden; opacity:0; transform:translateY(100%); transition:all .5s cubic-bezier(.68,-.55,.27,1.55); pointer-events:none;}
-    .toast.show { visibility:visible; opacity:1; transform:translateY(0); }
-    .spinner { border:4px solid rgba(0,0,0,.1); width:36px; height:36px; border-radius:50%; border-left-color:#6366f1; animation:spin 1s ease infinite;}
-    @keyframes spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
-    .btn-primary { background-image:linear-gradient(to right,#6366f1,#8b5cf6); color:#fff; border-radius:.625rem; padding:.5rem .875rem; font-weight:700; }
-    .btn-primary:hover { box-shadow:0 4px 15px rgba(99,102,241,.6); }
-    .grid-mosaic { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
-    .mosaic-item { position:relative; aspect-ratio:1/1; }
-    .mosaic-img { width:100%; height:100%; object-fit:cover; border-radius:.5rem; }
-    .mosaic-del { position:absolute; top:.25rem; right:.25rem; background:rgba(0,0,0,.6); color:#fff; border-radius:.5rem; padding:.15rem .4rem; font-size:.8rem; }
-    .badge { font-size:.7rem; padding:.1rem .35rem; border-radius:.35rem; }
-    .locked { filter: blur(22px); }
-    .tab-btn.active { border-bottom:2px solid #6366f1; color:#6366f1; font-weight:600; }
-    #login-screen { position:relative; z-index:10; }
-    #loading-spinner.hidden { display:none !important; }
   </style>
 </head>
-<body class="bg-slate-100 h-screen">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+    <h1 class="text-3xl font-bold mb-6">Bienvenido a TeReto</h1>
+    <p class="text-gray-600 mb-6">Iniciá sesión para continuar</p>
 
-  <!-- SPINNER -->
-  <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
-    <div class="spinner"></div>
-  </div>
-
-  <!-- TOAST -->
-  <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-600 bg-white rounded-xl shadow-2xl z-[90]">
-    <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
-    <div id="toast-message" class="ml-3 text-sm font-normal"></div>
-  </div>
-
-  <!-- LOGIN -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
-      <div class="flex items-center justify-center mb-4">
-        <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><circle cx="16" cy="16" r="12" stroke="url(#lg1)" stroke-width="3"/><circle cx="16" cy="16" r="4" stroke="url(#lg1)" stroke-width="3"/></svg>
-        <svg class="h-8 ml-2" viewBox="0 0 90 25" fill="none"><defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs><text x="0" y="20" font-size="24" font-weight="700" fill="url(#lg2)">TeReto</text></svg>
-      </div>
-      <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
-      <button id="google-btn" type="button" onclick="_startGoogle()" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
-        <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" draggable="false">
-        <span class="font-semibold text-slate-700">Continuar con Google</span>
-      </button>
-      <p class="text-[11px] text-center text-slate-400 mt-4">Serví esto en <code>http://localhost</code> o un dominio autorizado (Firebase › Authentication › Authorized domains).</p>
+    <!-- Checks legales -->
+    <div class="mt-4 space-y-3 text-sm text-left" id="legal-checks">
+      <label class="flex items-start gap-2">
+        <input id="chk-adult" type="checkbox" class="mt-1 shrink-0">
+        <span>Soy <strong>mayor de 18 años</strong>.</span>
+      </label>
+      <label class="flex items-start gap-2">
+        <input id="chk-terms" type="checkbox" class="mt-1 shrink-0">
+        <span>He leído y acepto los
+          <a href="/legal/terminos-condiciones.html" target="_blank" class="underline text-blue-600">
+            Términos y Condiciones
+          </a>.
+        </span>
+      </label>
     </div>
+
+    <!-- Botón de Google -->
+    <button id="btn-google" data-google-signin class="mt-6 bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+      Continuar con Google
+    </button>
+
+    <p class="text-xs text-gray-400 mt-4">© 2025 TeReto</p>
   </div>
-
-  <!-- APP -->
-  <div id="app-screen" class="h-full flex flex-col hidden">
-    <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
-
-      <!-- FEED -->
-      <div id="feed-view">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
-          <div class="flex items-center space-x-2">
-            <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="lg3" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><circle cx="16" cy="16" r="12" stroke="url(#lg3)" stroke-width="3"/><circle cx="16" cy="16" r="4" stroke="url(#lg3)" stroke-width="3"/></svg>
-            <svg class="h-7" viewBox="0 0 90 25" fill="none"><defs><linearGradient id="lg4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs><text x="0" y="20" font-size="24" font-weight="700" fill="url(#lg4)">TeReto</text></svg>
-          </div>
-          <button id="signout-btn" class="text-slate-500 hover:text-indigo-500 text-sm font-semibold">Cerrar sesión</button>
-        </header>
-
-        <div class="px-3 pt-3 pb-1">
-          <div id="feed-tip" class="hidden text-[12px] text-slate-600">
-            <span class="px-2 py-[2px] rounded-full border text-[10px]">Consejo</span> Tocá la imagen bloqueada para aceptar el desafío. 😉
-          </div>
-        </div>
-        <div id="feed-container" class="p-2 space-y-4"></div>
-      </div>
-
-      <!-- CREATE (simple) -->
-      <div id="create-view" class="hidden p-4">
-        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crear reto</h2>
-          <div class="space-y-3">
-            <input id="challenge-title" class="w-full px-3 py-2 border rounded-md" placeholder="Título">
-            <textarea id="challenge-caption" rows="3" class="w-full px-3 py-2 border rounded-md" placeholder="Descripción"></textarea>
-
-            <label class="block text-sm font-medium text-slate-700 mt-2">Vigencia</label>
-            <select id="challenge-expiry" class="w-full border rounded-md px-3 py-2">
-              <option value="24">1 día</option>
-              <option value="48">2 días</option>
-              <option value="none">Sin vencimiento</option>
-            </select>
-            <p class="text-xs text-slate-500">El feed oculta retos vencidos automáticamente.</p>
-
-            <label class="block text-sm font-medium text-slate-700 mt-2">Visibilidad</label>
-            <select id="challenge-vis" class="w-full border rounded-md px-3 py-2">
-              <option value="public">Pública</option>
-              <option value="friends">Solo amigos</option>
-            </select>
-            <p class="text-xs text-slate-500">Si elegís “Solo amigos”, solo tus amigos podrán ver el reto en el feed.</p>
-
-            <button id="publish-btn" class="mt-4 w-full btn-primary">Publicar reto</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- FRIENDS -->
-      <div id="friends-view" class="hidden">
-        <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40">
-          <h1 class="text-3xl font-bold text-slate-800">Amigos</h1>
-        </header>
-        <div class="p-4">
-          <div class="flex gap-4 border-b">
-            <button class="tab-btn active py-2" data-tab="buscar">Buscar</button>
-            <button class="tab-btn py-2 text-slate-500" data-tab="mis-amigos">Mis Amigos</button>
-            <button class="tab-btn py-2 text-slate-500 relative" data-tab="solicitudes">
-              Solicitudes
-              <span id="requests-badge-tab" class="hidden absolute -top-1 -right-2 w-2.5 h-2.5 rounded-full bg-red-500"></span>
-            </button>
-            <button class="tab-btn py-2 text-slate-500" data-tab="seguidores">Seguidores</button>
-          </div>
-
-          <div id="tab-buscar" class="mt-4">
-            <div class="relative mb-4">
-              <input type="search" id="user-search-input" placeholder="Buscar por nombre o email..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
-                <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              </div>
-            </div>
-            <div id="friends-results" class="space-y-2"></div>
-          </div>
-
-          <div id="tab-mis-amigos" class="hidden mt-4"><div id="friends-list" class="space-y-2"></div></div>
-          <div id="tab-solicitudes" class="hidden mt-4"><div id="requests-list" class="space-y-2"></div></div>
-          <div id="tab-seguidores" class="hidden mt-4"><div id="followers-list" class="space-y-2"></div></div>
-        </div>
-      </div>
-
-      <!-- PROFILE -->
-      <div id="profile-view" class="hidden">
-        <div class="p-4 bg-white shadow-lg">
-          <div class="flex flex-col items-center">
-            <img id="profile-pic" class="w-24 h-24 rounded-full border-4 border-white -mt-16 shadow-lg">
-            <h2 id="profile-name" class="text-2xl font-bold mt-4 text-slate-800"></h2>
-            <p id="profile-email" class="text-slate-500"></p>
-            <div class="w-full mt-6">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-lg font-semibold text-slate-700">Mis retos</h3>
-                <span id="my-retos-count" class="text-xs text-slate-500"></span>
-              </div>
-              <div id="my-mosaic" class="grid-mosaic"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-
-    <!-- NAV -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
-      <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">🏠<span class="text-xs font-semibold">Inicio</span></button>
-      <button data-view="friends-view" class="nav-button relative flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
-        👥<span class="text-xs font-semibold">Amigos</span>
-        <span id="requests-badge" class="hidden absolute top-1 right-5 w-2.5 h-2.5 rounded-full bg-red-500"></span>
-      </button>
-      <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">➕<span class="text-xs font-semibold">Crear</span></button>
-      <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">👤<span class="text-xs font-semibold">Perfil</span></button>
-    </nav>
-  </div>
-
-  <!-- TEMPLATE POST -->
-  <template id="post-template">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
-      <div class="p-4 flex items-center space-x-3">
-        <img class="w-10 h-10 rounded-full author-img" src="">
-        <div>
-          <p class="font-semibold text-slate-800 author-name"></p>
-          <p class="text-[11px] text-slate-500 post-time"></p>
-        </div>
-      </div>
-      <div class="relative">
-        <img class="w-full h-80 object-cover content-img" src="">
-        <div class="lock-overlay absolute inset-0 hidden bg-black/40 text-white flex flex-col items-center justify-center">
-          <div class="text-5xl mb-2">🔒</div>
-          <p class="text-sm">Tocá para aceptar el desafío</p>
-        </div>
-      </div>
-      <div class="p-4">
-        <p class="text-sm text-slate-700 caption mt-1"></p>
-        <div class="flex items-center justify-between mt-2 text-slate-500">
-          <div class="flex space-x-4">
-            <button class="like-button flex items-center space-x-1 cursor-pointer"><span>❤</span><span class="likes-count">0</span></button>
-            <button class="comment-button flex items-center space-x-1 cursor-pointer"><span>💬</span><span class="comments-count">0</span></button>
-          </div>
-          <span class="text-[11px] post-time-secondary"></span>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- TEMPLATE COMMENT -->
-  <template id="comment-item-template">
-    <div class="flex items-start space-x-3">
-      <img class="w-8 h-8 rounded-full cmt-img">
-      <div class="flex-1 bg-slate-100 rounded-xl p-3">
-        <p class="text-sm"><strong class="cmt-name text-slate-800"></strong> <span class="cmt-text text-slate-600"></span></p>
-        <p class="text-xs text-slate-400 mt-1 cmt-time"></p>
-      </div>
-    </div>
-  </template>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import {
-      getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-      onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, setDoc, doc, updateDoc,
-      serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
-      startAt, endAt, deleteDoc, writeBatch, increment, getDoc
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // --- Firebase ---
+    // --- CONFIG DE FIREBASE ---
     const firebaseConfig = {
-      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
-      authDomain: "tereto-prod.firebaseapp.com",
-      projectId: "tereto-prod",
-      storageBucket: "tereto-prod.firebasestorage.app",
-      messagingSenderId: "914605096619",
-      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_PROJECTO.firebaseapp.com",
+      projectId: "TU_PROJECTO",
+      storageBucket: "TU_PROJECTO.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxxxx"
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence).catch(()=>{});
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
     const db = getFirestore(app);
 
-    // --- Utils ---
-    const $ = (id)=>document.getElementById(id);
-    const toast = (msg,type='success')=>{
-      $("toast-message").textContent=msg;
-      $("toast-icon").innerHTML= type==='success'?'✅':'❌';
-      const t=$("toast"); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
-    };
-    const isExpired = (ch)=>{ if(!ch.expiresAt) return false; const d=ch.expiresAt?.toDate?.()||new Date(ch.expiresAt); return d && d<new Date(); };
+    // --- CONTROL DE CHECKS + LOGIN GOOGLE ---
+    const TERMS_VERSION = "1.0";
+    const TERMS_URL = "/legal/terminos-condiciones.html";
 
-    const solvedKey = (uid)=>`tereto_solved_${uid}`;
-    const loadSolved = (uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid))||'[]')); }catch{return new Set();} };
-    const saveSolved = (uid,set)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify([...set])); }catch{} };
+    const btnGoogle = document.querySelector('[data-google-signin]');
+    const chkAdult  = document.getElementById('chk-adult');
+    const chkTerms  = document.getElementById('chk-terms');
 
-    let currentUser=null, solvedSet=new Set();
-    let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
-    let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
-    let feedUnsub=null, myChallengesSub=null;
-
-    const clearSubs = ()=>{
-      [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesSub]
-        .forEach(u=>{ try{ u && u(); }catch{} });
-      unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesSub=null;
-    };
-
-    // --- Auth handlers ---
-    window._startGoogle = async function(){
-      try{
-        $("loading-spinner").classList.remove("hidden");
-        try {
-          await signInWithPopup(auth, provider);
-        } catch(e){
-          if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
-            await signInWithRedirect(auth, provider);
-          } else { throw e; }
-        }
-      }catch(err){
-        console.error(err);
-        toast((err?.code || 'auth_error').toString().replace('auth/',''), 'error');
-      }finally{
-        $("loading-spinner").classList.add("hidden");
+    function updateGoogleBtnState() {
+      const enabled = chkAdult?.checked && chkTerms?.checked;
+      if (btnGoogle) {
+        btnGoogle.disabled = !enabled;
+        btnGoogle.classList.toggle('opacity-50', !enabled);
+        btnGoogle.classList.toggle('cursor-not-allowed', !enabled);
       }
-    };
-    $("google-btn")?.addEventListener("click", ()=>window._startGoogle(), {passive:true});
-    $("google-btn")?.addEventListener("touchend", (e)=>{ e.preventDefault(); window._startGoogle(); }, {passive:false});
-
-    (async ()=>{
-      try { $("loading-spinner").classList.remove("hidden"); await getRedirectResult(auth); }
-      catch(e){ console.warn("redirect err", e?.code||e?.message); }
-      finally{ $("loading-spinner").classList.add("hidden"); }
-    })();
-
-    $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>toast('No se pudo cerrar sesión','error')));
-
-    async function upsertUser(user){
-      const dn=user.displayName||null, em=user.email||null;
-      try{
-        await setDoc(doc(db,"users",user.uid),{
-          displayName:dn, displayNameLower:dn?.toLowerCase()||null,
-          email:em, emailLower:em?.toLowerCase()||null,
-          photoURL:user.photoURL||null, updatedAt:serverTimestamp()
-        },{merge:true});
-      }catch(e){ console.error('upsert users',e); }
     }
+    chkAdult?.addEventListener('change', updateGoogleBtnState);
+    chkTerms?.addEventListener('change', updateGoogleBtnState);
+    updateGoogleBtnState();
 
-    // ---------- FEED ----------
-    const postTemplate=$("post-template");
-    function renderFeed(items){
-      const feedContainer=$("feed-container");
-      feedContainer.innerHTML='';
-      $("feed-tip").classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
-      if(items.length===0){
-        feedContainer.innerHTML='<div class="mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600"><p class="font-semibold text-slate-800 mb-1">No hay retos nuevos</p><p class="text-sm">Probá seguir a tus amigos.</p></div>';
+    btnGoogle?.addEventListener('click', async (e) => {
+      if (!chkAdult?.checked || !chkTerms?.checked) {
+        e.preventDefault();
         return;
       }
-      items.forEach(ch=>{
-        const frag=document.importNode(postTemplate.content,true);
-        const card=frag.querySelector('.post-card'); card.dataset.challengeId=ch.id;
-        frag.querySelector('.author-img').src=ch.authorImg||'';
-        frag.querySelector('.author-name').textContent=ch.authorName||'Usuario';
-        const dt=ch.createdAt?.toDate?.()||new Date();
-        frag.querySelector('.post-time').textContent=new Date(dt).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
-        frag.querySelector('.content-img').src=ch.contentUrl||'https://placehold.co/600x400/333/FFF?text=TeReto';
-        frag.querySelector('.caption').textContent=ch.caption||'';
-        frag.querySelector('.likes-count').textContent=ch.likesCount??0;
-        frag.querySelector('.comments-count').textContent=ch.commentsCount??0;
-        paintLockState(card, shouldUnlock(ch));
-        feedContainer.appendChild(frag);
-      });
-    }
-    const shouldUnlock = (ch)=>{ if(!currentUser) return false; if(ch.authorId===currentUser.uid) return true; return solvedSet.has(ch.id); };
-    const paintLockState = (card, unlocked)=>{ const img=card.querySelector('.content-img'); const overlay=card.querySelector('.lock-overlay'); if(unlocked){ img.classList.remove('locked'); overlay.classList.add('hidden'); } else { img.classList.add('locked'); overlay.classList.remove('hidden'); } };
-
-    function restartFeed(){
-      if(feedUnsub){ feedUnsub(); feedUnsub=null; }
-      if(!currentUser) return;
-      const ids=[...friendsSet];
-      const feedContainer=$("feed-container");
-      if(ids.length===0){
-        feedContainer.innerHTML='<div class="mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600"><p class="font-semibold text-slate-800 mb-1">Tu feed está vacío</p><p class="text-sm">Agregá amigos en <span class="font-semibold">Amigos</span>.</p></div>';
-        return;
-      }
-      const qRef = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200));
-      feedUnsub = onSnapshot(qRef,(snap)=>{
-        const setIds=new Set(ids);
-        const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-          .filter(c=> setIds.has(c.authorId))
-          .filter(c=> !isExpired(c))
-          .filter(c=> c.authorId!==currentUser.uid)
-          .filter(c=> c.vis!=='friends' || friendsSet.has(c.authorId));
-        renderFeed(items);
-      });
-    }
-
-    // ---------- CREATE ----------
-    const calcExpiresAt = ()=>{
-      const v=$("challenge-expiry").value;
-      if(v==='24') return new Date(Date.now()+24*3600*1000);
-      if(v==='48') return new Date(Date.now()+48*3600*1000);
-      return null;
-    };
-    $("publish-btn")?.addEventListener('click', async ()=>{
-      if(!currentUser) return;
-      try{
-        await addDoc(collection(db,'challenges'),{
-          authorId:currentUser.uid, authorName:currentUser.displayName, authorImg:currentUser.photoURL,
-          title: ($("challenge-title").value||'').trim()||null,
-          caption: ($("challenge-caption").value||'').trim()||null,
-          contentUrl:'https://placehold.co/600x400/333/FFF?text=TeReto',
-          createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
-          likesCount:0, commentsCount:0,
-          vis: $("challenge-vis").value || 'public'
-        });
-        $("challenge-title").value=''; $("challenge-caption").value='';
-        toast('¡Reto publicado!'); switchView('feed-view');
-      }catch(e){ console.error(e); toast('No se pudo publicar','error'); }
-    });
-
-    // ---------- PROFILE ----------
-    function startMyChallenges(){
-      if (myChallengesSub) { myChallengesSub(); myChallengesSub = null; }
-      if (!currentUser) return;
-      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), orderBy('createdAt','desc'), limit(500));
-      myChallengesSub = onSnapshot(qRef, (snap)=>{
-        const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        refreshProfile(items);
-      }, (err)=>{ console.error('myChallenges sub', err); toast('No se pudo cargar tus retos','error'); });
-    }
-    function refreshProfile(myChallenges){
-      if(!currentUser) return;
-      $("profile-pic").src=currentUser.photoURL||''; $("profile-name").textContent=currentUser.displayName||'Usuario'; $("profile-email").textContent=currentUser.email||'';
-      const grid=$("my-mosaic"); grid.innerHTML=''; $("my-retos-count").textContent=`${myChallenges.length} retos`;
-      myChallenges.forEach(ch=>{
-        const wrap=document.createElement('div'); wrap.className='mosaic-item'; wrap.dataset.id=ch.id;
-        const img=document.createElement('img'); img.className='mosaic-img'; img.src=ch.contentUrl||'https://placehold.co/600x600/333/FFF?text=Reto'; wrap.appendChild(img);
-        const bar=document.createElement('div'); bar.style.position='absolute'; bar.style.left='.25rem'; bar.style.bottom='.25rem'; bar.style.display='flex'; bar.style.gap='.25rem';
-        const b1=document.createElement('span'); b1.className='badge'; b1.style.background='rgba(0,0,0,.6)'; b1.style.color='#fff'; b1.textContent=`❤ ${ch.likesCount||0}`;
-        const b2=document.createElement('span'); b2.className='badge'; b2.style.background='rgba(0,0,0,.6)'; b2.style.color='#fff'; b2.textContent=`💬 ${ch.commentsCount||0}`;
-        bar.appendChild(b1); bar.appendChild(b2);
-        if(isExpired(ch)){ const ex=document.createElement('span'); ex.className='badge'; ex.style.background='rgba(255,0,0,.7)'; ex.style.color='#fff'; ex.textContent='Vencido'; bar.appendChild(ex); }
-        wrap.appendChild(bar);
-        const del=document.createElement('button'); del.className='mosaic-del'; del.title='Eliminar'; del.textContent='🗑️';
-        del.onclick=async(e)=>{ e.stopPropagation(); if(!confirm('¿Eliminar este reto?')) return; try{ await deleteDoc(doc(db,'challenges',ch.id)); toast('Reto eliminado'); }catch(err){ console.error(err); toast('No se pudo eliminar','error'); } };
-        grid.appendChild(wrap).appendChild(del);
-      });
-    }
-
-    // ---------- SOCIAL ----------
-    async function followUser(uid, uData=null){
-      if(uid===currentUser.uid) return;
-      try{
-        await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName:uData?.displayName||null, photoURL:uData?.photoURL||null});
-        await setDoc(doc(db,'users',uid,'followers',currentUser.uid),{createdAt:serverTimestamp(), displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null});
-        toast('Siguiendo ✔');
-      }catch(e){ console.error(e); toast('No se pudo seguir','error'); }
-    }
-    async function unfollowUser(uid){
-      try{ await deleteDoc(doc(db,'users',currentUser.uid,'following',uid)); await deleteDoc(doc(db,'users',uid,'followers',currentUser.uid)); toast('Dejaste de seguir'); }catch(e){ console.error(e); toast('No se pudo dejar de seguir','error'); }
-    }
-    async function removeFollower(uid){
-      try{ await deleteDoc(doc(db,'users',currentUser.uid,'followers',uid)); await deleteDoc(doc(db,'users',uid,'following',currentUser.uid)); toast('Seguidor eliminado'); }catch(e){ console.error(e); toast('No se pudo eliminar seguidor','error'); }
-    }
-    async function sendFriendRequest(target){
-      if(target===currentUser.uid) return;
-      try{
-        await setDoc(doc(db,'users',target,'friendRequests',currentUser.uid),{fromUid:currentUser.uid, displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null, createdAt:serverTimestamp()});
-        await setDoc(doc(db,'users',currentUser.uid,'sentRequests',target),{toUid:target, createdAt:serverTimestamp()});
-        toast('Solicitud enviada');
-      }catch(e){ console.error(e); toast('No se pudo enviar solicitud','error'); }
-    }
-    async function cancelFriendRequest(target){
-      try{ await deleteDoc(doc(db,'users',target,'friendRequests',currentUser.uid)); await deleteDoc(doc(db,'users',currentUser.uid,'sentRequests',target)); toast('Solicitud cancelada'); }catch(e){ console.error(e); toast('No se pudo cancelar','error'); }
-    }
-    async function acceptFriendRequest(fromUid){
-      try{
-        const batch=writeBatch(db);
-        batch.delete(doc(db,'users',currentUser.uid,'friendRequests',fromUid));
-        batch.set(doc(db,'users',currentUser.uid,'friends',fromUid), {since:serverTimestamp()});
-        batch.set(doc(db,'users',fromUid,'friends',currentUser.uid), {since:serverTimestamp()});
-        batch.delete(doc(db,'users',fromUid,'sentRequests',currentUser.uid));
-        await batch.commit();
-        toast('Ahora son amigos ✔');
-      }catch(e){ console.error(e); toast('No se pudo aceptar','error'); }
-    }
-    async function declineFriendRequest(fromUid){
-      try{ await deleteDoc(doc(db,'users',currentUser.uid,'friendRequests',fromUid)); await deleteDoc(doc(db,'users',fromUid,'sentRequests',currentUser.uid)).catch(()=>{}); toast('Solicitud rechazada'); }catch(e){ console.error(e); toast('No se pudo rechazar','error'); }
-    }
-    async function removeFriend(uid){
-      try{ const batch=writeBatch(db); batch.delete(doc(db,'users',currentUser.uid,'friends',uid)); batch.delete(doc(db,'users',uid,'friends',currentUser.uid)); await batch.commit(); toast('Amigo eliminado'); }catch(e){ console.error(e); toast('No se pudo eliminar amigo','error'); }
-    }
-
-    function subFriends(){
-      if(unsubFriends){unsubFriends();unsubFriends=null;}
-      unsubFriends = onSnapshot(collection(db,'users',currentUser.uid,'friends'), (snap)=>{
-        friendsSet=new Set(snap.docs.map(d=>d.id));
-        restartFeed(); renderFriendsTab(); scheduleFriendsSearch();
-      });
-    }
-    function subFollowing(){
-      if(unsubFollowing){unsubFollowing();unsubFollowing=null;}
-      unsubFollowing = onSnapshot(collection(db,'users',currentUser.uid,'following'), (snap)=>{ followingSet=new Set(snap.docs.map(d=>d.id)); renderFriendsTab(); scheduleFriendsSearch(); });
-    }
-    function subFollowers(){
-      if(unsubFollowers){unsubFollowers();unsubFollowers=null;}
-      unsubFollowers = onSnapshot(collection(db,'users',currentUser.uid,'followers'), (snap)=>{ followersSet=new Set(snap.docs.map(d=>d.id)); renderFriendsTab(); });
-    }
-    function subIncomingRequests(){
-      if(unsubIncomingReq){unsubIncomingReq();unsubIncomingReq=null;}
-      unsubIncomingReq = onSnapshot(collection(db,'users',currentUser.uid,'friendRequests'), (snap)=>{
-        incomingReqSet=new Set(snap.docs.map(d=>d.id));
-        renderFriendRequests();
-        updateRequestsBadge();
-        scheduleFriendsSearch();
-      });
-    }
-    function subSentRequests(){
-      if(unsubSentReq){unsubSentReq();unsubSentReq=null;}
-      unsubSentReq = onSnapshot(collection(db,'users',currentUser.uid,'sentRequests'), (snap)=>{ sentReqSet=new Set(snap.docs.map(d=>d.id)); scheduleFriendsSearch(); });
-    }
-
-    // ---------- Buscar (DEDUPE + render seguro) ----------
-    let friendsSearchTimer = null;
-    let friendsSearchVersion = 0;
-    function scheduleFriendsSearch() {
-      if (friendsSearchTimer) clearTimeout(friendsSearchTimer);
-      friendsSearchTimer = setTimeout(() => {
-        friendsSearchTimer = null;
-        renderFriendsSearchSafe();
-      }, 0);
-    }
-    async function renderFriendsSearchSafe() {
-      const myVersion = ++friendsSearchVersion;
-      const html = await buildFriendsSearchHTML();
-      if (myVersion !== friendsSearchVersion) return;
-      $("friends-results").innerHTML = html;
-    }
-    async function buildFriendsSearchHTML() {
-      const term = ($("user-search-input").value || "").toLowerCase().trim();
-      const results = new Map();
       try {
-        if (term && term.includes("@")) {
-          const qEmail = query(collection(db, "users"), where("emailLower", "==", term), limit(25));
-          (await getDocs(qEmail)).forEach((d) => results.set(d.id, { uid: d.id, ...d.data() }));
-        } else if (term) {
-          const qName = query(
-            collection(db, "users"),
-            orderBy("displayNameLower"),
-            startAt(term),
-            endAt(term + "\uf8ff"),
-            limit(50)
-          );
-          (await getDocs(qName)).forEach((d) => results.set(d.id, { uid: d.id, ...d.data() }));
-        } else {
-          const qUsers = query(collection(db, "users"), orderBy("displayNameLower"), limit(40));
-          (await getDocs(qUsers)).forEach((d) => results.set(d.id, { uid: d.id, ...d.data() }));
-        }
-      } catch (e) { console.error("search users", e); }
-
-      if (results.size === 0) return `<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`;
-
-      let out = "";
-      for (const u of results.values()) {
-        const isSelf = u.uid === currentUser?.uid;
-        const isFriend = friendsSet.has(u.uid);
-        const sent = sentReqSet.has(u.uid);
-        const incoming = incomingReqSet.has(u.uid);
-        const isFollowing = followingSet.has(u.uid);
-        out += `
-          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100">
-            <div class="flex items-center space-x-3">
-              <img class="w-10 h-10 rounded-full" src="${u.photoURL||""}">
-              <div class="flex flex-col">
-                <p class="font-semibold text-slate-700">${u.displayName||"(Sin nombre)"}${isSelf?' <span class="text-xs text-slate-400">(vos)</span>':''}</p>
-                <p class="text-xs text-slate-500">${u.email||""}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              ${
-                isSelf
-                  ? ``
-                  : isFriend
-                  ? `
-                    <button class="px-3 py-1 rounded-full text-sm ${isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800'}" data-act="${isFollowing?'unfollow':'follow'}" data-uid="${u.uid}">
-                      ${isFollowing?'Siguiendo':'Seguir'}
-                    </button>
-                    <button class="px-3 py-1 rounded-full text-sm bg-red-100 text-red-700" data-act="unfriend" data-uid="${u.uid}">
-                      Eliminar amigo
-                    </button>`
-                  : incoming
-                  ? `
-                    <button class="px-3 py-1 rounded-full text-sm bg-green-600 text-white" data-act="accept" data-uid="${u.uid}">Aceptar</button>
-                    <button class="px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800" data-act="decline" data-uid="${u.uid}">Rechazar</button>`
-                  : sent
-                  ? `<button class="px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800" data-act="cancel" data-uid="${u.uid}">Cancelar solicitud</button>`
-                  : `<button class="px-3 py-1 rounded-full text-sm bg-indigo-600 text-white" data-act="request" data-uid="${u.uid}">Enviar solicitud</button>`
-              }
-            </div>
-          </div>`;
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        await setDoc(doc(db, 'users', user.uid), {
+          isAdult: true,
+          acceptedTermsAt: serverTimestamp(),
+          acceptedTermsVersion: TERMS_VERSION,
+          acceptedTermsUrl: TERMS_URL
+        }, { merge: true });
+        // Acá seguiría tu flujo normal de app (mostrar feed, etc.)
+        alert('Login exitoso. Bienvenido ' + user.displayName);
+      } catch (err) {
+        console.error('Error en signInWithPopup:', err);
+        alert('Error al iniciar sesión: ' + err.message);
       }
-      return out;
-    }
-
-    // Delegación de clicks en Buscar
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-act][data-uid]");
-      if (!btn) return;
-      const uid = btn.getAttribute("data-uid");
-      const act = btn.getAttribute("data-act");
-      if (!uid || !currentUser) return;
-      if (act === "follow") followUser(uid);
-      else if (act === "unfollow") unfollowUser(uid);
-      else if (act === "unfriend") removeFriend(uid);
-      else if (act === "accept") acceptFriendRequest(uid);
-      else if (act === "decline") declineFriendRequest(uid);
-      else if (act === "request") sendFriendRequest(uid);
-      else if (act === "cancel") cancelFriendRequest(uid);
     });
-
-    // Badges
-    function updateRequestsBadge() {
-      const b1 = $("requests-badge");
-      const b2 = $("requests-badge-tab");
-      const show = incomingReqSet.size > 0;
-      [b1,b2].forEach(b=>{ if(!b) return; b.classList.toggle("hidden", !show); });
-    }
-
-    // Tabs & views
-    const friendsResults=$("friends-results"), friendsList=$("friends-list"), requestsList=$("requests-list"), followersList=$("followers-list");
-    function setActiveTab(tab){
-      document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.toggle('active', b.dataset.tab===tab); b.classList.toggle('text-slate-500', b.dataset.tab!==tab); });
-      ["buscar","mis-amigos","solicitudes","seguidores"].forEach(t=>{ $("tab-"+t).classList.toggle('hidden', t!==tab); });
-      if(tab==='buscar') scheduleFriendsSearch();
-      if(tab==='mis-amigos') renderMyFriends();
-      if(tab==='solicitudes') renderFriendRequests();
-      if(tab==='seguidores') renderFollowers();
-    }
-    document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>setActiveTab(b.dataset.tab)));
-
-    async function fetchUsersFor(ids){
-      const out=[];
-      for(const uid of ids){
-        const d=await getDoc(doc(db,'users',uid)).catch(()=>null);
-        if(d?.exists()) out.push({uid, ...d.data()});
-        else out.push({uid, displayName:'(Usuario)', photoURL:''});
-      }
-      return out;
-    }
-    async function renderMyFriends(){
-      const el=$("friends-list"); el.innerHTML='';
-      if(friendsSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés amigos.</p>'; return; }
-      const users = await fetchUsersFor([...friendsSet]);
-      users.forEach(u=>{
-        const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p></div>`;
-        const actions=document.createElement('div'); actions.className='flex items-center gap-2';
-        const isFollowing = followingSet.has(u.uid);
-        const btnFollow=document.createElement('button');
-        btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
-        btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
-        btnFollow.onclick=()=> isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u);
-        actions.appendChild(btnFollow);
-        const btnUnfriend=document.createElement('button');
-        btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
-        btnUnfriend.textContent='Eliminar amigo';
-        btnUnfriend.onclick=()=> removeFriend(u.uid);
-        actions.appendChild(btnUnfriend);
-        row.appendChild(actions);
-        el.appendChild(row);
-      });
-    }
-    async function renderFriendRequests(){
-      const el=$("requests-list"); el.innerHTML='';
-      if(incomingReqSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">No tenés solicitudes pendientes.</p>'; return; }
-      const users = await fetchUsersFor([...incomingReqSet]);
-      users.forEach(u=>{
-        const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
-        const actions=document.createElement('div'); actions.className='flex items-center gap-2';
-        const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=()=> acceptFriendRequest(u.uid);
-        const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=()=> declineFriendRequest(u.uid);
-        actions.appendChild(btnAcc); actions.appendChild(btnRej);
-        row.appendChild(actions);
-        el.appendChild(row);
-      });
-    }
-    async function renderFollowers(){
-      const el=$("followers-list"); el.innerHTML='';
-      if(followersSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés seguidores.</p>'; return; }
-      const users = await fetchUsersFor([...followersSet]);
-      users.forEach(u=>{
-        const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
-        const actions=document.createElement('div'); actions.className='flex items-center gap-2';
-        const btnRemove=document.createElement('button'); btnRemove.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700'; btnRemove.textContent='Eliminar seguidor'; btnRemove.onclick=()=> removeFollower(u.uid);
-        actions.appendChild(btnRemove);
-        row.appendChild(actions);
-        el.appendChild(row);
-      });
-    }
-    function renderFriendsTab(){
-      const activeBtn=document.querySelector('.tab-btn.active');
-      if(!activeBtn) return;
-      setActiveTab(activeBtn.dataset.tab);
-    }
-
-    // NAV & clicks generales
-    const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
-    function switchView(v){
-      Object.values(views).forEach(x=>x.classList.add('hidden'));
-      if(views[v]) views[v].classList.remove('hidden');
-      document.querySelectorAll('.nav-button').forEach(btn=>{ btn.classList.toggle('text-indigo-500', btn.dataset.view===v); btn.classList.toggle('text-slate-500', btn.dataset.view!==v); });
-      if(v==='profile-view') startMyChallenges();
-      if(v==='friends-view') setActiveTab('buscar');
-    }
-    document.addEventListener('click',(e)=>{
-      const navBtn=e.target.closest('.nav-button'); if(navBtn&&navBtn.dataset.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
-      if(e.target.closest('.post-card')){ localStorage.setItem('tereto_tip_seen','1'); $("feed-tip")?.classList.add('hidden'); }
-    });
-
-    // Auth state
-    onAuthStateChanged(auth, async (user)=>{
-      clearSubs();
-      if(!user){ currentUser=null; $("app-screen").classList.add("hidden"); $("login-screen").classList.remove("hidden"); return; }
-      currentUser=user;
-      $("login-screen").classList.add("hidden"); $("app-screen").classList.remove("hidden");
-      await upsertUser(user);
-      solvedSet=loadSolved(user.uid);
-      subFriends(); subFollowing(); subFollowers(); subIncomingRequests(); subSentRequests();
-      restartFeed(); startMyChallenges();
-      switchView('feed-view');
-    });
-
-    // Bind search input una sola vez
-    if (!$("user-search-input").dataset.bound) {
-      $("user-search-input").dataset.bound = "1";
-      $("user-search-input").addEventListener("input", () => scheduleFriendsSearch());
-    }
   </script>
 </body>
 </html>
