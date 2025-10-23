@@ -49,8 +49,7 @@
       </div>
       <p class="text-center text-slate-600 mb-6">Ingresá para continuar</p>
 
-      <!-- sin onclick inline -->
-      <button id="google-btn" type="button" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
+      <button id="google-btn" type="button" onclick="_startGoogle()" class="relative z-10 pointer-events-auto w-full flex items-center justify-center gap-3 border rounded-xl py-3 hover:bg-slate-50 select-none">
         <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" draggable="false">
         <span class="font-semibold text-slate-700">Continuar con Google</span>
       </button>
@@ -62,6 +61,7 @@
   <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
+
       <!-- FEED -->
       <div id="feed-view">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
@@ -77,7 +77,6 @@
             <span class="px-2 py-[2px] rounded-full border text-[10px]">Consejo</span> Tocá la imagen bloqueada para aceptar el desafío. 😉
           </div>
         </div>
-
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
 
@@ -305,8 +304,9 @@
     </div>
   </template>
 
-  <!-- APP LOGIC (un solo módulo) -->
+  <!-- APP LOGIC -->
   <script type="module">
+    /**** Firebase SDKs ****/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
@@ -318,20 +318,7 @@
       startAt, endAt, deleteDoc, writeBatch, increment, getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ===== Utils =====
-    const $ = (id)=>document.getElementById(id);
-    const toast = (msg,type='success')=>{
-      const t=$("toast"); if(!t) return console.log(msg);
-      $("toast-message").textContent=msg;
-      $("toast-icon").innerHTML= type==='success'?'✅':'❌';
-      t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
-    };
-    const isExpired = (ch)=>{ if(!ch.expiresAt) return false; const d=ch.expiresAt?.toDate?.()||new Date(ch.expiresAt); return d && d<new Date(); };
-    const solvedKey = (uid)=>`tereto_solved_${uid}`;
-    const loadSolved = (uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid))||'[]')); }catch{return new Set();} };
-    const saveSolved = (uid,set)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify([...set])); }catch{} };
-
-    // ===== Firebase =====
+    /**** Config Firebase (prod) ****/
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -342,25 +329,68 @@
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
-    await setPersistence(auth, browserLocalPersistence).catch(()=>{});
+    const db = getFirestore(app);
 
+    // Persistencia local estable
+    try { await setPersistence(auth, browserLocalPersistence); } catch {}
+
+    // Proveedor Google
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    // ===== Estado global =====
+    /**** Utils & UI helpers ****/
+    const $ = (id)=>document.getElementById(id);
+    function toast(msg,type='success'){
+      $("toast-message").textContent=msg;
+      $("toast-icon").innerHTML= type==='success'?'✅':'❌';
+      const t=$("toast"); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
+    }
+    const isExpired = (ch)=>{ if(!ch.expiresAt) return false; const d=ch.expiresAt?.toDate?.()||new Date(ch.expiresAt); return d && d<new Date(); };
+    const solvedKey = (uid)=>`tereto_solved_${uid}`;
+    const loadSolved = (uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid))||'[]')); }catch{return new Set();} };
+    const saveSolved = (uid,set)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify([...set])); }catch{} };
+
+    function resetCreateWizard() {
+      ["create-step-1","create-step-2","create-step-3-trivia","create-step-3-photo"]
+        .forEach(id => $(id)?.classList.add("hidden"));
+      $("create-step-1")?.classList.remove("hidden");
+      const btn = $("goto-step-2");
+      if (btn) { delete btn.dataset.fileUrl; btn.disabled = true; }
+      const imgPrev = $("image-preview");
+      const imgPrevWrap = $("image-preview-container");
+      if (imgPrev) imgPrev.src = "#";
+      if (imgPrevWrap) imgPrevWrap.classList.add("hidden");
+      const fileName = $("file-name"); if (fileName) fileName.textContent = "";
+      const cap = $("challenge-caption"); const exp = $("challenge-expiry");
+      if (cap) cap.value = ""; if (exp) exp.value = "none";
+      $("trivia-form")?.reset(); $("photo-challenge-form")?.reset();
+      $("camera-modal")?.classList.add("hidden"); $("trivia-modal")?.classList.add("hidden");
+      // Apagamos cámara si quedó abierta
+      if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+    }
+
+    /**** State ****/
     let currentUser=null, solvedSet=new Set();
     let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
     let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
-    let myChallenges=[];
 
-    const clearSubs = ()=>{ [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub].forEach(u=>{ if(u){u();} }); unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesUnsub=commentsUnsub=null; };
+    const clearSubs = ()=>{
+      [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub]
+        .forEach(u=>{ if(u){u();} });
+      unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesUnsub=commentsUnsub=null;
+    };
 
-    // ===== Cámara =====
+    /**** Cámara ****/
     let camStream=null, camResolve=null;
     const camModal=$("camera-modal"), camVideo=$("cam-video"), camCanvas=$("cam-canvas");
-    async function openCamera(){ try{ if(camStream) camStream.getTracks().forEach(t=>t.stop()); camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); camVideo.srcObject=camStream; camModal.classList.remove('hidden'); }catch(e){ console.error(e); toast('No se pudo acceder a la cámara','error'); } }
+    async function openCamera(){
+      try{
+        if(camStream) camStream.getTracks().forEach(t=>t.stop());
+        camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+        camVideo.srcObject=camStream; camModal.classList.remove('hidden');
+      }catch(e){ console.error(e); toast('No se pudo acceder a la cámara','error'); }
+    }
     function closeCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null;} camModal.classList.add('hidden'); }
     function capturePhoto(){ if(!camStream||!camVideo.videoWidth) return null; const w=camVideo.videoWidth,h=camVideo.videoHeight; camCanvas.width=w; camCanvas.height=h; camCanvas.getContext('2d').drawImage(camVideo,0,0,w,h); return camCanvas.toDataURL('image/jpeg',0.8); }
     $("cam-close")?.addEventListener('click', ()=>{ closeCamera(); if(camResolve) camResolve(null); camResolve=null; });
@@ -374,30 +404,26 @@
       let data=cvs.toDataURL('image/jpeg',quality); const kb=Math.round((data.length*3)/4/1024); if(kb>300) data=cvs.toDataURL('image/jpeg',0.6); return data;
     }
 
-    // ===== Auth: popup + fallback redirect =====
-    function startGoogle(){
-      $("loading-spinner")?.classList.remove("hidden");
-      signInWithPopup(auth, provider).catch(async (e)=>{
+    /**** Auth: popup + redirect fallback ****/
+    window._startGoogle = function(){
+      // Evitamos awaits antes del popup
+      signInWithPopup(auth, provider).catch((e)=>{
         if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
-          await signInWithRedirect(auth, provider);
+          signInWithRedirect(auth, provider);
           return;
         }
-        console.error("[auth]", e);
+        console.error(e);
         toast((e?.code || 'auth_error').toString().replace('auth/',''), 'error');
-      }).finally(()=>{
-        $("loading-spinner")?.classList.add("hidden");
       });
-    }
-    $("google-btn")?.addEventListener("click", startGoogle, {passive:true});
-    $("google-btn")?.addEventListener("touchend", (e)=>{ e.preventDefault(); startGoogle(); }, {passive:false});
+    };
+    $("google-btn")?.addEventListener("click", ()=>window._startGoogle(), {passive:true});
+    $("google-btn")?.addEventListener("touchend", (e)=>{ e.preventDefault(); window._startGoogle(); }, {passive:false});
 
-    // Resolver redirect si aplica
-    getRedirectResult(auth).catch((e)=>console.warn("[redirect]", e?.code || e?.message));
+    // Resolver sesión si venimos de redirect (no bloquea UI)
+    getRedirectResult(auth).catch((e)=>console.warn("redirect", e?.code||e?.message));
 
-    // ===== Sign out =====
     $("signout-btn")?.addEventListener("click", ()=>signOut(auth).catch(()=>toast('No se pudo cerrar sesión','error')));
 
-    // ===== Firestore helpers =====
     async function upsertUser(user){
       const dn=user.displayName||null, em=user.email||null;
       try{
@@ -482,6 +508,7 @@
     const shouldUnlock = (ch)=>{ if(!currentUser) return false; if(ch.authorId===currentUser.uid) return true; return solvedSet.has(ch.id); };
     const paintLockState = (card, unlocked)=>{ const img=card.querySelector('.content-img'); const overlay=card.querySelector('.lock-overlay'); if(unlocked){ img.classList.remove('locked'); overlay.classList.add('hidden'); } else { img.classList.add('locked'); overlay.classList.remove('hidden'); } };
 
+    let myChallenges=[], myChallengesUnsub=null;
     function startMyChallenges(){
       if (myChallengesUnsub) { myChallengesUnsub(); myChallengesUnsub = null; }
       if (!currentUser) return;
@@ -513,7 +540,6 @@
       });
     }
 
-    // ===== Comentarios =====
     const commentsModal=$("comments-modal"), commentsModalBody=$("comments-modal-body");
     const commentForm=$("comment-form"), commentInput=$("comment-input"), commentUserImg=$("comment-user-img"), commentItemTemplate=$("comment-item-template");
     function openComments(chId){
@@ -552,7 +578,6 @@
       }catch(e){ console.error(e); toast('No se pudo comentar','error'); }
     });
 
-    // ===== Crear retos =====
     const calcExpiresAt = ()=>{ const v=$("challenge-expiry").value; if(v==='24') return new Date(Date.now()+24*3600*1000); if(v==='48') return new Date(Date.now()+48*3600*1000); return null; };
     $("file-upload")?.addEventListener('change', async (e)=>{ const f=e.target.files?.[0]; if(!f){ $("file-name").textContent=''; $("goto-step-2").disabled=true; $("image-preview-container").classList.add('hidden'); return; } $("file-name").textContent=f.name; const dataUrl=await fileToCompressedDataURL(f); $("goto-step-2").dataset.fileUrl=dataUrl; $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); $("goto-step-2").disabled=false; });
     $("open-camera-btn")?.addEventListener('click', async ()=>{ const dataUrl=await captureWithModal(); if(!dataUrl){ return; } $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); const btn=$("goto-step-2"); btn.dataset.fileUrl=dataUrl; btn.disabled=false; $("file-name").textContent=`Foto capturada - ${new Date().toLocaleTimeString()}.jpg`; });
@@ -572,7 +597,9 @@
           contentUrl, caption:($("challenge-caption").value||'').trim()||null,
           likesCount:0, commentsCount:0, ...payload
         });
-        toast('¡Reto publicado!'); switchView('feed-view');
+        toast('¡Reto publicado!');
+        resetCreateWizard();     // limpieza
+        switchView('feed-view');
       }catch(e){ console.error(e);
         const msg=(e?.code||e?.message||'').toString();
         if(msg.includes('permission-denied')) toast('Permisos denegados','error');
@@ -583,7 +610,7 @@
     $("trivia-form")?.addEventListener('submit',(e)=>{ e.preventDefault(); publishChallenge({ type:'trivia', question:$("trivia-question").value, correctAnswer:$("correct-answer").value, wrongAnswers:[ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ] }); });
     $("photo-challenge-form")?.addEventListener('submit',(e)=>{ e.preventDefault(); publishChallenge({ type:'photo', question:$("photo-challenge-task").value }); });
 
-    // ===== Trivia =====
+    // Trivia
     const triviaModal=$("trivia-modal"), triviaQ=$("trivia-q"), triviaOpts=$("trivia-opts"), triviaFeedback=$("trivia-feedback");
     function openTrivia(ch, card){
       triviaQ.textContent=ch.question||'';
@@ -601,7 +628,7 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ triviaModal.classList.add('hidden'); triviaOpts.innerHTML=''; triviaFeedback.textContent=''; });
 
-    // ===== Social =====
+    // Social: follow/amigos
     async function followUser(uid, uData=null){
       if(uid===currentUser.uid) return;
       try{
@@ -672,7 +699,7 @@
       const results=new Map();
       try{
         if(term && term.includes('@')){ const qEmail=query(collection(db,'users'), where('emailLower','==',term), limit(25)); (await getDocs(qEmail)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
-        else if(term){ const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50)); (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
+        else if(term){ const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\\uf8ff'), limit(50)); (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
         else { const qUsers=query(collection(db,'users'), orderBy('displayNameLower'), limit(40)); (await getDocs(qUsers)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
       }catch(e){ console.error('search users',e); }
 
@@ -686,7 +713,7 @@
         </div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
 
-        const isSelf = u.uid===currentUser.uid;
+        const isSelf = u.uid===currentUser?.uid;
         const isFriend = friendsSet.has(u.uid);
         const sent = sentReqSet.has(u.uid);
         const incoming = incomingReqSet.has(u.uid);
@@ -790,10 +817,19 @@
     }
 
     const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
-    function switchView(v){ Object.values(views).forEach(x=>x.classList.add('hidden')); if(views[v]) views[v].classList.remove('hidden');
-      document.querySelectorAll('.nav-button').forEach(btn=>{ btn.classList.toggle('text-indigo-500', btn.dataset.view===v); btn.classList.toggle('text-slate-500', btn.dataset.view!==v); });
+    function switchView(v){
+      Object.values(views).forEach(x=>x.classList.add('hidden'));
+      if(views[v]) views[v].classList.remove('hidden');
+
+      document.querySelectorAll('.nav-button').forEach(btn=>{
+        btn.classList.toggle('text-indigo-500', btn.dataset.view===v);
+        btn.classList.toggle('text-slate-500', btn.dataset.view!==v);
+      });
+
       if(v==='profile-view') refreshProfile();
       if(v==='friends-view') setActiveTab('buscar');
+      if(v==='create-view') resetCreateWizard();      // limpieza al entrar
+      if(v!=='create-view' && camStream){ closeCamera(); } // por si quedó cámara abierta
     }
     document.addEventListener('click',(e)=>{
       const navBtn=e.target.closest('.nav-button'); if(navBtn&&navBtn.dataset.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
@@ -822,7 +858,6 @@
     });
     document.addEventListener('click',(e)=>{ if(e.target.closest('.post-card')){ localStorage.setItem('tereto_tip_seen','1'); $("feed-tip")?.classList.add('hidden'); } });
 
-    // ===== Sesión =====
     onAuthStateChanged(auth, async (user)=>{
       clearSubs();
       if(!user){
@@ -834,7 +869,7 @@
       currentUser=user;
       $("login-screen").classList.add("hidden");
       $("app-screen").classList.remove("hidden");
-      await upsertUser(user);
+      try { await upsertUser(user); } catch {}
       solvedSet=loadSolved(user.uid);
       subFriends(); subFollowing(); subFollowers(); subIncomingRequests(); subSentRequests();
       restartFeed(); startMyChallenges(); refreshProfile();
