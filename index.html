@@ -318,32 +318,67 @@
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // --- Firebase ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
-      authDomain: "tereto-prod.firebaseapp.com",
-      projectId: "tereto-prod",
-      storageBucket: "tereto-prod.firebasestorage.app",
-      messagingSenderId: "914605096619",
-      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    // 🔒 Persistencia antes de cualquier intento de login (no bloquea gesto de usuario)
-    try { await setPersistence(auth, browserLocalPersistence); } catch {}
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, setDoc, doc, updateDoc,
+    serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where,
+    startAt, endAt, deleteDoc, writeBatch, increment, getDoc
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
+  // --- Firebase (igual que antes) ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+    authDomain: "tereto-prod.firebaseapp.com",
+    projectId: "tereto-prod",
+    storageBucket: "tereto-prod.firebasestorage.app",
+    messagingSenderId: "914605096619",
+    appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const db = getFirestore(app);
+  // Proveedor Google (forzamos selector de cuenta)
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
 
-    // --- Guards de origen/domino autorizado ---
-    (function originGuard(){
-      const origin = location.origin;
-      const isFile = location.protocol === "file:";
-      const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-      if (isFile) toast("No uses file://. Servilo con http://localhost.", "error");
-      if (!isLocal) toast("Asegurate de agregar este dominio en Authentication → Authorized domains.", "error");
-    })();
+  // --- Login: popup directo + fallback redirect ---
+  window._startGoogle = function () {
+    // Importante: nada de awaits antes del popup
+    signInWithPopup(auth, provider).catch((e) => {
+      // Si el navegador bloquea el popup, vamos por redirect
+      if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
+        signInWithRedirect(auth, provider);
+        return;
+      }
+      // Dominio/origen no autorizado, credenciales, etc.
+      console.error("[auth]", e);
+      (window.toast || console.log)(
+        (e?.code || "auth_error").toString().replace("auth/", ""),
+        "error"
+      );
+    });
+  };
+
+  // Resolver login si venís de redirect (non-blocking)
+  getRedirectResult(auth).catch((e) => {
+    console.warn("[redirect]", e?.code || e?.message);
+  });
+
+  // Logout (tu botón ya existe)
+  document.getElementById("signout-btn")?.addEventListener("click", () => {
+    signOut(auth).catch(() => (window.toast && window.toast("No se pudo cerrar sesión", "error")));
+  });
+
+  // Mantengo tu onAuthStateChanged y resto del código tal cual más abajo…
+  // (no lo toco, solo asegúrate de que este bloque reemplace el anterior)
+</script>
+
 
     // --- Utils ---
     const $ = (id)=>document.getElementById(id);
