@@ -508,7 +508,6 @@
     const shouldUnlock = (ch)=>{ if(!currentUser) return false; if(ch.authorId===currentUser.uid) return true; return solvedSet.has(ch.id); };
     const paintLockState = (card, unlocked)=>{ const img=card.querySelector('.content-img'); const overlay=card.querySelector('.lock-overlay'); if(unlocked){ img.classList.remove('locked'); overlay.classList.add('hidden'); } else { img.classList.add('locked'); overlay.classList.remove('hidden'); } };
 
-    let myChallenges=[], myChallengesUnsub=null;
     function startMyChallenges(){
       if (myChallengesUnsub) { myChallengesUnsub(); myChallengesUnsub = null; }
       if (!currentUser) return;
