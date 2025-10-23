@@ -1,90 +1,177 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>TeReto</title></head><body>
-<div id="create-step-2">
-  <label class="block text-sm font-medium text-slate-700 mt-2">Vigencia</label>
-  <select id="challenge-expiry"></select>
-  <p class="text-xs text-slate-500">El feed oculta retos vencidos automáticamente.</p>
-              <label class="block text-sm font-medium text-slate-700 mt-2">Visibilidad</label>
-              <select id="challenge-vis" class="w-full border rounded-md px-3 py-2">
-                <option value="public">Pública</option>
-                <option value="friends">Solo amigos</option>
-              </select>
-              <p class="text-xs text-slate-500">Si elegís “Solo amigos”, solo tus amigos podrán ver el reto en el feed.</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeReto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .blurred { filter: blur(8px); pointer-events: none; }
+    .toast { visibility:hidden; min-width:250px; margin-left:-125px; background:#333; color:#fff; text-align:center; border-radius:4px; padding:16px; position:fixed; z-index:1; left:50%; bottom:30px; font-size:17px;}
+    .toast.show {visibility:visible; -webkit-animation:fadein 0.5s, fadeout 0.5s 2.5s; animation:fadein 0.5s, fadeout 0.5s 2.5s;}
+    @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+    @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+  </style>
+</head>
+<body class="bg-gray-100">
 
-</div>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, updateDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs, limit, where, startAt, endAt, deleteDoc, writeBatch, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-  const firebaseConfig = {}; const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app); const db = getFirestore(app);
-  function isExpired() { return false; }
-  function renderFeed(items){}
-  function $ (id){ return document.getElementById(id); }
-  let friendsSet = new Set(); let currentUser = null;
-  let feedUnsub = null;
-  async function publishChallenge(payload){
-    await addDoc(collection(db,'challenges'),{
-      authorId: currentUser?.uid || "x",
-      createdAt: serverTimestamp(),
-                likesCount: 0, commentsCount: 0,
-          vis: ($("challenge-vis")?.value || \'public\'),
-      ...payload
+  <!-- Login -->
+  <div id="login-view" class="flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-80 text-center">
+      <h1 class="text-2xl font-semibold mb-4">TeReto</h1>
+      <p class="text-sm mb-4">Ingresá para continuar</p>
+      <button id="login-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">Continuar con Google</button>
+    </div>
+  </div>
+
+  <!-- Feed -->
+  <div id="app-view" class="hidden p-4">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Feed de Retos</h1>
+      <button id="logout-btn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Salir</button>
+    </div>
+
+    <div id="feed-container" class="space-y-4"></div>
+
+    <!-- Crear reto -->
+    <div class="mt-8 bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-2">Crear reto</h2>
+      <input id="challenge-title" type="text" placeholder="Título" class="border rounded px-3 py-2 w-full mb-2">
+      <textarea id="challenge-desc" placeholder="Descripción" class="border rounded px-3 py-2 w-full mb-2"></textarea>
+
+      <label class="block text-sm font-medium text-slate-700 mt-2">Vigencia</label>
+      <select id="challenge-expiry" class="border rounded-md px-3 py-2 w-full mb-2">
+        <option value="1">1 día</option>
+        <option value="3">3 días</option>
+        <option value="7">7 días</option>
+      </select>
+      <p class="text-xs text-slate-500">El feed oculta retos vencidos automáticamente.</p>
+
+      <label class="block text-sm font-medium text-slate-700 mt-2">Visibilidad</label>
+      <select id="challenge-vis" class="w-full border rounded-md px-3 py-2">
+        <option value="public">Pública</option>
+        <option value="friends">Solo amigos</option>
+      </select>
+      <p class="text-xs text-slate-500 mb-4">Si elegís “Solo amigos”, solo tus amigos podrán ver el reto en el feed.</p>
+
+      <button id="publish-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">Publicar reto</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+      authDomain: "tereto-prod.firebaseapp.com",
+      projectId: "tereto-prod",
+      storageBucket: "tereto-prod.firebasestorage.app",
+      messagingSenderId: "914605096619",
+      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginView = document.getElementById('login-view');
+    const appView = document.getElementById('app-view');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const publishBtn = document.getElementById('publish-btn');
+    const feedContainer = document.getElementById('feed-container');
+    const toast = document.getElementById('toast');
+
+    let currentUser = null;
+    let feedUnsub = null;
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.className = "toast show";
+      setTimeout(()=>toast.className="toast", 3000);
+    }
+
+    loginBtn.addEventListener('click', async ()=>{
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
     });
-  }
-  
-function restartFeed(){
-  if(feedUnsub){ feedUnsub(); feedUnsub=null; }
-  if(!currentUser) return;
 
-  const ids=[...friendsSet];
-  const feedContainer=$("feed-container");
-
-  if(ids.length===0){
-    const qRef = query(
-      collection(db,'challenges'),
-      where('vis','==','public'),
-      orderBy('createdAt','desc'),
-      limit(120)
-    );
-    feedUnsub = onSnapshot(qRef,(snap)=>{
-      const items = snap.docs
-        .map(d=>({id:d.id,...d.data()}))
-        .filter(c=> !isExpired(c))
-        .filter(c=> c.authorId!==currentUser.uid);
-      renderFeed(items);
+    logoutBtn.addEventListener('click', async ()=>{
+      await signOut(auth);
     });
-    return;
-  }
 
-  if (ids.length <= 10) {
-    const qRef = query(
-      collection(db,'challenges'),
-      where('authorId','in', ids),
-      orderBy('createdAt','desc'),
-      limit(200)
-    );
-    feedUnsub = onSnapshot(qRef,(snap)=>{
-      const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-        .filter(c=> !isExpired(c))
-        .filter(c=> c.authorId!==currentUser.uid);
-      renderFeed(items);
+    onAuthStateChanged(auth, user=>{
+      currentUser = user;
+      if(user){
+        loginView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        restartFeed();
+      } else {
+        appView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+        if(feedUnsub){ feedUnsub(); feedUnsub = null; }
+      }
     });
-  } else {
-    const setIds=new Set(ids);
-    const qRef = query(
-      collection(db,'challenges'),
-      orderBy('createdAt','desc'),
-      limit(400)
-    );
-    feedUnsub = onSnapshot(qRef,(snap)=>{
-      const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-        .filter(c=> setIds.has(c.authorId))
-        .filter(c=> !isExpired(c))
-        .filter(c=> c.authorId!==currentUser.uid);
-      renderFeed(items);
-    });
-  }
-}
 
-</script>
-</body></html>
+    publishBtn.addEventListener('click', async ()=>{
+      const title = document.getElementById('challenge-title').value.trim();
+      const desc = document.getElementById('challenge-desc').value.trim();
+      const vis = document.getElementById('challenge-vis').value;
+      if(!title) return showToast('El título es obligatorio');
+      await addDoc(collection(db,'challenges'), {
+        authorId: currentUser.uid,
+        authorName: currentUser.displayName || 'Usuario',
+        title,
+        desc,
+        vis,
+        createdAt: serverTimestamp(),
+        likesCount: 0,
+        commentsCount: 0
+      });
+      document.getElementById('challenge-title').value = '';
+      document.getElementById('challenge-desc').value = '';
+      showToast('Reto publicado ✔');
+    });
+
+    function renderFeed(items){
+      feedContainer.innerHTML = '';
+      if(items.length === 0){
+        feedContainer.innerHTML = '<p class="text-gray-500 text-center">No hay retos disponibles.</p>';
+        return;
+      }
+      for(const item of items){
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded shadow';
+        div.innerHTML = `
+          <h3 class="text-lg font-semibold mb-1">${item.title}</h3>
+          <p class="text-sm text-gray-600 mb-2">${item.desc || ''}</p>
+          <p class="text-xs text-gray-400">por ${item.authorName || 'Usuario'}</p>
+        `;
+        feedContainer.appendChild(div);
+      }
+    }
+
+    function restartFeed(){
+      if(feedUnsub){ feedUnsub(); feedUnsub = null; }
+      const qRef = query(
+        collection(db,'challenges'),
+        where('vis','==','public'),
+        orderBy('createdAt','desc'),
+        limit(50)
+      );
+      feedUnsub = onSnapshot(qRef, snap=>{
+        const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        renderFeed(items);
+      });
+    }
+  </script>
+</body>
+</html>
