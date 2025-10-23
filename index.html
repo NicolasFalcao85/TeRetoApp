@@ -44,7 +44,6 @@
       <div class="flex gap-3">
         <button id="btnSignOut" type="button"
           class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">Salir</button>
-        <!-- Placeholders para cuando migremos el feed a Firestore -->
         <button id="btnMockChallenge" type="button"
           class="rounded-lg px-3 py-2 border border-neutral-700 hover:border-neutral-500">Crear reto (mock)</button>
       </div>
@@ -53,20 +52,13 @@
   </main>
 
   <script type="module">
-    // =========================
-    // Firebase v11.0.1 (ESM)
-    // =========================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
       onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import {
-      getFirestore
-      // (cuando migremos) collection, addDoc, getDocs, onSnapshot, query, where, orderBy
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ---- UI handles ----
     const $ = (id) => document.getElementById(id);
     const loginCard = $("loginCard");
     const appCard = $("appCard");
@@ -78,7 +70,6 @@
     const feed = $("feed");
     const btnMockChallenge = $("btnMockChallenge");
 
-    // ---- Seguridad de origen ----
     const originIsFile = location.protocol === "file:";
     const originIsLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.origin);
 
@@ -97,15 +88,14 @@
 
     // ---- Firebase Config ----
     const firebaseConfig = {
-      // TODO: pega aquí tu config real de Firebase (apiKey, authDomain, projectId, appId, etc.)
-      // Ejemplo:
-      // apiKey: "AAAA...BBBB",
-      // authDomain: "tereto-prod.firebaseapp.com",
-      // projectId: "tereto-prod",
-      // appId: "1:1234567890:web:abcdef",
+      apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
+      authDomain: "tereto-prod.firebaseapp.com",
+      projectId: "tereto-prod",
+      storageBucket: "tereto-prod.firebasestorage.app",
+      messagingSenderId: "914605096619",
+      appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
 
-    // Guardrail: valida config mínima
     function assertConfig(cfg) {
       const required = ["apiKey", "authDomain", "projectId", "appId"];
       const missing = required.filter(k => !cfg?.[k]);
@@ -114,7 +104,6 @@
       }
     }
 
-    // ---- Init ordenado ----
     let app, auth, db, provider;
     try {
       assertConfig(firebaseConfig);
@@ -122,7 +111,6 @@
       auth = getAuth(app);
       db = getFirestore(app);
       provider = new GoogleAuthProvider();
-      // Opcional: forzar prompt de cuenta
       provider.setCustomParameters({ prompt: "select_account" });
       console.info("[TeReto] Firebase inicializado OK.");
     } catch (e) {
@@ -130,7 +118,6 @@
       showNotice("Error inicializando Firebase: " + e.message, "error");
     }
 
-    // ---- Estado de sesión ----
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userArea.textContent = user.displayName ? `Hola, ${user.displayName}` : user.email;
@@ -140,7 +127,6 @@
         `;
         loginCard.classList.add("hidden");
         appCard.classList.remove("hidden");
-        // (luego) cargar feed desde Firestore
       } else {
         userArea.textContent = "";
         appCard.classList.add("hidden");
@@ -148,21 +134,16 @@
       }
     });
 
-    // ---- Login con popup + fallback redirect ----
     async function startGoogleLogin() {
       try {
-        // Tip: algunos navegadores requieren que la llamada ocurra
-        // estrictamente dentro del handler del click sin awaits previos.
         await signInWithPopup(auth, provider);
       } catch (err) {
         console.warn("[TeReto] signInWithPopup falló:", err?.code, err?.message);
-        // Bloqueo de popup → redirigir
         if (err?.code === "auth/popup-blocked" || err?.code === "auth/popup-closed-by-user") {
           showNotice("Popup bloqueado. Vamos por redirección...", "info");
           await signInWithRedirect(auth, provider);
           return;
         }
-        // Origen no autorizado / dominios
         if (err?.message?.includes("domain") || err?.message?.includes("origin")) {
           showNotice("Dominio/origen no autorizado en Firebase Authentication → Authorized domains.", "error");
           return;
@@ -171,11 +152,9 @@
       }
     }
 
-    // ---- Handlers UI (bind después de cargar el DOM) ----
     btnGoogle.addEventListener("click", (ev) => {
-      ev.preventDefault();         // evita submits inesperados
-      ev.stopPropagation();        // evita interferencias de listeners padres
-      // IMPORTANTE: no pongas awaits antes del signInWithPopup
+      ev.preventDefault();
+      ev.stopPropagation();
       startGoogleLogin();
     });
 
@@ -183,7 +162,6 @@
       await signOut(auth);
     });
 
-    // ---- Mock mínimo (deja hooks para migrar a Firestore) ----
     const mockFeed = [];
     function renderFeed() {
       feed.innerHTML = mockFeed.length
@@ -201,7 +179,6 @@
     });
     renderFeed();
 
-    // ---- Diagnóstico rápido en consola ----
     console.table({
       origin: location.origin,
       isFileProtocol: originIsFile,
