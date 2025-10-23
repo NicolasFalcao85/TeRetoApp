@@ -318,6 +318,15 @@
       startAt, endAt, deleteDoc, writeBatch, increment, getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+// === TeReto globals (single source of truth) ===
+let currentUser = null, solvedSet = new Set();
+let friendsSet = new Set(), followingSet = new Set(), followersSet = new Set(), incomingReqSet = new Set(), sentReqSet = new Set();
+let unsubFriends = null, unsubFollowing = null, unsubFollowers = null, unsubIncomingReq = null, unsubSentReq = null;
+let feedUnsub = null, commentsUnsub = null;
+let myChallenges = [];
+let myChallengesUnsub = null;
+
+
     /**** Config Firebase (prod) ****/
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
@@ -342,8 +351,8 @@
     const $ = (id)=>document.getElementById(id);
     
 // === TeReto globals (single source of truth) ===
-let myChallenges = [];
-let myChallengesUnsub = null;
+
+
 function toast(msg,type='success'){
       $("toast-message").textContent=msg;
       $("toast-icon").innerHTML= type==='success'?'✅':'❌';
@@ -377,7 +386,6 @@ function toast(msg,type='success'){
     let currentUser=null, solvedSet=new Set();
     let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
-    let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
 
     const clearSubs = ()=>{
       [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub]
