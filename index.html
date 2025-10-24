@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeReto</title>
 
-  <!-- Tailwind (ok en dev). En prod conviene build con CLI/PostCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -33,18 +32,15 @@
 </head>
 
 <body class="bg-slate-100 h-screen">
-  <!-- SPINNER -->
   <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
     <div class="spinner"></div>
   </div>
 
-  <!-- TOAST -->
   <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-700 bg-white rounded-xl shadow-2xl z-[90]">
     <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
-  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
@@ -74,11 +70,9 @@
     </div>
   </div>
 
-  <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
 
-      <!-- FEED -->
       <div id="feed-view">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
           <div class="flex items-center space-x-2">
@@ -96,7 +90,6 @@
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
 
-      <!-- CREATE -->
       <div id="create-view" class="hidden p-4">
         <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
@@ -177,7 +170,6 @@
         </div>
       </div>
 
-      <!-- FRIENDS -->
       <div id="friends-view" class="hidden">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40">
           <h1 class="text-3xl font-bold text-slate-800">Amigos</h1>
@@ -207,7 +199,6 @@
         </div>
       </div>
 
-      <!-- PROFILE -->
       <div id="profile-view" class="hidden">
         <div class="p-4 bg-white shadow-lg">
           <div class="flex flex-col items-center">
@@ -227,7 +218,6 @@
 
     </main>
 
-    <!-- NAV -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
       <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">🏠<span class="text-xs font-semibold">Inicio</span></button>
       <button data-view="friends-view" class="nav-button relative flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
@@ -239,7 +229,6 @@
     </nav>
   </div>
 
-  <!-- COMMENTS MODAL -->
   <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
       <header class="flex items-center justify-between p-4 border-b">
@@ -257,7 +246,6 @@
     </div>
   </div>
 
-  <!-- TRIVIA MODAL -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 z-[100] p-4 flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
       <div class="flex justify-between items-center mb-3">
@@ -270,7 +258,6 @@
     </div>
   </div>
 
-  <!-- CAMERA MODAL -->
   <div id="camera-modal" class="hidden fixed inset-0 bg-black/80 z-[100]">
     <video id="cam-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
     <canvas id="cam-canvas" class="hidden"></canvas>
@@ -280,7 +267,6 @@
     </div>
   </div>
 
-  <!-- TEMPLATE POST -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -310,7 +296,6 @@
     </div>
   </template>
 
-  <!-- TEMPLATE COMMENT -->
   <template id="comment-item-template">
     <div class="flex items-start space-x-3">
       <img class="w-8 h-8 rounded-full cmt-img">
@@ -321,7 +306,6 @@
     </div>
   </template>
 
-  <!-- SINGLE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
@@ -336,11 +320,8 @@
     import {
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-    import {
-      initializeAppCheck, ReCaptchaV3Provider
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
-    // --- Firebase ---
+    // --- Firebase Config ---
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -350,23 +331,15 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
     const app = initializeApp(firebaseConfig);
-
-    // App Check (evita 403/CORS si Storage está en enforced)
-    // REEMPLAZAR por tu site key de reCAPTCHA v3
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider("6LeKa_UrAAAAAOfLf2_yKvWFyYbGMzT6xjxdsmEv"),
-      isTokenAutoRefreshEnabled: true
-    });
-
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    // NO PERSISTIR SESIÓN
+    // --- Configuración de Sesión ---
     try { await setPersistence(auth, inMemoryPersistence); } catch(_) {}
-    // Forzar sign-out al cargar (si venías logueado de otra pestaña)
+    // Forzar cierre de sesión para asegurar que siempre se deba loguear
     try { await signOut(auth); } catch(_) {}
     window.addEventListener("beforeunload", () => { try { signOut(auth); } catch(_) {} });
 
@@ -385,21 +358,15 @@
     }
     function ts(v){ if(!v) return 0; if(typeof v.toDate==='function'){ try{return v.toDate().getTime();}catch(_){return 0;} } if(v instanceof Date) return v.getTime(); return 0; }
 
-    // ---- Estado global ----
+    // ---- Estado Global ----
     const TERMS_VERSION = "1.0";
     const TERMS_URL = "/legal/terminos-condiciones.html";
-
     let currentUser = null, solvedSet = new Set();
     let friendsSet = new Set(), followingSet = new Set(), followersSet = new Set(), incomingReqSet = new Set(), sentReqSet = new Set();
-
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
     let feedUnsub=null, myChallengesUnsub2=null, commentsUnsub=null;
-
-    // Control de feed para evitar “race”
     let feedGen = 0;
     let lastFeedItems = [];
-
-    // Debounce render amigos
     let friendsRenderScheduled = false;
 
     function clearSubs(){
@@ -412,7 +379,7 @@
     const loadSolved=(uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid)) || "[]")); }catch(_){ return new Set(); } };
     const saveSolved=(uid, setVal)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify(Array.from(setVal))); }catch(_){ } };
 
-    // ---- Login UI checks ----
+    // ---- Lógica de UI del Login ----
     const chkAdult = $("chk-adult");
     const chkTerms = $("chk-terms");
     const googleBtn = $("google-btn");
@@ -425,14 +392,13 @@
     chkTerms?.addEventListener('change', updateLoginBtn);
     updateLoginBtn();
 
-    // Gate de sesión: obliga click del botón en esta carga
-    let sessionStarted = false;
+    let sessionStarted = false; // Flag para controlar que el login sea por acción del usuario
     if (googleBtn){
       googleBtn.addEventListener("click", ()=>{ sessionStarted = true; window._startGoogle(); }, {passive:true});
       googleBtn.addEventListener("touchend", (e)=>{ e.preventDefault(); sessionStarted = true; window._startGoogle(); }, {passive:false});
     }
 
-    // ---- Auth ----
+    // ---- Autenticación ----
     window._startGoogle = async function(){
       if(!(chkAdult && chkAdult.checked) || !(chkTerms && chkTerms.checked)){
         toastMsg('Tildá +18 y TyC','error'); return;
@@ -450,7 +416,6 @@
       }finally{ $("loading-spinner")?.classList.add("hidden"); }
     };
 
-    // Resolver redirect silencioso
     try{ $("loading-spinner")?.classList.remove("hidden"); await getRedirectResult(auth); }
     catch(e){ console.warn("redirect", e && (e.code||e.message)); }
     finally { $("loading-spinner")?.classList.add("hidden"); }
@@ -468,7 +433,7 @@
       }catch(e){ console.error('upsert users',e); }
     }
 
-    // ---- Subs social ----
+    // ---- Suscripciones a Datos Sociales ----
     function renderFriendsTab(){
       if(friendsRenderScheduled) return;
       friendsRenderScheduled = true;
@@ -517,17 +482,13 @@
       });
     }
 
-    // ---- FEED
+    // ---- Lógica del Feed ----
     function restartFeed(){
       const myGen = ++feedGen;
-      lastFeedItems = [];
-      renderFeed([]);
-
       feedUnsub?.(); feedUnsub=null;
       if(!currentUser) return;
 
       const ids = Array.from(friendsSet);
-
       const createListener=(qRef)=>{
         feedUnsub = onSnapshot(qRef, (snap)=>{
           if(myGen !== feedGen) return;
@@ -595,7 +556,7 @@
       else { img.classList.add('locked'); overlay.classList.remove('hidden'); }
     }
 
-    // --- Perfil (mosaico)
+    // --- Lógica del Perfil (mosaico) ---
     let myChallenges=[];
     function startMyChallenges(){
       myChallengesUnsub2?.(); myChallengesUnsub2=null;
@@ -631,7 +592,7 @@
       }
     }
 
-    // --- Comentarios
+    // --- Lógica de Comentarios ---
     const commentsModal=$("comments-modal"), commentsModalBody=$("comments-modal-body");
     const commentForm=$("comment-form"), commentInput=$("comment-input"), commentUserImg=$("comment-user-img"), commentItemTemplate=$("comment-item-template");
     function openComments(chId){
@@ -659,7 +620,7 @@
     $("close-comments-modal")?.addEventListener('click', closeComments);
     commentForm?.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const chId=commentForm.dataset.challengeId; const text=(commentInput?.value||'').trim(); if(!text) return;
+      const chId=commentForm.dataset.challengeId; const text=(commentInput?.value||'').trim(); if(!text || !currentUser) return;
       try{
         const batch=writeBatch(db);
         const cRef=doc(collection(db,'challenges',chId,'comments'));
@@ -669,7 +630,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo comentar','error'); }
     });
 
-    // --- Crear reto: compresión + subida a Storage (data_url) ---
+    // --- Lógica de Crear Reto ---
     function calcExpiresAt(){
       const sel = $("challenge-expiry"); if(!sel) return null;
       const v = sel.value; if(v==='24') return new Date(Date.now()+24*3600*1000);
@@ -701,22 +662,21 @@
       const dataUrl = $("goto-step-2")?.dataset.fileUrl || '';
       if(!dataUrl){ toastMsg('Falta la imagen','error'); return; }
 
-      // Subida (cumple reglas: challenges/{uid}/...)
-      const sRef = ref(storage, `challenges/${auth.currentUser.uid}/${Date.now()}.jpg`);
-      await uploadString(sRef, dataUrl, 'data_url', { contentType: 'image/jpeg' });
-      const contentUrl = await getDownloadURL(sRef);
+      try {
+          const sRef = ref(storage, `challenges/${auth.currentUser.uid}/${Date.now()}.jpg`);
+          await uploadString(sRef, dataUrl, 'data_url');
+          const contentUrl = await getDownloadURL(sRef);
 
-      try{
-        await addDoc(collection(db,'challenges'),{
-          authorId:auth.currentUser.uid, authorName:auth.currentUser.displayName, authorImg:auth.currentUser.photoURL,
-          createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
-          contentUrl, caption:(($("challenge-caption")?.value)||'').trim() || null,
-          likesCount:0, commentsCount:0, vis:'public', ...payload
-        });
-        toastMsg('¡Reto publicado!','success'); switchView('feed-view');
-      }catch(e){
-        console.error(e);
-        toastMsg(String(e.code||e.message||'error_publicar'),'error');
+          await addDoc(collection(db,'challenges'),{
+            authorId:auth.currentUser.uid, authorName:auth.currentUser.displayName, authorImg:auth.currentUser.photoURL,
+            createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
+            contentUrl, caption:(($("challenge-caption")?.value)||'').trim() || null,
+            likesCount:0, commentsCount:0, vis:'public', ...payload
+          });
+          toastMsg('¡Reto publicado!','success'); switchView('feed-view');
+      } catch(e) {
+          console.error(e);
+          toastMsg(String(e.code||e.message||'error_publicar'),'error');
       }
     }
     $("trivia-form")?.addEventListener('submit', (e)=>{
@@ -741,12 +701,11 @@
       const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h;
       const ctx=cvs.getContext('2d'); ctx.drawImage(bmp,0,0,w,h);
       let data=cvs.toDataURL('image/jpeg',quality);
-      const kb=Math.round((data.length*3)/4/1024);
-      if(kb>400) data=cvs.toDataURL('image/jpeg',0.65);
+      if(Math.round((data.length*3)/4/1024) > 400) data=cvs.toDataURL('image/jpeg',0.65);
       return data;
     }
 
-    // Trivia
+    // --- Lógica de Trivia ---
     const triviaModal=$("trivia-modal"), triviaQ=$("trivia-q"), triviaOpts=$("trivia-opts"), triviaFeedback=$("trivia-feedback");
     function openTrivia(ch, card){
       if(!triviaQ||!triviaOpts||!triviaModal) return;
@@ -757,8 +716,12 @@
         btn.onclick=function(){
           const ok = (opt===String(ch.correctAnswer));
           if(triviaFeedback){ triviaFeedback.className='h-6 mt-2 text-center text-sm '+(ok?'text-green-600':'text-red-600'); triviaFeedback.textContent= ok?'¡Correcto!':'Respuesta incorrecta'; }
-          if(ok){ solvedSet.add(card.dataset.challengeId); saveSolved(currentUser.uid, solvedSet); paintLockState(card, true); setTimeout(()=>{ triviaModal.classList.add('hidden'); if(triviaFeedback) triviaFeedback.textContent=''; }, 600); }
-          else { setTimeout(()=>{ if(triviaFeedback) triviaFeedback.textContent=''; }, 1200); }
+          if(ok){
+            solvedSet.add(card.dataset.challengeId); saveSolved(currentUser.uid, solvedSet); paintLockState(card, true);
+            setTimeout(()=>{ triviaModal.classList.add('hidden'); if(triviaFeedback) triviaFeedback.textContent=''; }, 600);
+          } else {
+            setTimeout(()=>{ if(triviaFeedback) triviaFeedback.textContent=''; }, 1200);
+          }
         };
         triviaOpts.appendChild(btn);
       }
@@ -766,9 +729,9 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ triviaModal?.classList.add('hidden'); if(triviaOpts) triviaOpts.innerHTML=''; if(triviaFeedback) triviaFeedback.textContent=''; });
 
-    // Social
+    // --- Lógica Social ---
     async function followUser(uid, uData){
-      if(uid===currentUser.uid) return;
+      if(!currentUser || uid===currentUser.uid) return;
       try{
         await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName:uData?.displayName||null, photoURL:uData?.photoURL||null});
         await setDoc(doc(db,'users',uid,'followers',currentUser.uid),{createdAt:serverTimestamp(), displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null});
@@ -776,6 +739,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo seguir','error'); }
     }
     async function unfollowUser(uid){
+      if(!currentUser) return;
       try{
         await deleteDoc(doc(db,'users',currentUser.uid,'following',uid));
         await deleteDoc(doc(db,'users',uid,'followers',currentUser.uid));
@@ -783,6 +747,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo dejar de seguir','error'); }
     }
     async function removeFollower(uid){
+       if(!currentUser) return;
       try{
         await deleteDoc(doc(db,'users',currentUser.uid,'followers',uid));
         await deleteDoc(doc(db,'users',uid,'following',currentUser.uid));
@@ -790,7 +755,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo eliminar seguidor','error'); }
     }
     async function sendFriendRequest(target){
-      if(target===currentUser.uid) return;
+      if(!currentUser || target===currentUser.uid) return;
       try{
         await setDoc(doc(db,'users',target,'friendRequests',currentUser.uid),{fromUid:currentUser.uid, displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null, createdAt:serverTimestamp()});
         await setDoc(doc(db,'users',currentUser.uid,'sentRequests',target),{toUid:target, createdAt:serverTimestamp()});
@@ -798,6 +763,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo enviar solicitud','error'); }
     }
     async function cancelFriendRequest(target){
+      if(!currentUser) return;
       try{
         await deleteDoc(doc(db,'users',target,'friendRequests',currentUser.uid));
         await deleteDoc(doc(db,'users',currentUser.uid,'sentRequests',target));
@@ -805,6 +771,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo cancelar','error'); }
     }
     async function acceptFriendRequest(fromUid){
+      if(!currentUser) return;
       try{
         const batch=writeBatch(db);
         batch.delete(doc(db,'users',currentUser.uid,'friendRequests',fromUid));
@@ -816,6 +783,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo aceptar','error'); }
     }
     async function declineFriendRequest(fromUid){
+      if(!currentUser) return;
       try{
         await deleteDoc(doc(db,'users',currentUser.uid,'friendRequests',fromUid));
         try{ await deleteDoc(doc(db,'users',fromUid,'sentRequests',currentUser.uid)); }catch(_){}
@@ -823,6 +791,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo rechazar','error'); }
     }
     async function removeFriend(uid){
+      if(!currentUser) return;
       try{
         const batch=writeBatch(db);
         batch.delete(doc(db,'users',currentUser.uid,'friends',uid));
@@ -883,10 +852,7 @@
       const arr=Array.from(results.values());
       for(const u of arr){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML='<div class="flex items-center space-x-3">'+
-          '<img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'">'+
-          '<div class="flex flex-col"><p class="font-semibold text-slate-700">'+(u.displayName||'(Sin nombre)')+'</p><p class="text-xs text-slate-500">'+(u.email||'')+'</p></div>'+
-        '</div>';
+        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><div class="flex flex-col"><p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p><p class="text-xs text-slate-500">${u.email||''}</p></div></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
 
         const isSelf = u.uid===currentUser?.uid;
@@ -900,7 +866,7 @@
           actions.appendChild(tag);
         } else if(isFriend){
           const btnFollow=document.createElement('button');
-          btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
+          btnFollow.className=`px-3 py-1 rounded-full text-sm ${isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800'}`;
           btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
           btnFollow.onclick=()=>{ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
           actions.appendChild(btnFollow);
@@ -908,23 +874,19 @@
           const btnUnfriend=document.createElement('button');
           btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
           btnUnfriend.textContent='Eliminar amigo';
-          btnUnfriend.onclick=()=>{ removeFriend(u.uid); };
+          btnUnfriend.onclick=()=>removeFriend(u.uid);
           actions.appendChild(btnUnfriend);
-
         } else if(incoming){
           const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=()=>acceptFriendRequest(u.uid);
           const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=()=>declineFriendRequest(u.uid);
           actions.appendChild(btnAcc); actions.appendChild(btnRej);
-
         } else if(sent){
           const btnCancel=document.createElement('button'); btnCancel.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnCancel.textContent='Cancelar solicitud'; btnCancel.onclick=()=>cancelFriendRequest(u.uid);
           actions.appendChild(btnCancel);
-
         } else {
           const btnReq=document.createElement('button'); btnReq.className='px-3 py-1 rounded-full text-sm bg-indigo-600 text-white'; btnReq.textContent='Enviar solicitud'; btnReq.onclick=()=>sendFriendRequest(u.uid);
           actions.appendChild(btnReq);
         }
-
         row.appendChild(actions);
         friendsResults.appendChild(row);
       }
@@ -937,22 +899,19 @@
       const users = await fetchUsersFor(Array.from(friendsSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML='<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'"><p class="font-semibold text-slate-700">'+(u.displayName||'(Sin nombre)')+'</p></div>';
+        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
         const isFollowing = followingSet.has(u.uid);
-
         const btnFollow=document.createElement('button');
-        btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
+        btnFollow.className=`px-3 py-1 rounded-full text-sm ${isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800'}`;
         btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
         btnFollow.onclick=()=>{ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
         actions.appendChild(btnFollow);
-
         const btnUnfriend=document.createElement('button');
         btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
         btnUnfriend.textContent='Eliminar amigo';
         btnUnfriend.onclick=()=>removeFriend(u.uid);
         actions.appendChild(btnUnfriend);
-
         row.appendChild(actions); el.appendChild(row);
       }
     }
@@ -963,7 +922,7 @@
       const users = await fetchUsersFor(Array.from(incomingReqSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML='<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'"><p class="font-semibold text-slate-700">'+(u.displayName||'(Usuario)')+'</p></div>';
+        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
         const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=()=>acceptFriendRequest(u.uid);
         const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=()=>declineFriendRequest(u.uid);
@@ -978,7 +937,7 @@
       const users = await fetchUsersFor(Array.from(followersSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
-        row.innerHTML='<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'"><p class="font-semibold text-slate-700">'+(u.displayName||'(Usuario)')+'</p></div>';
+        row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
         const btnRemove=document.createElement('button'); btnRemove.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700'; btnRemove.textContent='Eliminar seguidor'; btnRemove.onclick=()=>removeFollower(u.uid);
         actions.appendChild(btnRemove);
@@ -986,8 +945,21 @@
       }
     }
 
-    // ---- Navegación principal + acciones en feed ----
+    // ---- Navegación Principal ----
     const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
+
+    function resetCreateForm() {
+        $("file-upload")?.value && ($("file-upload").value = "");
+        $("image-preview-container")?.classList.add('hidden');
+        $("file-name") && ($("file-name").textContent = "");
+        const nextBtn = $("goto-step-2");
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            delete nextBtn.dataset.fileUrl;
+        }
+        showCreateStep('create-step-1');
+    }
+
     function switchView(v){
       Object.values(views).forEach((el)=>el?.classList.add('hidden'));
       views[v]?.classList.remove('hidden');
@@ -996,14 +968,18 @@
         nb.classList.toggle('text-indigo-500', isActive);
         nb.classList.toggle('text-slate-500', !isActive);
       });
+      // --- Lógica de refresco de vistas ---
+      if(v==='feed-view') restartFeed();
       if(v==='profile-view') refreshProfile();
       if(v==='friends-view') setActiveTab('buscar');
+      if(v==='create-view') resetCreateForm();
     }
 
+    // --- Listeners Globales de Clicks ---
     if (!window.__tereto_click_bound){
       window.__tereto_click_bound = true;
 
-      document.addEventListener('click', function(e){
+      document.addEventListener('click', async function(e){
         const navBtn = e.target.closest?.('.nav-button');
         if(navBtn?.dataset?.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
 
@@ -1012,28 +988,24 @@
 
         if(e.target.closest?.('.comment-button')){ openComments(chId); return; }
         if(e.target.closest?.('.like-button')){
-          (async ()=>{
-            try{
-              await updateDoc(doc(db,'challenges',chId),{likesCount:increment(1)});
-              const span=card.querySelector('.likes-count'); if(span) span.textContent=String((parseInt(span.textContent||'0',10))+1);
-            }catch(err){ console.error(err); toastMsg('No se pudo like','error'); }
-          })();
+          try{
+            await updateDoc(doc(db,'challenges',chId),{likesCount:increment(1)});
+            const span=card.querySelector('.likes-count'); if(span) span.textContent=String((parseInt(span.textContent||'0',10))+1);
+          }catch(err){ console.error(err); toastMsg('No se pudo like','error'); }
           return;
         }
 
         const locked = card.querySelector('.content-img')?.classList.contains('locked');
         if(!locked) return;
 
-        (async ()=>{
-          const d = await getDoc(doc(db,'challenges',chId));
-          if(!(d && d.exists())) { toastMsg('El reto ya no existe','error'); return; }
-          const data=d.data();
-          if(data.type==='trivia'){ openTrivia(data, card); }
-          else if(data.type==='photo'){
-            const dataUrl = await captureWithModal(); if(!dataUrl){ toastMsg('No se envió la foto','error'); return; }
-            solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); toastMsg('Enviado. Desbloqueado 👌','success');
-          } else { solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); }
-        })();
+        const d = await getDoc(doc(db,'challenges',chId));
+        if(!(d && d.exists())) { toastMsg('El reto ya no existe','error'); return; }
+        const data=d.data();
+        if(data.type==='trivia'){ openTrivia(data, card); }
+        else if(data.type==='photo'){
+          const dataUrl = await captureWithModal(); if(!dataUrl){ toastMsg('No se envió la foto','error'); return; }
+          solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); toastMsg('Enviado. Desbloqueado 👌','success');
+        } else { solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); }
       });
 
       document.addEventListener('click', function(e){
@@ -1041,7 +1013,7 @@
       });
     }
 
-    // ---- Auth state ----
+    // ---- Manejo del Estado de Autenticación ----
     onAuthStateChanged(auth, async function(user){
       clearSubs();
       if(!user || !sessionStarted){
@@ -1059,11 +1031,11 @@
 
       solvedSet=loadSolved(user.uid);
       subFriends(); subFollowing(); subFollowers(); subIncomingRequests(); subSentRequests();
-      restartFeed(); startMyChallenges(); refreshProfile();
-      switchView('feed-view');
+      startMyChallenges();
+      switchView('feed-view'); // Iniciar en el feed
     });
 
-    // ---- Cámara ----
+    // ---- Lógica de la Cámara ----
     let camStream=null, camResolve=null;
     const camModal=$("camera-modal"), camVideo=$("cam-video"), camCanvas=$("cam-canvas");
     async function openCamera(){
