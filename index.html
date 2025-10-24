@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeReto</title>
 
-  <!-- Tailwind (CDN para dev). En prod real, usar CLI/PostCSS -->
+  <!-- Tailwind (CDN para dev). En prod real, compilar con CLI/PostCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Favicon inline para evitar 404 hasta subir uno real -->
+  <link rel="icon" href="data:,">
 
   <style>
     body { font-family: 'Poppins', sans-serif; }
@@ -336,29 +339,37 @@
     import {
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-    import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
+    // App Check desactivado de momento para que el login funcione sin 400:
+    // import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
     // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      storageBucket: "tereto-prod.firebasestorage.app",   // ← usar el bucket REAL
+      // IMPORTANTE: bucket real (nombre gs:// de la consola)
+      storageBucket: "tereto-prod.appspot.com",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
     const app = initializeApp(firebaseConfig);
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider("6Lf-F_YrAAAAAIP3PEguICRDGBgmbtDGRIs7P0vW"),
-      isTokenAutoRefreshEnabled: true
-    });
+
+    // --- App Check ---
+    // Cuando quieras activarlo:
+    // 1) En localhost, podés usar debug:
+    //    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    // 2) Usá el site key que te da **Firebase App Check** (no el de hCaptcha/ReCAPTCHA suelto)
+    // 3) Agregá tus dominios en App Check y en Auth › Authorized domains
+    // initializeAppCheck(app, {
+    //   provider: new ReCaptchaV3Provider("TU_SITE_KEY_DE_APPCHECK"),
+    //   isTokenAutoRefreshEnabled: true
+    // });
 
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // FORZAR BUCKET CORRECTO (mata CORS por confs erradas)
-    const storage = getStorage(app, "gs://tereto-prod.firebasestorage.app");
-    // Debug simple
+    // FORZAR BUCKET CORRECTO (evita CORS si estaba mal configurado)
+    const storage = getStorage(app, "gs://tereto-prod.appspot.com");
     console.log('bucket efectivo:', ref(storage, '').bucket);
 
     const provider = new GoogleAuthProvider();
@@ -711,7 +722,7 @@
       if(!f){
         const fn=$("file-name"); if(fn) fn.textContent='';
         const gs=$("goto-step-2"); if(gs){ gs.disabled=true; }
-        const ipc=$("image-preview-container"); ifipc && ipc.classList.add('hidden');
+        const ipc=$("image-preview-container"); if(ipc) ipc.classList.add('hidden');
         return;
       }
       const fn2=$("file-name"); if(fn2) fn2.textContent=f.name;
@@ -760,9 +771,9 @@
           vis:'public',
           // payload de tipo
           type: payload.type,
-          question: payload.question ?? null,
-          correctAnswer: payload.correctAnswer ?? null,
-          wrongAnswers: payload.wrongAnswers ?? null
+          question: payload.question,
+          correctAnswer: payload.correctAnswer,
+          wrongAnswers: payload.wrongAnswers
         });
         toastMsg('¡Reto publicado!','success');
         switchView('feed-view');
@@ -831,7 +842,7 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ if(triviaModal) triviaModal.classList.add('hidden'); if(triviaOpts) triviaOpts.innerHTML=''; if(triviaFeedback) triviaFeedback.textContent=''; });
 
-    // --- Social: follow/amigos ---
+    // --- Social: follow/amigos
     async function followUser(uid, uData){
       if(!currentUser || uid===currentUser.uid) return;
       const displayNameVal = (uData && uData.displayName) ? uData.displayName : null;
@@ -1029,7 +1040,7 @@
         btnFollow.onclick=function(){ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
         actions.appendChild(btnFollow);
 
-        const btnUnfriend=document.createElement('button');
+        const btnUnfriend=document.createElement='button';
         btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
         btnUnfriend.textContent='Eliminar amigo';
         btnUnfriend.onclick=function(){ removeFriend(u.uid); };
