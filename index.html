@@ -32,15 +32,18 @@
 </head>
 
 <body class="bg-slate-100 h-screen">
+  <!-- SPINNER -->
   <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-100/80 flex items-center justify-center z-[100]">
     <div class="spinner"></div>
   </div>
 
+  <!-- TOAST -->
   <div id="toast" class="toast fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center w-full max-w-xs p-4 text-slate-700 bg-white rounded-xl shadow-2xl z-[90]">
     <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
     <div id="toast-message" class="ml-3 text-sm font-normal"></div>
   </div>
 
+  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
       <div class="flex items-center justify-center mb-4">
@@ -70,9 +73,11 @@
     </div>
   </div>
 
+  <!-- APP -->
   <div id="app-screen" class="h-full flex flex-col hidden">
     <main class="flex-grow overflow-y-auto pb-20 bg-slate-100">
 
+      <!-- FEED -->
       <div id="feed-view">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b flex justify-between items-center z-40">
           <div class="flex items-center space-x-2">
@@ -90,6 +95,7 @@
         <div id="feed-container" class="p-2 space-y-4"></div>
       </div>
 
+      <!-- CREATE -->
       <div id="create-view" class="hidden p-4">
         <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Crea un Nuevo Reto</h2>
@@ -170,6 +176,7 @@
         </div>
       </div>
 
+      <!-- FRIENDS -->
       <div id="friends-view" class="hidden">
         <header class="sticky top-0 bg-white/80 backdrop-blur-sm p-4 border-b z-40">
           <h1 class="text-3xl font-bold text-slate-800">Amigos</h1>
@@ -199,6 +206,7 @@
         </div>
       </div>
 
+      <!-- PROFILE -->
       <div id="profile-view" class="hidden">
         <div class="p-4 bg-white shadow-lg">
           <div class="flex flex-col items-center">
@@ -218,6 +226,7 @@
 
     </main>
 
+    <!-- NAV -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
       <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">🏠<span class="text-xs font-semibold">Inicio</span></button>
       <button data-view="friends-view" class="nav-button relative flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
@@ -229,6 +238,7 @@
     </nav>
   </div>
 
+  <!-- COMMENTS MODAL -->
   <div id="comments-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
       <header class="flex items-center justify-between p-4 border-b">
@@ -246,6 +256,7 @@
     </div>
   </div>
 
+  <!-- TRIVIA MODAL -->
   <div id="trivia-modal" class="hidden fixed inset-0 bg-black/70 z-[100] p-4 flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
       <div class="flex justify-between items-center mb-3">
@@ -258,6 +269,7 @@
     </div>
   </div>
 
+  <!-- CAMERA MODAL -->
   <div id="camera-modal" class="hidden fixed inset-0 bg-black/80 z-[100]">
     <video id="cam-video" class="w-full h-full object-contain" autoplay playsinline muted></video>
     <canvas id="cam-canvas" class="hidden"></canvas>
@@ -267,6 +279,7 @@
     </div>
   </div>
 
+  <!-- TEMPLATES -->
   <template id="post-template">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
       <div class="p-4 flex items-center space-x-3">
@@ -290,7 +303,7 @@
             <button class="like-button flex items-center space-x-1 cursor-pointer"><span>❤</span><span class="likes-count">0</span></button>
             <button class="comment-button flex items-center space-x-1 cursor-pointer"><span>💬</span><span class="comments-count">0</span></button>
           </div>
-          <span class="text-[11px] post-time-secondary"></span>
+          <span class="text:[11px] post-time-secondary"></span>
         </div>
       </div>
     </div>
@@ -306,6 +319,7 @@
     </div>
   </template>
 
+  <!-- SINGLE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
@@ -337,11 +351,8 @@
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    // --- Configuración de Sesión ---
+    // --- Sesión en memoria (no persiste) ---
     try { await setPersistence(auth, inMemoryPersistence); } catch(_) {}
-    // Forzar cierre de sesión para asegurar que siempre se deba loguear
-    try { await signOut(auth); } catch(_) {}
-    window.addEventListener("beforeunload", () => { try { signOut(auth); } catch(_) {} });
 
     // ---- Helpers ----
     const $ = (id)=>document.getElementById(id);
@@ -357,6 +368,17 @@
       return d < new Date();
     }
     function ts(v){ if(!v) return 0; if(typeof v.toDate==='function'){ try{return v.toDate().getTime();}catch(_){return 0;} } if(v instanceof Date) return v.getTime(); return 0; }
+
+    // Espera usuario y fuerza token fresco (evita uploads sin Authorization)
+    async function waitForAuthUser(timeoutMs = 5000) {
+      if (auth.currentUser) return auth.currentUser;
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('auth_timeout')), timeoutMs);
+        const unsub = onAuthStateChanged(auth, u => {
+          if (u) { clearTimeout(t); unsub(); resolve(u); }
+        });
+      });
+    }
 
     // ---- Estado Global ----
     const TERMS_VERSION = "1.0";
@@ -392,7 +414,7 @@
     chkTerms?.addEventListener('change', updateLoginBtn);
     updateLoginBtn();
 
-    let sessionStarted = false; // Flag para controlar que el login sea por acción del usuario
+    let sessionStarted = false;
     if (googleBtn){
       googleBtn.addEventListener("click", ()=>{ sessionStarted = true; window._startGoogle(); }, {passive:true});
       googleBtn.addEventListener("touchend", (e)=>{ e.preventDefault(); sessionStarted = true; window._startGoogle(); }, {passive:false});
@@ -416,6 +438,7 @@
       }finally{ $("loading-spinner")?.classList.add("hidden"); }
     };
 
+    // Resolver redirect silencioso
     try{ $("loading-spinner")?.classList.remove("hidden"); await getRedirectResult(auth); }
     catch(e){ console.warn("redirect", e && (e.code||e.message)); }
     finally { $("loading-spinner")?.classList.add("hidden"); }
@@ -556,7 +579,7 @@
       else { img.classList.add('locked'); overlay.classList.remove('hidden'); }
     }
 
-    // --- Lógica del Perfil (mosaico) ---
+    // --- Perfil (mosaico)
     let myChallenges=[];
     function startMyChallenges(){
       myChallengesUnsub2?.(); myChallengesUnsub2=null;
@@ -592,7 +615,7 @@
       }
     }
 
-    // --- Lógica de Comentarios ---
+    // --- Comentarios
     const commentsModal=$("comments-modal"), commentsModalBody=$("comments-modal-body");
     const commentForm=$("comment-form"), commentInput=$("comment-input"), commentUserImg=$("comment-user-img"), commentItemTemplate=$("comment-item-template");
     function openComments(chId){
@@ -630,7 +653,7 @@
       }catch(e){ console.error(e); toastMsg('No se pudo comentar','error'); }
     });
 
-    // --- Lógica de Crear Reto ---
+    // --- Crear reto
     function calcExpiresAt(){
       const sel = $("challenge-expiry"); if(!sel) return null;
       const v = sel.value; if(v==='24') return new Date(Date.now()+24*3600*1000);
@@ -658,25 +681,33 @@
     $("select-photo-challenge-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-photo'));
 
     async function publishChallenge(payload){
-      if (!auth.currentUser){ toastMsg('Sesión expirada, volvé a loguearte','error'); return; }
+      // Garantiza usuario y token válido antes de tocar Storage
+      try {
+        const u = await waitForAuthUser();
+        await u.getIdToken(true);
+      } catch {
+        toastMsg('Sesión no disponible. Volvé a loguearte','error');
+        return;
+      }
+
       const dataUrl = $("goto-step-2")?.dataset.fileUrl || '';
       if(!dataUrl){ toastMsg('Falta la imagen','error'); return; }
 
       try {
-          const sRef = ref(storage, `challenges/${auth.currentUser.uid}/${Date.now()}.jpg`);
-          await uploadString(sRef, dataUrl, 'data_url');
-          const contentUrl = await getDownloadURL(sRef);
+        const sRef = ref(storage, `challenges/${auth.currentUser.uid}/${Date.now()}.jpg`);
+        await uploadString(sRef, dataUrl, 'data_url');
+        const contentUrl = await getDownloadURL(sRef);
 
-          await addDoc(collection(db,'challenges'),{
-            authorId:auth.currentUser.uid, authorName:auth.currentUser.displayName, authorImg:auth.currentUser.photoURL,
-            createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
-            contentUrl, caption:(($("challenge-caption")?.value)||'').trim() || null,
-            likesCount:0, commentsCount:0, vis:'public', ...payload
-          });
-          toastMsg('¡Reto publicado!','success'); switchView('feed-view');
+        await addDoc(collection(db,'challenges'),{
+          authorId:auth.currentUser.uid, authorName:auth.currentUser.displayName, authorImg:auth.currentUser.photoURL,
+          createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
+          contentUrl, caption:(($("challenge-caption")?.value)||'').trim() || null,
+          likesCount:0, commentsCount:0, vis:'public', ...payload
+        });
+        toastMsg('¡Reto publicado!','success'); switchView('feed-view');
       } catch(e) {
-          console.error(e);
-          toastMsg(String(e.code||e.message||'error_publicar'),'error');
+        console.error(e);
+        toastMsg(String(e.code||e.message||'error_publicar'),'error');
       }
     }
     $("trivia-form")?.addEventListener('submit', (e)=>{
@@ -705,7 +736,7 @@
       return data;
     }
 
-    // --- Lógica de Trivia ---
+    // --- Trivia ---
     const triviaModal=$("trivia-modal"), triviaQ=$("trivia-q"), triviaOpts=$("trivia-opts"), triviaFeedback=$("trivia-feedback");
     function openTrivia(ch, card){
       if(!triviaQ||!triviaOpts||!triviaModal) return;
@@ -729,7 +760,7 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ triviaModal?.classList.add('hidden'); if(triviaOpts) triviaOpts.innerHTML=''; if(triviaFeedback) triviaFeedback.textContent=''; });
 
-    // --- Lógica Social ---
+    // --- Social ---
     async function followUser(uid, uData){
       if(!currentUser || uid===currentUser.uid) return;
       try{
@@ -949,15 +980,12 @@
     const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
 
     function resetCreateForm() {
-        $("file-upload")?.value && ($("file-upload").value = "");
-        $("image-preview-container")?.classList.add('hidden');
-        $("file-name") && ($("file-name").textContent = "");
-        const nextBtn = $("goto-step-2");
-        if (nextBtn) {
-            nextBtn.disabled = true;
-            delete nextBtn.dataset.fileUrl;
-        }
-        showCreateStep('create-step-1');
+      if ($("file-upload")?.value) $("file-upload").value = "";
+      $("image-preview-container")?.classList.add('hidden');
+      if ($("file-name")) $("file-name").textContent = "";
+      const nextBtn = $("goto-step-2");
+      if (nextBtn) { nextBtn.disabled = true; delete nextBtn.dataset.fileUrl; }
+      showCreateStep('create-step-1');
     }
 
     function switchView(v){
@@ -968,14 +996,14 @@
         nb.classList.toggle('text-indigo-500', isActive);
         nb.classList.toggle('text-slate-500', !isActive);
       });
-      // --- Lógica de refresco de vistas ---
+      // Refrescos por vista
       if(v==='feed-view') restartFeed();
       if(v==='profile-view') refreshProfile();
       if(v==='friends-view') setActiveTab('buscar');
       if(v==='create-view') resetCreateForm();
     }
 
-    // --- Listeners Globales de Clicks ---
+    // --- Listeners Globales (una sola vez)
     if (!window.__tereto_click_bound){
       window.__tereto_click_bound = true;
 
@@ -1013,7 +1041,7 @@
       });
     }
 
-    // ---- Manejo del Estado de Autenticación ----
+    // ---- Auth state ----
     onAuthStateChanged(auth, async function(user){
       clearSubs();
       if(!user || !sessionStarted){
@@ -1035,7 +1063,7 @@
       switchView('feed-view'); // Iniciar en el feed
     });
 
-    // ---- Lógica de la Cámara ----
+    // ---- Cámara ----
     let camStream=null, camResolve=null;
     const camModal=$("camera-modal"), camVideo=$("cam-video"), camCanvas=$("cam-canvas");
     async function openCamera(){
