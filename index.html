@@ -227,7 +227,7 @@
 
     </main>
 
-    <!-- NAV con punto rojo -->
+    <!-- NAV -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around p-1 z-40">
       <button data-view="feed-view" class="nav-button flex-1 p-2 rounded-lg text-indigo-500 flex flex-col items-center space-y-1">🏠<span class="text-xs font-semibold">Inicio</span></button>
       <button data-view="friends-view" class="nav-button relative flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
@@ -336,6 +336,9 @@
     import {
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+    import {
+      initializeAppCheck, ReCaptchaV3Provider
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
     // --- Firebase ---
     const firebaseConfig = {
@@ -347,22 +350,28 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
     const app = initializeApp(firebaseConfig);
+
+    // App Check (evita 403/CORS si Storage está en enforced)
+    // REEMPLAZAR por tu site key de reCAPTCHA v3
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider("RECAPTCHA_V3_SITE_KEY"),
+      isTokenAutoRefreshEnabled: true
+    });
+
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
 
     // NO PERSISTIR SESIÓN
     try { await setPersistence(auth, inMemoryPersistence); } catch(_) {}
-    // Forzar sign-out al cargar (asegura flags y botón siempre)
+    // Forzar sign-out al cargar (si venías logueado de otra pestaña)
     try { await signOut(auth); } catch(_) {}
-    // Forzar sign-out al cerrar/recargar pestaña
     window.addEventListener("beforeunload", () => { try { signOut(auth); } catch(_) {} });
 
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
     // ---- Helpers ----
-    function $(id){ return document.getElementById(id); }
+    const $ = (id)=>document.getElementById(id);
     function toastMsg(msg,type){
       const tm=$("toast-message"), ti=$("toast-icon"), t=$("toast");
       if(!tm||!ti||!t) return;
@@ -374,12 +383,7 @@
       const d = (ch.expiresAt && typeof ch.expiresAt.toDate==='function') ? ch.expiresAt.toDate() : new Date(ch.expiresAt);
       return d < new Date();
     }
-    function ts(v){
-      if(!v) return 0;
-      if(typeof v.toDate==='function'){ try{ return v.toDate().getTime(); }catch(_){ return 0; } }
-      if(v instanceof Date) return v.getTime();
-      return 0;
-    }
+    function ts(v){ if(!v) return 0; if(typeof v.toDate==='function'){ try{return v.toDate().getTime();}catch(_){return 0;} } if(v instanceof Date) return v.getTime(); return 0; }
 
     // ---- Estado global ----
     const TERMS_VERSION = "1.0";
@@ -389,8 +393,7 @@
     let friendsSet = new Set(), followingSet = new Set(), followersSet = new Set(), incomingReqSet = new Set(), sentReqSet = new Set();
 
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
-    let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
-    let myChallengesUnsub2=null;
+    let feedUnsub=null, myChallengesUnsub2=null, commentsUnsub=null;
 
     // Control de feed para evitar “race”
     let feedGen = 0;
@@ -400,25 +403,14 @@
     let friendsRenderScheduled = false;
 
     function clearSubs(){
-      const arr=[
-        unsubFriends,unsubFollowing,unsubFollowers,
-        unsubIncomingReq,unsubSentReq,
-        feedUnsub,myChallengesUnsub,myChallengesUnsub2,
-        commentsUnsub
-      ];
-      for(let i=0;i<arr.length;i++){ if(typeof arr[i]==='function'){ try{arr[i]();}catch(_){ } } }
-      unsubFriends=unsubFollowing=unsubFollowers=
-      unsubIncomingReq=unsubSentReq=
-      feedUnsub=myChallengesUnsub=myChallengesUnsub2=commentsUnsub=null;
+      const arr=[unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub2,commentsUnsub];
+      for(const fn of arr){ if(typeof fn==='function'){ try{fn();}catch(_){ } } }
+      unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesUnsub2=commentsUnsub=null;
     }
 
-    function solvedKey(uid){ return "tereto_solved_"+uid; }
-    function loadSolved(uid){
-      try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid)) || "[]")); }catch(_){ return new Set(); }
-    }
-    function saveSolved(uid, setVal){
-      try{ localStorage.setItem(solvedKey(uid), JSON.stringify(Array.from(setVal))); }catch(_){}
-    }
+    const solvedKey=(uid)=>"tereto_solved_"+uid;
+    const loadSolved=(uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid)) || "[]")); }catch(_){ return new Set(); } };
+    const saveSolved=(uid, setVal)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify(Array.from(setVal))); }catch(_){ } };
 
     // ---- Login UI checks ----
     const chkAdult = $("chk-adult");
@@ -443,47 +435,40 @@
     // ---- Auth ----
     window._startGoogle = async function(){
       if(!(chkAdult && chkAdult.checked) || !(chkTerms && chkTerms.checked)){
-        toastMsg('Tildá +18 y TyC','error');
-        return;
+        toastMsg('Tildá +18 y TyC','error'); return;
       }
-      const sp=$("loading-spinner"); sp?.classList.remove("hidden");
+      $("loading-spinner")?.classList.remove("hidden");
       try{
         try { await signInWithPopup(auth, provider); }
         catch(e){
-          if (e && (e.code==="auth/popup-blocked" || e.code==="auth/cancelled-popup-request")) {
-            await signInWithRedirect(auth, provider);
-          } else { throw e; }
+          if (e && (e.code==="auth/popup-blocked" || e.code==="auth/cancelled-popup-request")) { await signInWithRedirect(auth, provider); }
+          else { throw e; }
         }
       }catch(err){
         console.error(err);
-        const code = (err && err.code) ? String(err.code).replace('auth/','') : 'auth_error';
-        toastMsg(code,'error');
-      }finally{
-        sp?.classList.add("hidden");
-      }
+        toastMsg((err && err.code) ? String(err.code).replace('auth/','') : 'auth_error','error');
+      }finally{ $("loading-spinner")?.classList.add("hidden"); }
     };
 
     // Resolver redirect silencioso
-    try{ const sp2=$("loading-spinner"); sp2?.classList.remove("hidden"); await getRedirectResult(auth); }
+    try{ $("loading-spinner")?.classList.remove("hidden"); await getRedirectResult(auth); }
     catch(e){ console.warn("redirect", e && (e.code||e.message)); }
-    finally { const sp2=$("loading-spinner"); sp2?.classList.add("hidden"); }
+    finally { $("loading-spinner")?.classList.add("hidden"); }
 
-    const signoutBtn = $("signout-btn");
-    signoutBtn?.addEventListener("click", ()=>{ signOut(auth).catch(()=>{ toastMsg('No se pudo cerrar sesión','error'); }); });
+    $("signout-btn")?.addEventListener("click", ()=>{ signOut(auth).catch(()=>toastMsg('No se pudo cerrar sesión','error')); });
 
     async function upsertUserWithTerms(user){
-      const dn=user.displayName||null, em=user.email||null;
       try{
         await setDoc(doc(db,"users",user.uid),{
-          displayName:dn, displayNameLower: dn? dn.toLowerCase(): null,
-          email:em, emailLower: em? em.toLowerCase(): null,
+          displayName:user.displayName||null, displayNameLower: user.displayName? user.displayName.toLowerCase(): null,
+          email:user.email||null, emailLower: user.email? user.email.toLowerCase(): null,
           photoURL:user.photoURL||null, updatedAt:serverTimestamp(),
           isAdult:true, acceptedTermsAt:serverTimestamp(), acceptedTermsVersion:TERMS_VERSION, acceptedTermsUrl:TERMS_URL
         },{merge:true});
       }catch(e){ console.error('upsert users',e); }
     }
 
-    // ---- Subscriptions (friends/followers/requests) ----
+    // ---- Subs social ----
     function renderFriendsTab(){
       if(friendsRenderScheduled) return;
       friendsRenderScheduled = true;
@@ -496,41 +481,36 @@
     }
 
     function subFriends(){
-      if(unsubFriends){ try{unsubFriends();}catch(_){ } unsubFriends=null; }
+      unsubFriends?.(); unsubFriends=null;
       unsubFriends = onSnapshot(collection(db,'users',currentUser.uid,'friends'), (snap)=>{
         friendsSet = new Set(snap.docs.map((d)=>d.id));
         restartFeed(); renderFriendsTab();
       });
     }
     function subFollowing(){
-      if(unsubFollowing){ try{unsubFollowing();}catch(_){ } unsubFollowing=null; }
+      unsubFollowing?.(); unsubFollowing=null;
       unsubFollowing = onSnapshot(collection(db,'users',currentUser.uid,'following'), (snap)=>{
         followingSet = new Set(snap.docs.map((d)=>d.id));
         renderFriendsTab();
       });
     }
     function subFollowers(){
-      if(unsubFollowers){ try{unsubFollowers();}catch(_){ } unsubFollowers=null; }
+      unsubFollowers?.(); unsubFollowers=null;
       unsubFollowers = onSnapshot(collection(db,'users',currentUser.uid,'followers'), (snap)=>{
         followersSet = new Set(snap.docs.map((d)=>d.id));
         renderFriendsTab();
       });
     }
-
-    function updateRequestsBadge(){
-      const dot = $("req-dot");
-      if(dot) dot.classList.toggle('hidden', incomingReqSet.size === 0);
-    }
+    function updateRequestsBadge(){ const dot = $("req-dot"); dot?.classList.toggle('hidden', incomingReqSet.size === 0); }
     function subIncomingRequests(){
-      if(unsubIncomingReq){ try{unsubIncomingReq();}catch(_){ } unsubIncomingReq=null; }
+      unsubIncomingReq?.(); unsubIncomingReq=null;
       unsubIncomingReq = onSnapshot(collection(db,'users',currentUser.uid,'friendRequests'), (snap)=>{
         incomingReqSet = new Set(snap.docs.map((d)=>d.id));
-        renderFriendRequests();
-        updateRequestsBadge();
+        renderFriendRequests(); updateRequestsBadge();
       });
     }
     function subSentRequests(){
-      if(unsubSentReq){ try{unsubSentReq();}catch(_){ } unsubSentReq=null; }
+      unsubSentReq?.(); unsubSentReq=null;
       unsubSentReq = onSnapshot(collection(db,'users',currentUser.uid,'sentRequests'), (snap)=>{
         sentReqSet = new Set(snap.docs.map((d)=>d.id));
         renderFriendsSearch();
@@ -540,50 +520,40 @@
     // ---- FEED
     function restartFeed(){
       const myGen = ++feedGen;
-
-      // Reset memoria de último render y mostrar placeholder de arranque
       lastFeedItems = [];
       renderFeed([]);
 
-      if(feedUnsub){ try{ feedUnsub(); }catch(_){ } feedUnsub=null; }
+      feedUnsub?.(); feedUnsub=null;
       if(!currentUser) return;
 
       const ids = Array.from(friendsSet);
 
-      function createListener(qRef){
+      const createListener=(qRef)=>{
         feedUnsub = onSnapshot(qRef, (snap)=>{
           if(myGen !== feedGen) return;
           const items = snap.docs.map((d)=>({id:d.id, ...d.data()}))
             .filter((c)=>!isExpired(c))
             .filter((c)=>c.authorId !== currentUser.uid)
             .sort((a,b)=> ts(b.createdAt) - ts(a.createdAt));
-
-          if(items.length === 0 && lastFeedItems.length > 0) return; // evita parpadeo
+          if(items.length === 0 && lastFeedItems.length > 0) return;
           lastFeedItems = items;
           renderFeed(items);
         });
-      }
+      };
 
       if(ids.length === 0){
-        const qPublic = query(collection(db,'challenges'), where('vis','==','public'), orderBy('createdAt','desc'), limit(120));
-        createListener(qPublic);
+        createListener(query(collection(db,'challenges'), where('vis','==','public'), orderBy('createdAt','desc'), limit(120)));
         return;
       }
-
       if(ids.length <= 10){
-        const qRef = query(collection(db,'challenges'), where('authorId','in',ids), orderBy('createdAt','desc'), limit(200));
-        createListener(qRef);
+        createListener(query(collection(db,'challenges'), where('authorId','in',ids), orderBy('createdAt','desc'), limit(200)));
         return;
       }
-
-      const qLast = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200));
-      feedUnsub = onSnapshot(qLast, (snap)=>{
+      feedUnsub = onSnapshot(query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200)), (snap)=>{
         if(myGen !== feedGen) return;
         const setIds = new Set(ids);
         const items = snap.docs.map((d)=>({id:d.id, ...d.data()}))
-          .filter((c)=> setIds.has(c.authorId))
-          .filter((c)=> !isExpired(c))
-          .filter((c)=> c.authorId !== currentUser.uid)
+          .filter((c)=> setIds.has(c.authorId) && !isExpired(c) && c.authorId !== currentUser.uid)
           .sort((a,b)=> ts(b.createdAt) - ts(a.createdAt));
         if(items.length === 0 && lastFeedItems.length > 0) return;
         lastFeedItems = items;
@@ -596,9 +566,7 @@
       const feedContainer=$("feed-container");
       if(!feedContainer) return;
       feedContainer.innerHTML='';
-      const tip = $("feed-tip");
-      if(tip) tip.classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
-
+      $("feed-tip")?.classList.toggle("hidden", !!localStorage.getItem("tereto_tip_seen"));
       if(items.length===0){
         feedContainer.innerHTML='<div class="mx-3 my-6 p-4 bg-white rounded-xl shadow text-slate-600"><p class="font-semibold text-slate-800 mb-1">No hay retos nuevos</p><p class="text-sm">Probá seguir a tus amigos.</p></div>';
         return;
@@ -618,7 +586,7 @@
         feedContainer.appendChild(frag);
       }
     }
-    function shouldUnlock(ch){ if(!currentUser) return false; if(ch.authorId===currentUser.uid) return true; return solvedSet.has(ch.id); }
+    const shouldUnlock=(ch)=> currentUser ? (ch.authorId===currentUser.uid || solvedSet.has(ch.id)) : false;
     function paintLockState(card, unlocked){
       const img=card.querySelector('.content-img');
       const overlay=card.querySelector('.lock-overlay');
@@ -630,36 +598,24 @@
     // --- Perfil (mosaico)
     let myChallenges=[];
     function startMyChallenges(){
-      if (myChallengesUnsub2) { try{myChallengesUnsub2();}catch(_){ } myChallengesUnsub2 = null; }
+      myChallengesUnsub2?.(); myChallengesUnsub2=null;
       if (!currentUser) return;
-      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), limit(500));
-      myChallengesUnsub2 = onSnapshot(qRef, (snap)=>{
+      myChallengesUnsub2 = onSnapshot(query(collection(db,'challenges'), where('authorId','==', currentUser.uid), limit(500)), (snap)=>{
         try{
-          myChallenges = snap.docs.map((d)=>{
-            const data=d.data();
-            return { id:d.id, ...data, _createdAtMs: ts(data.createdAt) };
-          }).sort((a,b)=> b._createdAtMs - a._createdAtMs);
+          myChallenges = snap.docs.map((d)=>{ const data=d.data(); return { id:d.id, ...data, _createdAtMs: ts(data.createdAt) }; })
+            .sort((a,b)=> b._createdAtMs - a._createdAtMs);
           refreshProfile();
-        }catch(err){
-          console.error('myChallenges sub', err);
-          toastMsg('No se pudo cargar tus retos','error');
-        }
-      }, (err)=>{
-        console.error('myChallenges sub', err);
-        toastMsg('No se pudo cargar tus retos','error');
-      });
+        }catch(err){ console.error('myChallenges sub', err); toastMsg('No se pudo cargar tus retos','error'); }
+      }, (err)=>{ console.error('myChallenges sub', err); toastMsg('No se pudo cargar tus retos','error'); });
     }
     function refreshProfile(){
       if(!currentUser) return;
-      const pPic=$("profile-pic"), pName=$("profile-name"), pEmail=$("profile-email");
-      if(pPic) pPic.src=currentUser.photoURL||'';
-      if(pName) pName.textContent=currentUser.displayName||'Usuario';
-      if(pEmail) pEmail.textContent=currentUser.email||'';
-
+      $("profile-pic").src=currentUser.photoURL||'';
+      $("profile-name").textContent=currentUser.displayName||'Usuario';
+      $("profile-email").textContent=currentUser.email||'';
       const grid=$("my-mosaic"); if(!grid) return;
       grid.innerHTML='';
       const cnt=$("my-retos-count"); if(cnt) cnt.textContent=String(myChallenges.length)+" retos";
-
       for(const ch of myChallenges){
         const wrap=document.createElement('div'); wrap.className='mosaic-item'; wrap.dataset.id=ch.id;
         const img=document.createElement('img'); img.className='mosaic-img'; img.src=ch.contentUrl||'https://placehold.co/600x600/333/FFF?text=Reto'; wrap.appendChild(img);
@@ -670,16 +626,8 @@
         if(isExpired(ch)){ const ex=document.createElement('span'); ex.className='badge'; ex.style.background='rgba(255,0,0,.7)'; ex.style.color='#fff'; ex.textContent='Vencido'; bar.appendChild(ex); }
         wrap.appendChild(bar);
         const del=document.createElement('button'); del.className='mosaic-del'; del.title='Eliminar'; del.textContent='🗑️';
-        del.onclick = (function(chId){
-          return async function(e){
-            e.stopPropagation();
-            if(!confirm('¿Eliminar este reto?')) return;
-            try{ await deleteDoc(doc(db,'challenges',chId)); toastMsg('Reto eliminado'); }
-            catch(err){ console.error(err); toastMsg('No se pudo eliminar','error'); }
-          };
-        })(ch.id);
-        const appended = grid.appendChild(wrap);
-        appended.appendChild(del);
+        del.onclick = (e)=>{ e.stopPropagation(); if(!confirm('¿Eliminar este reto?')) return; deleteDoc(doc(db,'challenges',ch.id)).then(()=>toastMsg('Reto eliminado')).catch(()=>toastMsg('No se pudo eliminar','error')); };
+        const appended = grid.appendChild(wrap); appended.appendChild(del);
       }
     }
 
@@ -690,10 +638,9 @@
       if(!currentUser) return;
       if(commentUserImg) commentUserImg.src=currentUser.photoURL||'';
       if(commentForm) commentForm.dataset.challengeId=chId;
-      if(commentsModal) commentsModal.classList.remove('hidden');
-      if(commentsUnsub){ try{commentsUnsub();}catch(_){ } commentsUnsub=null; }
-      const qRef=query(collection(db,'challenges',chId,'comments'), orderBy('createdAt','asc'), limit(200));
-      commentsUnsub=onSnapshot(qRef,(snap)=>{
+      commentsModal?.classList.remove('hidden');
+      commentsUnsub?.(); commentsUnsub=null;
+      commentsUnsub=onSnapshot(query(collection(db,'challenges',chId,'comments'), orderBy('createdAt','asc'), limit(200)),(snap)=>{
         if(!commentsModalBody) return;
         commentsModalBody.innerHTML='';
         snap.forEach((d)=>{
@@ -708,82 +655,54 @@
         });
       });
     }
-    function closeComments(){
-      commentsModal?.classList.add('hidden');
-      if(commentsUnsub){ try{commentsUnsub();}catch(_){ } commentsUnsub=null; }
-    }
+    function closeComments(){ commentsModal?.classList.add('hidden'); commentsUnsub?.(); commentsUnsub=null; }
     $("close-comments-modal")?.addEventListener('click', closeComments);
     commentForm?.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const chId=commentForm.dataset.challengeId;
-      const text=(commentInput && commentInput.value ? commentInput.value : '').trim();
-      if(!text) return;
+      const chId=commentForm.dataset.challengeId; const text=(commentInput?.value||'').trim(); if(!text) return;
       try{
         const batch=writeBatch(db);
         const cRef=doc(collection(db,'challenges',chId,'comments'));
         batch.set(cRef,{authorId:currentUser.uid,authorName:currentUser.displayName,authorImg:currentUser.photoURL,text,createdAt:serverTimestamp()});
         batch.update(doc(db,'challenges',chId),{commentsCount:increment(1)});
-        await batch.commit();
-        if(commentInput) commentInput.value='';
+        await batch.commit(); commentInput.value='';
       }catch(e){ console.error(e); toastMsg('No se pudo comentar','error'); }
     });
 
     // --- Crear reto: compresión + subida a Storage (data_url) ---
     function calcExpiresAt(){
-      const sel = $("challenge-expiry");
-      if(!sel) return null;
-      const v = sel.value;
-      if(v==='24') return new Date(Date.now()+24*3600*1000);
-      if(v==='48') return new Date(Date.now()+48*3600*1000);
-      return null;
+      const sel = $("challenge-expiry"); if(!sel) return null;
+      const v = sel.value; if(v==='24') return new Date(Date.now()+24*3600*1000);
+      if(v==='48') return new Date(Date.now()+48*3600*1000); return null;
     }
-    const fileUpload = $("file-upload");
-    fileUpload?.addEventListener('change', async ()=>{
-      const f = fileUpload.files && fileUpload.files[0];
-      if(!f){
-        $("file-name") && ( $("file-name").textContent='' );
-        const gs=$("goto-step-2"); if(gs){ gs.disabled=true; }
-        $("image-preview-container")?.classList.add('hidden');
-        return;
-      }
-      $("file-name") && ( $("file-name").textContent=f.name );
+    $("file-upload")?.addEventListener('change', async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if(!f){ $("file-name")&&( $("file-name").textContent=''); $("goto-step-2")?.setAttribute('disabled',''); $("image-preview-container")?.classList.add('hidden'); return; }
+      $("file-name")&&( $("file-name").textContent=f.name );
       const dataUrl=await fileToCompressedDataURL(f);
-      const gs2=$("goto-step-2");
-      if(gs2) gs2.dataset.fileUrl=dataUrl;
+      const btn=$("goto-step-2"); if(btn){ btn.dataset.fileUrl=dataUrl; btn.disabled=false; }
       const ip=$("image-preview"); if(ip) ip.src=dataUrl;
       $("image-preview-container")?.classList.remove('hidden');
-      if(gs2) gs2.disabled=false;
     });
     $("open-camera-btn")?.addEventListener('click', async ()=>{
       const dataUrl=await captureWithModal(); if(!dataUrl) return;
-      const ip=$("image-preview"); if(ip) ip.src=dataUrl;
+      $("image-preview").src=dataUrl;
       $("image-preview-container")?.classList.remove('hidden');
       const btn=$("goto-step-2"); if(btn){ btn.dataset.fileUrl=dataUrl; btn.disabled=false; }
       $("file-name") && ( $("file-name").textContent='Foto capturada - '+new Date().toLocaleTimeString()+'.jpg' );
     });
-    function showCreateStep(step){
-      const ids=["create-step-1","create-step-2","create-step-3-trivia","create-step-3-photo"];
-      for(const id of ids){ const el=$(id); if(el) el.classList.add("hidden"); }
-      $(step)?.classList.remove("hidden");
-    }
-    $("goto-step-2")?.addEventListener('click', ()=>{ showCreateStep('create-step-2'); });
-    $("select-trivia-btn")?.addEventListener('click', ()=>{ showCreateStep('create-step-3-trivia'); });
-    $("select-photo-challenge-btn")?.addEventListener('click', ()=>{ showCreateStep('create-step-3-photo'); });
+    const showCreateStep=(step)=>["create-step-1","create-step-2","create-step-3-trivia","create-step-3-photo"].forEach(id=>$(id)?.classList.toggle('hidden', id!==step));
+    $("goto-step-2")?.addEventListener('click', ()=>showCreateStep('create-step-2'));
+    $("select-trivia-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-trivia'));
+    $("select-photo-challenge-btn")?.addEventListener('click', ()=>showCreateStep('create-step-3-photo'));
 
     async function publishChallenge(payload){
-      // Asegurar sesión válida al momento de subir
-      if (!auth.currentUser){
-        toastMsg('Sesión expirada, volvé a loguearte','error');
-        return;
-      }
-      const gs=$("goto-step-2");
-      const dataUrl = (gs && gs.dataset.fileUrl) ? gs.dataset.fileUrl : '';
+      if (!auth.currentUser){ toastMsg('Sesión expirada, volvé a loguearte','error'); return; }
+      const dataUrl = $("goto-step-2")?.dataset.fileUrl || '';
       if(!dataUrl){ toastMsg('Falta la imagen','error'); return; }
 
-      const tsName = Date.now();
-      const path = "challenges/"+auth.currentUser.uid+"/"+tsName+".jpg"; // debe matchear reglas
-      const sRef = ref(storage, path);
-
+      // Subida (cumple reglas: challenges/{uid}/...)
+      const sRef = ref(storage, `challenges/${auth.currentUser.uid}/${Date.now()}.jpg`);
       await uploadString(sRef, dataUrl, 'data_url', { contentType: 'image/jpeg' });
       const contentUrl = await getDownloadURL(sRef);
 
@@ -791,41 +710,34 @@
         await addDoc(collection(db,'challenges'),{
           authorId:auth.currentUser.uid, authorName:auth.currentUser.displayName, authorImg:auth.currentUser.photoURL,
           createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
-          contentUrl, caption:(($("challenge-caption") && $("challenge-caption").value) || '').trim() || null,
+          contentUrl, caption:(($("challenge-caption")?.value)||'').trim() || null,
           likesCount:0, commentsCount:0, vis:'public', ...payload
         });
-        toastMsg('¡Reto publicado!','success');
-        switchView('feed-view');
+        toastMsg('¡Reto publicado!','success'); switchView('feed-view');
       }catch(e){
         console.error(e);
-        const msg=(e && (e.code||e.message)) ? String(e.code||e.message) : '';
-        if(msg.indexOf('permission-denied')>=0) toastMsg('Permisos denegados','error');
-        else toastMsg('No se pudo publicar','error');
+        toastMsg(String(e.code||e.message||'error_publicar'),'error');
       }
     }
     $("trivia-form")?.addEventListener('submit', (e)=>{
       e.preventDefault();
       publishChallenge({
         type:'trivia',
-        question: ($("trivia-question") && $("trivia-question").value) || '',
-        correctAnswer: ($("correct-answer") && $("correct-answer").value) || '',
-        wrongAnswers: [ ($("wrong-answer-1") && $("wrong-answer-1").value)||'',
-                        ($("wrong-answer-2") && $("wrong-answer-2").value)||'',
-                        ($("wrong-answer-3") && $("wrong-answer-3").value)||'' ]
+        question: ($("trivia-question")?.value)||'',
+        correctAnswer: ($("correct-answer")?.value)||'',
+        wrongAnswers: [ $("wrong-answer-1")?.value||'', $("wrong-answer-2")?.value||'', $("wrong-answer-3")?.value||'' ]
       });
     });
     $("photo-challenge-form")?.addEventListener('submit', (e)=>{
       e.preventDefault();
-      publishChallenge({ type:'photo', question: ($("photo-challenge-task") && $("photo-challenge-task").value) || '' });
+      publishChallenge({ type:'photo', question: ($("photo-challenge-task")?.value)||'' });
     });
 
-    async function fileToCompressedDataURL(file,maxW,quality){
-      maxW = maxW || 960; quality = quality || 0.75;
+    async function fileToCompressedDataURL(file,maxW=960,quality=0.75){
       if(!file || !(file.type && file.type.indexOf('image/')===0)) return 'https://placehold.co/800x600/333/FFF?text=TeReto';
       const bmp = await createImageBitmap(file);
       const r = bmp.width / bmp.height;
-      const w = Math.min(bmp.width, maxW);
-      const h = Math.round(w / r);
+      const w = Math.min(bmp.width, maxW); const h = Math.round(w / r);
       const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h;
       const ctx=cvs.getContext('2d'); ctx.drawImage(bmp,0,0,w,h);
       let data=cvs.toDataURL('image/jpeg',quality);
@@ -838,24 +750,15 @@
     const triviaModal=$("trivia-modal"), triviaQ=$("trivia-q"), triviaOpts=$("trivia-opts"), triviaFeedback=$("trivia-feedback");
     function openTrivia(ch, card){
       if(!triviaQ||!triviaOpts||!triviaModal) return;
-      triviaQ.textContent=ch.question||'';
-      triviaOpts.innerHTML='';
-      const arr=(ch.wrongAnswers||[]).concat([ch.correctAnswer]).map((x)=>String(x)).sort(()=> Math.random()-0.5);
+      triviaQ.textContent=ch.question||''; triviaOpts.innerHTML='';
+      const arr=(ch.wrongAnswers||[]).concat([ch.correctAnswer]).map(String).sort(()=> Math.random()-0.5);
       for(const opt of arr){
         const btn=document.createElement('button'); btn.className='w-full text-left p-3 border rounded-lg hover:bg-slate-50'; btn.textContent=opt;
         btn.onclick=function(){
-          const ok = (String(opt)===String(ch.correctAnswer));
-          if(triviaFeedback){
-            if(ok){ triviaFeedback.className='h-6 mt-2 text-center text-sm text-green-600'; triviaFeedback.textContent='¡Correcto!'; }
-            else { triviaFeedback.className='h-6 mt-2 text-center text-sm text-red-600'; triviaFeedback.textContent='Respuesta incorrecta'; }
-          }
-          if(ok){
-            solvedSet.add(card.dataset.challengeId); saveSolved(currentUser.uid, solvedSet);
-            paintLockState(card, true);
-            setTimeout(()=>{ triviaModal.classList.add('hidden'); if(triviaFeedback) triviaFeedback.textContent=''; }, 600);
-          } else {
-            setTimeout(()=>{ if(triviaFeedback) triviaFeedback.textContent=''; }, 1200);
-          }
+          const ok = (opt===String(ch.correctAnswer));
+          if(triviaFeedback){ triviaFeedback.className='h-6 mt-2 text-center text-sm '+(ok?'text-green-600':'text-red-600'); triviaFeedback.textContent= ok?'¡Correcto!':'Respuesta incorrecta'; }
+          if(ok){ solvedSet.add(card.dataset.challengeId); saveSolved(currentUser.uid, solvedSet); paintLockState(card, true); setTimeout(()=>{ triviaModal.classList.add('hidden'); if(triviaFeedback) triviaFeedback.textContent=''; }, 600); }
+          else { setTimeout(()=>{ if(triviaFeedback) triviaFeedback.textContent=''; }, 1200); }
         };
         triviaOpts.appendChild(btn);
       }
@@ -863,11 +766,11 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ triviaModal?.classList.add('hidden'); if(triviaOpts) triviaOpts.innerHTML=''; if(triviaFeedback) triviaFeedback.textContent=''; });
 
-    // Social: follow/amigos
+    // Social
     async function followUser(uid, uData){
       if(uid===currentUser.uid) return;
       try{
-        await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName:uData && uData.displayName || null, photoURL:uData && uData.photoURL || null});
+        await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName:uData?.displayName||null, photoURL:uData?.photoURL||null});
         await setDoc(doc(db,'users',uid,'followers',currentUser.uid),{createdAt:serverTimestamp(), displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null});
         toastMsg('Siguiendo ✔');
       }catch(e){ console.error(e); toastMsg('No se pudo seguir','error'); }
@@ -929,57 +832,46 @@
       }catch(e){ console.error(e); toastMsg('No se pudo eliminar amigo','error'); }
     }
 
-    const friendsResults=$("friends-results"), friendsList=$("friends-list"), requestsList=$("requests-list"), followersList=$("followers-list");
+    const friendsResults=$("friends-results");
     function setActiveTab(tab){
-      const btns=document.querySelectorAll('.tab-btn');
-      for(const b of btns){
+      document.querySelectorAll('.tab-btn').forEach((b)=>{
         const match=b.getAttribute('data-tab')===tab;
-        b.classList.toggle('active', match);
-        b.classList.toggle('text-slate-500', !match);
-      }
-      const tabs=['buscar','mis-amigos','solicitudes','seguidores'];
-      for(const t of tabs){
-        const el=$("tab-"+t);
-        if(el) el.classList.toggle('hidden', t!==tab);
-      }
+        b.classList.toggle('active', match); b.classList.toggle('text-slate-500', !match);
+      });
+      ['buscar','mis-amigos','solicitudes','seguidores'].forEach((t)=>{ $("tab-"+t)?.classList.toggle('hidden', t!==tab); });
       if(tab==='buscar') renderFriendsSearch();
       if(tab==='mis-amigos') renderMyFriends();
       if(tab==='solicitudes') renderFriendRequests();
       if(tab==='seguidores') renderFollowers();
     }
-    const tbBtns=document.querySelectorAll('.tab-btn');
-    for(const b of tbBtns){ b.addEventListener('click', function(){ setActiveTab(this.getAttribute('data-tab')); }); }
+    document.querySelectorAll('.tab-btn').forEach((b)=> b.addEventListener('click', function(){ setActiveTab(this.getAttribute('data-tab')); }));
 
     async function fetchUsersFor(ids){
       const out=[];
       for(const uid of ids){
         try{
           const d=await getDoc(doc(db,'users',uid));
-          if(d && d.exists()) out.push({uid:uid, ...d.data()});
-          else out.push({uid:uid, displayName:'(Usuario)', photoURL:''});
-        }catch(_){
-          out.push({uid:uid, displayName:'(Usuario)', photoURL:''});
-        }
+          out.push(d && d.exists()? {uid, ...d.data()} : {uid, displayName:'(Usuario)', photoURL:''});
+        }catch(_){ out.push({uid, displayName:'(Usuario)', photoURL:''}); }
       }
       return out;
     }
 
     async function renderFriendsSearch(){
       if(!friendsResults) return;
-      const input=$("user-search-input");
-      const term = input && input.value ? input.value.toLowerCase().trim() : '';
+      const term = ($("user-search-input")?.value||'').toLowerCase().trim();
       friendsResults.innerHTML='';
       const results=new Map();
       try{
         if(term && term.indexOf('@')>=0){
-          const qEmail=query(collection(db,'users'), where('emailLower','==',term), limit(25));
-          const s1=await getDocs(qEmail); s1.forEach((d)=>{ results.set(d.id,{uid:d.id,...d.data()}); });
+          const s1=await getDocs(query(collection(db,'users'), where('emailLower','==',term), limit(25)));
+          s1.forEach((d)=>results.set(d.id,{uid:d.id,...d.data()}));
         } else if(term){
-          const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50));
-          const s2=await getDocs(qName); s2.forEach((d)=>{ results.set(d.id,{uid:d.id,...d.data()}); });
+          const s2=await getDocs(query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50)));
+          s2.forEach((d)=>results.set(d.id,{uid:d.id,...d.data()}));
         } else {
-          const qUsers=query(collection(db,'users'), orderBy('displayNameLower'), limit(40));
-          const s3=await getDocs(qUsers); s3.forEach((d)=>{ results.set(d.id,{uid:d.id,...d.data()}); });
+          const s3=await getDocs(query(collection(db,'users'), orderBy('displayNameLower'), limit(40)));
+          s3.forEach((d)=>results.set(d.id,{uid:d.id,...d.data()}));
         }
       }catch(e){ console.error('search users',e); }
 
@@ -997,7 +889,7 @@
         '</div>';
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
 
-        const isSelf = u.uid===currentUser.uid;
+        const isSelf = u.uid===currentUser?.uid;
         const isFriend = friendsSet.has(u.uid);
         const sent = sentReqSet.has(u.uid);
         const incoming = incomingReqSet.has(u.uid);
@@ -1010,26 +902,26 @@
           const btnFollow=document.createElement('button');
           btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
           btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
-          btnFollow.onclick=function(){ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
+          btnFollow.onclick=()=>{ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
           actions.appendChild(btnFollow);
 
           const btnUnfriend=document.createElement('button');
           btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
           btnUnfriend.textContent='Eliminar amigo';
-          btnUnfriend.onclick=function(){ removeFriend(u.uid); };
+          btnUnfriend.onclick=()=>{ removeFriend(u.uid); };
           actions.appendChild(btnUnfriend);
 
         } else if(incoming){
-          const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=function(){ acceptFriendRequest(u.uid); };
-          const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=function(){ declineFriendRequest(u.uid); };
+          const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=()=>acceptFriendRequest(u.uid);
+          const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=()=>declineFriendRequest(u.uid);
           actions.appendChild(btnAcc); actions.appendChild(btnRej);
 
         } else if(sent){
-          const btnCancel=document.createElement('button'); btnCancel.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnCancel.textContent='Cancelar solicitud'; btnCancel.onclick=function(){ cancelFriendRequest(u.uid); };
+          const btnCancel=document.createElement('button'); btnCancel.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnCancel.textContent='Cancelar solicitud'; btnCancel.onclick=()=>cancelFriendRequest(u.uid);
           actions.appendChild(btnCancel);
 
         } else {
-          const btnReq=document.createElement('button'); btnReq.className='px-3 py-1 rounded-full text-sm bg-indigo-600 text-white'; btnReq.textContent='Enviar solicitud'; btnReq.onclick=function(){ sendFriendRequest(u.uid); };
+          const btnReq=document.createElement('button'); btnReq.className='px-3 py-1 rounded-full text-sm bg-indigo-600 text-white'; btnReq.textContent='Enviar solicitud'; btnReq.onclick=()=>sendFriendRequest(u.uid);
           actions.appendChild(btnReq);
         }
 
@@ -1037,12 +929,11 @@
         friendsResults.appendChild(row);
       }
     }
-    $("user-search-input")?.addEventListener('input', ()=>{ renderFriendsSearch(); });
+    $("user-search-input")?.addEventListener('input', ()=>renderFriendsSearch());
 
     async function renderMyFriends(){
-      const el=$("friends-list"); if(!el){ return; }
-      el.innerHTML='';
-      if(friendsSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés amigos.</p>'; return; }
+      const el=$("friends-list"); if(!el) return;
+      el.innerHTML=''; if(friendsSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés amigos.</p>'; return; }
       const users = await fetchUsersFor(Array.from(friendsSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
@@ -1053,31 +944,29 @@
         const btnFollow=document.createElement('button');
         btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
         btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
-        btnFollow.onclick=function(){ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
+        btnFollow.onclick=()=>{ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
         actions.appendChild(btnFollow);
 
         const btnUnfriend=document.createElement('button');
         btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
         btnUnfriend.textContent='Eliminar amigo';
-        btnUnfriend.onclick=function(){ removeFriend(u.uid); };
+        btnUnfriend.onclick=()=>removeFriend(u.uid);
         actions.appendChild(btnUnfriend);
 
-        row.appendChild(actions);
-        el.appendChild(row);
+        row.appendChild(actions); el.appendChild(row);
       }
     }
 
     async function renderFriendRequests(){
       const el=$("requests-list"); if(!el) return;
-      el.innerHTML='';
-      if(incomingReqSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">No tenés solicitudes pendientes.</p>'; return; }
+      el.innerHTML=''; if(incomingReqSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">No tenés solicitudes pendientes.</p>'; return; }
       const users = await fetchUsersFor(Array.from(incomingReqSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML='<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'"><p class="font-semibold text-slate-700">'+(u.displayName||'(Usuario)')+'</p></div>';
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
-        const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=function(){ acceptFriendRequest(u.uid); };
-        const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=function(){ declineFriendRequest(u.uid); };
+        const btnAcc=document.createElement('button'); btnAcc.className='px-3 py-1 rounded-full text-sm bg-green-600 text-white'; btnAcc.textContent='Aceptar'; btnAcc.onclick=()=>acceptFriendRequest(u.uid);
+        const btnRej=document.createElement('button'); btnRej.className='px-3 py-1 rounded-full text-sm bg-slate-200 text-slate-800'; btnRej.textContent='Rechazar'; btnRej.onclick=()=>declineFriendRequest(u.uid);
         actions.appendChild(btnAcc); actions.appendChild(btnRej);
         row.appendChild(actions); el.appendChild(row);
       }
@@ -1085,14 +974,13 @@
 
     async function renderFollowers(){
       const el=$("followers-list"); if(!el) return;
-      el.innerHTML='';
-      if(followersSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés seguidores.</p>'; return; }
+      el.innerHTML=''; if(followersSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés seguidores.</p>'; return; }
       const users = await fetchUsersFor(Array.from(followersSet));
       for(const u of users){
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML='<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="'+(u.photoURL||'')+'"><p class="font-semibold text-slate-700">'+(u.displayName||'(Usuario)')+'</p></div>';
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
-        const btnRemove=document.createElement('button'); btnRemove.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700'; btnRemove.textContent='Eliminar seguidor'; btnRemove.onclick=function(){ removeFollower(u.uid); };
+        const btnRemove=document.createElement('button'); btnRemove.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700'; btnRemove.textContent='Eliminar seguidor'; btnRemove.onclick=()=>removeFollower(u.uid);
         actions.appendChild(btnRemove);
         row.appendChild(actions); el.appendChild(row);
       }
@@ -1101,66 +989,55 @@
     // ---- Navegación principal + acciones en feed ----
     const views={'feed-view':$("feed-view"),'friends-view':$("friends-view"),'create-view':$("create-view"),'profile-view':$("profile-view")};
     function switchView(v){
-      const keys=Object.keys(views);
-      for(const k of keys){ const el=views[k]; if(el) el.classList.add('hidden'); }
-      if(views[v]) views[v].classList.remove('hidden');
-
-      const navBtns=document.querySelectorAll('.nav-button');
-      for(const nb of navBtns){
+      Object.values(views).forEach((el)=>el?.classList.add('hidden'));
+      views[v]?.classList.remove('hidden');
+      document.querySelectorAll('.nav-button').forEach((nb)=>{
         const isActive = nb.getAttribute('data-view')===v;
         nb.classList.toggle('text-indigo-500', isActive);
         nb.classList.toggle('text-slate-500', !isActive);
-      }
+      });
       if(v==='profile-view') refreshProfile();
       if(v==='friends-view') setActiveTab('buscar');
     }
 
-    // Evitar doble binding de listeners globales
     if (!window.__tereto_click_bound){
       window.__tereto_click_bound = true;
 
       document.addEventListener('click', function(e){
-        const navBtn = e.target.closest ? e.target.closest('.nav-button') : null;
-        if(navBtn && navBtn.dataset && navBtn.dataset.view){
-          e.preventDefault(); switchView(navBtn.dataset.view); return;
-        }
+        const navBtn = e.target.closest?.('.nav-button');
+        if(navBtn?.dataset?.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
 
-        const card = e.target.closest ? e.target.closest('.post-card') : null;
-        if(!card) return;
+        const card = e.target.closest?.('.post-card'); if(!card) return;
         const chId = card.dataset.challengeId;
 
-        if(e.target.closest && e.target.closest('.comment-button')){ openComments(chId); return; }
-        if(e.target.closest && e.target.closest('.like-button')){
-          (async function(){
+        if(e.target.closest?.('.comment-button')){ openComments(chId); return; }
+        if(e.target.closest?.('.like-button')){
+          (async ()=>{
             try{
               await updateDoc(doc(db,'challenges',chId),{likesCount:increment(1)});
-              const span=card.querySelector('.likes-count');
-              if(span) span.textContent=String((parseInt(span.textContent||'0',10))+1);
+              const span=card.querySelector('.likes-count'); if(span) span.textContent=String((parseInt(span.textContent||'0',10))+1);
             }catch(err){ console.error(err); toastMsg('No se pudo like','error'); }
           })();
           return;
         }
 
-        const img=card.querySelector('.content-img');
-        const locked = img && img.classList.contains('locked');
+        const locked = card.querySelector('.content-img')?.classList.contains('locked');
         if(!locked) return;
 
-        (async function(){
+        (async ()=>{
           const d = await getDoc(doc(db,'challenges',chId));
           if(!(d && d.exists())) { toastMsg('El reto ya no existe','error'); return; }
           const data=d.data();
           if(data.type==='trivia'){ openTrivia(data, card); }
           else if(data.type==='photo'){
-            const dataUrl = await captureWithModal();
-            if(!dataUrl){ toastMsg('No se envió la foto','error'); return; }
+            const dataUrl = await captureWithModal(); if(!dataUrl){ toastMsg('No se envió la foto','error'); return; }
             solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); toastMsg('Enviado. Desbloqueado 👌','success');
           } else { solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); }
         })();
       });
 
       document.addEventListener('click', function(e){
-        const pc = e.target.closest ? e.target.closest('.post-card') : null;
-        if(pc){ localStorage.setItem('tereto_tip_seen','1'); const ft=$("feed-tip"); ft?.classList.add('hidden'); }
+        const pc = e.target.closest?.('.post-card'); if(pc){ localStorage.setItem('tereto_tip_seen','1'); $("feed-tip")?.classList.add('hidden'); }
       });
     }
 
@@ -1192,24 +1069,16 @@
     async function openCamera(){
       try{
         if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) throw new Error('no camera');
-        if(camStream){ camStream.getTracks().forEach((t)=>{ t.stop(); }); camStream=null; }
+        if(camStream){ camStream.getTracks().forEach((t)=>t.stop()); camStream=null; }
         camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
         if(camVideo) camVideo.srcObject=camStream;
         camModal?.classList.remove('hidden');
       }catch(e){ console.error(e); toastMsg('No se pudo acceder a la cámara','error'); }
     }
-    function closeCamera(){
-      if(camStream){ camStream.getTracks().forEach((t)=>{ t.stop(); }); camStream=null; }
-      camModal?.classList.add('hidden');
-    }
-    function capturePhoto(){
-      if(!(camVideo && camVideo.videoWidth)) return null;
-      const w=camVideo.videoWidth,h=camVideo.videoHeight;
-      if(camCanvas){ camCanvas.width=w; camCanvas.height=h; const ctx=camCanvas.getContext('2d'); ctx.drawImage(camVideo,0,0,w,h); return camCanvas.toDataURL('image/jpeg',0.8); }
-      return null;
-    }
-    $("cam-close")?.addEventListener('click', ()=>{ closeCamera(); if(camResolve) camResolve(null); camResolve=null; });
-    $("cam-capture")?.addEventListener('click', ()=>{ const dataUrl=capturePhoto(); closeCamera(); if(camResolve) camResolve(dataUrl); camResolve=null; });
+    function closeCamera(){ if(camStream){ camStream.getTracks().forEach((t)=>t.stop()); camStream=null; } camModal?.classList.add('hidden'); }
+    function capturePhoto(){ if(!(camVideo && camVideo.videoWidth)) return null; const w=camVideo.videoWidth,h=camVideo.videoHeight; if(!camCanvas) return null; camCanvas.width=w; camCanvas.height=h; camCanvas.getContext('2d').drawImage(camVideo,0,0,w,h); return camCanvas.toDataURL('image/jpeg',0.8); }
+    $("cam-close")?.addEventListener('click', ()=>{ closeCamera(); camResolve?.(null); camResolve=null; });
+    $("cam-capture")?.addEventListener('click', ()=>{ const dataUrl=capturePhoto(); closeCamera(); camResolve?.(dataUrl); camResolve=null; });
     function captureWithModal(){ return new Promise(async (res)=>{ camResolve=res; await openCamera(); }); }
   </script>
 </body>
