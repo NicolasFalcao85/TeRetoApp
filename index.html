@@ -342,7 +342,7 @@
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      storageBucket: "tereto-prod.appspot.com", // IMPORTANTE: *.appspot.com
+      storageBucket: "tereto-prod.firebasestorage.app",   // ← usar el bucket REAL
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
@@ -351,7 +351,7 @@
     const db = getFirestore(app);
 
     // FORZAR BUCKET CORRECTO (mata CORS por confs erradas)
-    const storage = getStorage(app, "gs://tereto-prod.appspot.com");
+    const storage = getStorage(app, "gs://tereto-prod.firebasestorage.app");
     // Debug simple
     console.log('bucket efectivo:', ref(storage, '').bucket);
 
