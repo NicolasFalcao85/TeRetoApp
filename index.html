@@ -25,6 +25,7 @@
     .tab-btn.active { border-bottom:2px solid #6366f1; color:#6366f1; font-weight:600;}
     #loading-spinner.hidden { display:none !important; }
     .hint { font-size:11px; color:#64748b }
+    .dot { position:absolute; top:2px; right:22px; width:10px; height:10px; background:#ef4444; border-radius:9999px; box-shadow:0 0 0 2px #fff; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -181,10 +182,13 @@
         </header>
 
         <div class="p-4">
-          <div class="flex gap-4 border-b">
+          <div class="flex gap-4 border-b relative">
             <button class="tab-btn active py-2" data-tab="buscar">Buscar</button>
             <button class="tab-btn py-2 text-slate-500" data-tab="mis-amigos">Mis Amigos</button>
-            <button class="tab-btn py-2 text-slate-500" data-tab="solicitudes">Solicitudes</button>
+            <button class="tab-btn py-2 text-slate-500 relative" data-tab="solicitudes">
+              Solicitudes
+              <span id="requests-dot" class="dot hidden"></span>
+            </button>
             <button class="tab-btn py-2 text-slate-500" data-tab="seguidores">Seguidores</button>
           </div>
 
@@ -230,7 +234,6 @@
       <button data-view="friends-view" class="nav-button relative flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">
         👥<span class="text-xs font-semibold">Amigos</span>
         <span id="req-dot" class="hidden absolute top-1 right-3 w-2 h-2 bg-red-600 rounded-full"></span>
-        <!-- <span id="req-badge" class="hidden absolute -top-1 right-2 min-w-[18px] h-[18px] px-[5px] text-[11px] font-bold text-white bg-red-600 rounded-full text-center leading-[18px]">0</span> -->
       </button>
       <button data-view="create-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">➕<span class="text-xs font-semibold">Crear</span></button>
       <button data-view="profile-view" class="nav-button flex-1 p-2 rounded-lg text-slate-500 flex flex-col items-center space-y-1">👤<span class="text-xs font-semibold">Perfil</span></button>
@@ -278,6 +281,47 @@
     </div>
   </div>
 
+  <!-- TEMPLATE POST -->
+  <template id="post-template">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden post-card">
+      <div class="p-4 flex items-center space-x-3">
+        <img class="w-10 h-10 rounded-full author-img" src="">
+        <div>
+          <p class="font-semibold text-slate-800 author-name"></p>
+          <p class="text-[11px] text-slate-500 post-time"></p>
+        </div>
+      </div>
+      <div class="relative">
+        <img class="w-full h-80 object-cover content-img" src="">
+        <div class="lock-overlay absolute inset-0 hidden bg-black/40 text-white flex flex-col items-center justify-center">
+          <div class="text-5xl mb-2">🔒</div>
+          <p class="text-sm">Tocá para aceptar el desafío</p>
+        </div>
+      </div>
+      <div class="p-4">
+        <p class="text-sm text-slate-700 caption mt-1"></p>
+        <div class="flex items-center justify-between mt-2 text-slate-500">
+          <div class="flex space-x-4">
+            <button class="like-button flex items-center space-x-1 cursor-pointer"><span>❤</span><span class="likes-count">0</span></button>
+            <button class="comment-button flex items-center space-x-1 cursor-pointer"><span>💬</span><span class="comments-count">0</span></button>
+          </div>
+          <span class="text-[11px] post-time-secondary"></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- TEMPLATE COMMENT -->
+  <template id="comment-item-template">
+    <div class="flex items-start space-x-3">
+      <img class="w-8 h-8 rounded-full cmt-img">
+      <div class="flex-1 bg-slate-100 rounded-xl p-3">
+        <p class="text-sm"><strong class="cmt-name text-slate-800"></strong> <span class="cmt-text text-slate-600"></span></p>
+        <p class="text-xs text-slate-400 mt-1 cmt-time"></p>
+      </div>
+    </div>
+  </template>
+
   <!-- SINGLE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -294,7 +338,7 @@
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
-    // --- Firebase (con bucket corregido) ---
+    // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
@@ -398,7 +442,7 @@
     }
     function updateRequestsBadge(){
       const dot = document.getElementById('req-dot'); if (dot) dot.classList.toggle('hidden', incomingReqSet.size === 0);
-      const badge = document.getElementById('req-badge'); if (badge){ const n=incomingReqSet.size; badge.textContent=String(n); badge.classList.toggle('hidden', n===0); }
+      const dot2 = document.getElementById('requests-dot'); if (dot2) dot2.classList.toggle('hidden', incomingReqSet.size === 0);
     }
     function subIncomingRequests(){
       if(unsubIncomingReq){unsubIncomingReq();unsubIncomingReq=null;}
@@ -435,10 +479,12 @@
         const qRef = query(collection(db,'challenges'), where('authorId','in',ids), orderBy('createdAt','desc'), limit(200));
         feedUnsub = onSnapshot(qRef,(snap)=>{
           const setIds=new Set(ids);
+          const seen = new Set();
           const items=snap.docs.map(d=>({id:d.id,...d.data()}))
             .filter(c=> setIds.has(c.authorId))
             .filter(c=> !isExpired(c))
-            .filter(c=> c.authorId!==currentUser.uid);
+            .filter(c=> c.authorId!==currentUser.uid)
+            .filter(c=> (seen.has(c.id)?false:seen.add(c.id)));
           renderFeed(items);
         });
         return;
@@ -447,10 +493,12 @@
       const qLast = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200));
       feedUnsub = onSnapshot(qLast,(snap)=>{
         const setIds=new Set(ids);
+        const seen = new Set();
         const items=snap.docs.map(d=>({id:d.id,...d.data()}))
           .filter(c=> setIds.has(c.authorId))
           .filter(c=> !isExpired(c))
-          .filter(c=> c.authorId!==currentUser.uid);
+          .filter(c=> c.authorId!==currentUser.uid)
+          .filter(c=> (seen.has(c.id)?false:seen.add(c.id)));
         renderFeed(items);
       });
     }
@@ -487,12 +535,11 @@
     function startMyChallenges(){
       if (myChallengesUnsub2) { myChallengesUnsub2(); myChallengesUnsub2 = null; }
       if (!currentUser) return;
-      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), limit(500));
+      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), orderBy('createdAt','desc'), limit(500));
       myChallengesUnsub2 = onSnapshot(qRef, (snap)=>{
-        myChallenges = snap.docs.map(d=>{
-          const data=d.data();
-          return { id:d.id, ...data, _createdAtMs: data.createdAt?.toDate?.()?.getTime?.() ?? 0 };
-        }).sort((a,b)=> b._createdAtMs - a._createdAtMs);
+        const seen = new Set();
+        myChallenges = snap.docs.map(d=>({ id:d.id, ...d.data()}))
+                                .filter(c => (seen.has(c.id)?false:seen.add(c.id)));
         refreshProfile();
       }, (err)=>{ console.error('myChallenges sub', err); toast('No se pudo cargar tus retos','error'); });
     }
@@ -525,7 +572,7 @@
       commentsModal.classList.remove('hidden');
       if(commentsUnsub){ commentsUnsub(); commentsUnsub=null; }
       const qRef=query(collection(db,'challenges',chId,'comments'), orderBy('createdAt','asc'), limit(200));
-      commentsUnsub=onSnapshot(qRef,(snap)=>{ commentsModalBody.innerHTML=''; snap.forEach(d=>{ const c=d.data(); const el=document.importNode(commentItemTemplate.content,true); el.querySelector('.cmt-img').src=c.authorImg||''; el.querySelector('.cmt-name').textContent=c.authorName||'Usuario'; el.querySelector('.cmt-text').textContent=c.text||''; const dt=c.createdAt?.toDate?.()||new Date(); el.querySelector('.cmt-time').textContent=new Date(dt).toLocaleString('es-AR',{timeStyle:'short'}); commentsModalBody.appendChild(el); }); });
+      commentsUnsub=onSnapshot(qRef,(snap)=>{ commentsModalBody.innerHTML=''; const seen=new Set(); snap.forEach(d=>{ if(seen.has(d.id)) return; seen.add(d.id); const c=d.data(); const el=document.importNode(commentItemTemplate.content,true); el.querySelector('.cmt-img').src=c.authorImg||''; el.querySelector('.cmt-name').textContent=c.authorName||'Usuario'; el.querySelector('.cmt-text').textContent=c.text||''; const dt=c.createdAt?.toDate?.()||new Date(); el.querySelector('.cmt-time').textContent=new Date(dt).toLocaleString('es-AR',{timeStyle:'short'}); commentsModalBody.appendChild(el); }); });
     }
     function closeComments(){ commentsModal.classList.add('hidden'); if(commentsUnsub){ commentsUnsub(); commentsUnsub=null; } }
     $("close-comments-modal")?.addEventListener('click', closeComments);
@@ -562,7 +609,7 @@
           createdAt:serverTimestamp(), expiresAt:calcExpiresAt(),
           contentUrl, caption:($("challenge-caption").value||'').trim()||null,
           likesCount:0, commentsCount:0, ...payload,
-          vis: 'public' // podés cambiar a selector si querés
+          vis: 'public'
         });
         toast('¡Reto publicado!'); switchView('feed-view');
       }catch(e){ console.error(e); const msg=(e?.code||e?.message||'').toString(); if(msg.includes('permission-denied')) toast('Permisos denegados','error'); else toast('No se pudo publicar','error'); }
@@ -640,8 +687,9 @@
     document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>setActiveTab(b.dataset.tab)));
 
     async function fetchUsersFor(ids){
-      const out=[];
+      const out=[]; const seen=new Set();
       for(const uid of ids){
+        if(seen.has(uid)) continue; seen.add(uid);
         const d=await getDoc(doc(db,'users',uid)).catch(()=>null);
         if(d?.exists()) out.push({uid, ...d.data()});
         else out.push({uid, displayName:'(Usuario)', photoURL:''});
@@ -654,14 +702,23 @@
       friendsResults.innerHTML='';
       const results=new Map();
       try{
-        if(term && term.includes('@')){ const qEmail=query(collection(db,'users'), where('emailLower','==',term), limit(25)); (await getDocs(qEmail)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
-        else if(term){ const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50)); (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
-        else { const qUsers=query(collection(db,'users'), orderBy('displayNameLower'), limit(40)); (await getDocs(qUsers)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()})); }
+        if(term && term.includes('@')){
+          const qEmail=query(collection(db,'users'), where('emailLower','==',term), limit(25));
+          (await getDocs(qEmail)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+        } else if(term){
+          const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50));
+          (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+        } else {
+          const qUsers=query(collection(db,'users'), orderBy('displayNameLower'), limit(40));
+          (await getDocs(qUsers)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+        }
       }catch(e){ console.error('search users',e); }
 
       if(results.size===0){ friendsResults.innerHTML=`<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return; }
 
+      const rendered = new Set();
       [...results.values()].forEach(u=>{
+        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3">
           <img class="w-10 h-10 rounded-full" src="${u.photoURL||''}">
@@ -710,7 +767,9 @@
       const el=document.getElementById("friends-list"); el.innerHTML='';
       if(friendsSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés amigos.</p>'; return; }
       const users = await fetchUsersFor([...friendsSet]);
+      const rendered = new Set();
       users.forEach(u=>{
+        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
@@ -733,7 +792,9 @@
       const el=document.getElementById("requests-list"); el.innerHTML='';
       if(incomingReqSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">No tenés solicitudes pendientes.</p>'; return; }
       const users = await fetchUsersFor([...incomingReqSet]);
+      const rendered = new Set();
       users.forEach(u=>{
+        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
@@ -748,7 +809,9 @@
       const el=document.getElementById("followers-list"); el.innerHTML='';
       if(followersSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés seguidores.</p>'; return; }
       const users = await fetchUsersFor([...followersSet]);
+      const rendered = new Set();
       users.forEach(u=>{
+        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
