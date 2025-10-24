@@ -369,7 +369,7 @@
     const db = getFirestore(app);
 
     // FORZAR BUCKET CORRECTO (evita CORS si estaba mal configurado)
-    const storage = getStorage(app, "gs://tereto-prod.appspot.com");
+    const storage = getStorage(app, "gs://tereto-prod.firebasestorage.app");
     console.log('bucket efectivo:', ref(storage, '').bucket);
 
     const provider = new GoogleAuthProvider();
