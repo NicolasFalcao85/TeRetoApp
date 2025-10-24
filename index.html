@@ -25,7 +25,6 @@
     .tab-btn.active { border-bottom:2px solid #6366f1; color:#6366f1; font-weight:600;}
     #loading-spinner.hidden { display:none !important; }
     .hint { font-size:11px; color:#64748b }
-    .dot { position:absolute; top:2px; right:22px; width:10px; height:10px; background:#ef4444; border-radius:9999px; box-shadow:0 0 0 2px #fff; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen">
@@ -182,13 +181,10 @@
         </header>
 
         <div class="p-4">
-          <div class="flex gap-4 border-b relative">
+          <div class="flex gap-4 border-b">
             <button class="tab-btn active py-2" data-tab="buscar">Buscar</button>
             <button class="tab-btn py-2 text-slate-500" data-tab="mis-amigos">Mis Amigos</button>
-            <button class="tab-btn py-2 text-slate-500 relative" data-tab="solicitudes">
-              Solicitudes
-              <span id="requests-dot" class="dot hidden"></span>
-            </button>
+            <button class="tab-btn py-2 text-slate-500" data-tab="solicitudes">Solicitudes</button>
             <button class="tab-btn py-2 text-slate-500" data-tab="seguidores">Seguidores</button>
           </div>
 
@@ -371,13 +367,20 @@
     const loadSolved = (uid)=>{ try{ return new Set(JSON.parse(localStorage.getItem(solvedKey(uid))||'[]')); }catch{return new Set();} };
     const saveSolved = (uid,set)=>{ try{ localStorage.setItem(solvedKey(uid), JSON.stringify([...set])); }catch{} };
 
+    // Helper: detectar error de índice de Firestore
+    const isIndexError = (e) => {
+      const code = e?.code || '';
+      const msg = (e?.message||'').toLowerCase();
+      return code === 'failed-precondition' && msg.includes('index');
+    };
+
     let currentUser=null, solvedSet=new Set();
     let friendsSet=new Set(), followingSet=new Set(), followersSet=new Set(), incomingReqSet=new Set(), sentReqSet=new Set();
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
     let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
     const clearSubs = ()=>{ [unsubFriends,unsubFollowing,unsubFollowers,unsubIncomingReq,unsubSentReq,feedUnsub,myChallengesUnsub,commentsUnsub].forEach(u=>{ if(u){u();} }); unsubFriends=unsubFollowing=unsubFollowers=unsubIncomingReq=unsubSentReq=feedUnsub=myChallengesUnsub=commentsUnsub=null; };
 
-    // --- Login checks: habilitar botón ---
+    // --- Login checks ---
     const chkAdult = document.getElementById('chk-adult');
     const chkTerms = document.getElementById('chk-terms');
     const googleBtn = document.getElementById('google-btn');
@@ -386,7 +389,7 @@
     chkTerms?.addEventListener('change', updateLoginBtn);
     updateLoginBtn();
 
-    // Auth: popup + fallback redirect
+    // Auth
     window._startGoogle = async function(){
       if(!chkAdult?.checked || !chkTerms?.checked){ toast('Tildá +18 y TyC'); return; }
       try{
@@ -424,10 +427,11 @@
       }catch(e){ console.error('upsert users',e); }
     }
 
-    // ---- Subscriptions ----
+    // ---- Subscriptions / Badges ----
     function subFriends(){
       if(unsubFriends){unsubFriends();unsubFriends=null;}
       unsubFriends = onSnapshot(collection(db,'users',currentUser.uid,'friends'), (snap)=>{
+        // De-dup por id
         friendsSet=new Set(snap.docs.map(d=>d.id));
         restartFeed(); renderFriendsTab();
       });
@@ -442,7 +446,6 @@
     }
     function updateRequestsBadge(){
       const dot = document.getElementById('req-dot'); if (dot) dot.classList.toggle('hidden', incomingReqSet.size === 0);
-      const dot2 = document.getElementById('requests-dot'); if (dot2) dot2.classList.toggle('hidden', incomingReqSet.size === 0);
     }
     function subIncomingRequests(){
       if(unsubIncomingReq){unsubIncomingReq();unsubIncomingReq=null;}
@@ -457,53 +460,9 @@
       unsubSentReq = onSnapshot(collection(db,'users',currentUser.uid,'sentRequests'), (snap)=>{ sentReqSet=new Set(snap.docs.map(d=>d.id)); renderFriendsSearch(); });
     }
 
-    function restartFeed(){
-      if(feedUnsub){ feedUnsub(); feedUnsub=null; }
-      if(!currentUser) return;
-
-      const ids=[...friendsSet];
-      const feedContainer=$("feed-container");
-
-      if(ids.length===0){
-        const qPublic = query(collection(db,'challenges'), where('vis','==','public'), orderBy('createdAt','desc'), limit(120));
-        feedUnsub = onSnapshot(qPublic,(snap)=>{
-          const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-            .filter(c=> !isExpired(c))
-            .filter(c=> c.authorId!==currentUser.uid);
-          renderFeed(items);
-        });
-        return;
-      }
-
-      if(ids.length<=10){
-        const qRef = query(collection(db,'challenges'), where('authorId','in',ids), orderBy('createdAt','desc'), limit(200));
-        feedUnsub = onSnapshot(qRef,(snap)=>{
-          const setIds=new Set(ids);
-          const seen = new Set();
-          const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-            .filter(c=> setIds.has(c.authorId))
-            .filter(c=> !isExpired(c))
-            .filter(c=> c.authorId!==currentUser.uid)
-            .filter(c=> (seen.has(c.id)?false:seen.add(c.id)));
-          renderFeed(items);
-        });
-        return;
-      }
-
-      const qLast = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200));
-      feedUnsub = onSnapshot(qLast,(snap)=>{
-        const setIds=new Set(ids);
-        const seen = new Set();
-        const items=snap.docs.map(d=>({id:d.id,...d.data()}))
-          .filter(c=> setIds.has(c.authorId))
-          .filter(c=> !isExpired(c))
-          .filter(c=> c.authorId!==currentUser.uid)
-          .filter(c=> (seen.has(c.id)?false:seen.add(c.id)));
-        renderFeed(items);
-      });
-    }
-
+    // ---- Feed (con fallback de índices) ----
     const postTemplate=document.getElementById("post-template");
+
     function renderFeed(items){
       const feedContainer=$("feed-container");
       feedContainer.innerHTML='';
@@ -527,19 +486,123 @@
         feedContainer.appendChild(frag);
       });
     }
+
     const shouldUnlock = (ch)=>{ if(!currentUser) return false; if(ch.authorId===currentUser.uid) return true; return solvedSet.has(ch.id); };
     const paintLockState = (card, unlocked)=>{ const img=card.querySelector('.content-img'); const overlay=card.querySelector('.lock-overlay'); if(unlocked){ img.classList.remove('locked'); overlay.classList.add('hidden'); } else { img.classList.add('locked'); overlay.classList.remove('hidden'); } };
 
-    // --- Perfil (mosaico)
+    function restartFeed(){
+      if(feedUnsub){ feedUnsub(); feedUnsub=null; }
+      if(!currentUser) return;
+
+      const ids=[...friendsSet];
+
+      // Caso 1: sin amigos -> feed público (fallback si falta índice)
+      if(ids.length===0){
+        try {
+          const qPublic = query(
+            collection(db,'challenges'),
+            where('vis','==','public'),
+            orderBy('createdAt','desc'),
+            limit(120)
+          );
+          feedUnsub = onSnapshot(qPublic,(snap)=>{
+            const items=snap.docs.map(d=>({id:d.id,...d.data()}))
+              .filter(c=> !isExpired(c))
+              .filter(c=> c.authorId!==currentUser.uid);
+            renderFeed(items);
+          }, async (err)=>{
+            if(isIndexError(err)){
+              console.warn('Public feed index missing, using fallback.', err);
+              // Fallback: sin orderBy (ordenamos en cliente)
+              if(feedUnsub){ feedUnsub(); feedUnsub=null; }
+              const qFallback = query(
+                collection(db,'challenges'),
+                where('vis','==','public'),
+                limit(200)
+              );
+              feedUnsub = onSnapshot(qFallback, (snap)=>{
+                const items = snap.docs.map(d=>({id:d.id, ...d.data()}))
+                  .filter(c=> !isExpired(c))
+                  .filter(c=> c.authorId!==currentUser.uid)
+                  .sort((a,b)=> (b.createdAt?.toMillis?.?.()||0) - (a.createdAt?.toMillis?.?.()||0));
+                renderFeed(items);
+              });
+            } else {
+              console.error(err);
+              toast('No se pudo cargar el feed','error');
+            }
+          });
+        } catch (e) { console.error(e); }
+        return;
+      }
+
+      // Caso 2: pocos amigos -> IN (evitar orderBy para no requerir índice), ordenar cliente
+      if(ids.length<=10){
+        try{
+          const qIn = query(
+            collection(db,'challenges'),
+            where('authorId','in',ids),
+            limit(200)
+          );
+          feedUnsub = onSnapshot(qIn,(snap)=>{
+            const setIds=new Set(ids);
+            const items=snap.docs.map(d=>({id:d.id,...d.data()}))
+              .filter(c=> setIds.has(c.authorId))
+              .filter(c=> !isExpired(c))
+              .filter(c=> c.authorId!==currentUser.uid)
+              .sort((a,b)=> (b.createdAt?.toMillis?.?.()||0) - (a.createdAt?.toMillis?.?.()||0));
+            renderFeed(items);
+          }, (err)=>{
+            console.error(err);
+            toast('No se pudo cargar el feed','error');
+          });
+        } catch(e){ console.error(e); }
+        return;
+      }
+
+      // Caso 3: muchos amigos -> timeline global con fallback, filtrado por ids y sort en cliente
+      try{
+        const qLast = query(collection(db,'challenges'), orderBy('createdAt','desc'), limit(200));
+        feedUnsub = onSnapshot(qLast,(snap)=>{
+          const setIds=new Set(ids);
+          const items=snap.docs.map(d=>({id:d.id,...d.data()}))
+            .filter(c=> setIds.has(c.authorId))
+            .filter(c=> !isExpired(c))
+            .filter(c=> c.authorId!==currentUser.uid);
+          renderFeed(items);
+        }, (err)=>{
+          if(isIndexError(err)){
+            console.warn('Global feed index missing, using fallback.', err);
+            if(feedUnsub){ feedUnsub(); feedUnsub=null; }
+            const qFallback = query(collection(db,'challenges'), limit(400));
+            feedUnsub = onSnapshot(qFallback,(snap)=>{
+              const setIds=new Set(ids);
+              const items=snap.docs.map(d=>({id:d.id,...d.data()}))
+                .filter(c=> setIds.has(c.authorId))
+                .filter(c=> !isExpired(c))
+                .filter(c=> c.authorId!==currentUser.uid)
+                .sort((a,b)=> (b.createdAt?.toMillis?.?.()||0) - (a.createdAt?.toMillis?.?.()||0));
+              renderFeed(items);
+            });
+          } else {
+            console.error(err);
+            toast('No se pudo cargar el feed','error');
+          }
+        });
+      } catch(e){ console.error(e); }
+    }
+
+    // --- Perfil (mosaico) (no requiere índice)
     let myChallenges=[], myChallengesUnsub2=null;
     function startMyChallenges(){
       if (myChallengesUnsub2) { myChallengesUnsub2(); myChallengesUnsub2 = null; }
       if (!currentUser) return;
-      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), orderBy('createdAt','desc'), limit(500));
+      const qRef = query(collection(db,'challenges'), where('authorId','==', currentUser.uid), limit(500));
       myChallengesUnsub2 = onSnapshot(qRef, (snap)=>{
-        const seen = new Set();
-        myChallenges = snap.docs.map(d=>({ id:d.id, ...d.data()}))
-                                .filter(c => (seen.has(c.id)?false:seen.add(c.id)));
+        myChallenges = snap.docs.map(d=>{
+          const data=d.data();
+          return { id:d.id, ...data, _createdAtMs: data.createdAt?.toMillis?.?.() ?? data.createdAt?.toDate?.()?.getTime?.() ?? 0 };
+        }).sort((a,b)=> b._createdAtMs - a._createdAtMs);
         refreshProfile();
       }, (err)=>{ console.error('myChallenges sub', err); toast('No se pudo cargar tus retos','error'); });
     }
@@ -572,7 +635,7 @@
       commentsModal.classList.remove('hidden');
       if(commentsUnsub){ commentsUnsub(); commentsUnsub=null; }
       const qRef=query(collection(db,'challenges',chId,'comments'), orderBy('createdAt','asc'), limit(200));
-      commentsUnsub=onSnapshot(qRef,(snap)=>{ commentsModalBody.innerHTML=''; const seen=new Set(); snap.forEach(d=>{ if(seen.has(d.id)) return; seen.add(d.id); const c=d.data(); const el=document.importNode(commentItemTemplate.content,true); el.querySelector('.cmt-img').src=c.authorImg||''; el.querySelector('.cmt-name').textContent=c.authorName||'Usuario'; el.querySelector('.cmt-text').textContent=c.text||''; const dt=c.createdAt?.toDate?.()||new Date(); el.querySelector('.cmt-time').textContent=new Date(dt).toLocaleString('es-AR',{timeStyle:'short'}); commentsModalBody.appendChild(el); }); });
+      commentsUnsub=onSnapshot(qRef,(snap)=>{ commentsModalBody.innerHTML=''; snap.forEach(d=>{ const c=d.data(); const el=document.importNode(commentItemTemplate.content,true); el.querySelector('.cmt-img').src=c.authorImg||''; el.querySelector('.cmt-name').textContent=c.authorName||'Usuario'; el.querySelector('.cmt-text').textContent=c.text||''; const dt=c.createdAt?.toDate?.()||new Date(); el.querySelector('.cmt-time').textContent=new Date(dt).toLocaleString('es-AR',{timeStyle:'short'}); commentsModalBody.appendChild(el); }); });
     }
     function closeComments(){ commentsModal.classList.add('hidden'); if(commentsUnsub){ commentsUnsub(); commentsUnsub=null; } }
     $("close-comments-modal")?.addEventListener('click', closeComments);
@@ -582,7 +645,7 @@
       try{ const batch=writeBatch(db); const cRef=doc(collection(db,'challenges',chId,'comments')); batch.set(cRef,{authorId:currentUser.uid,authorName:currentUser.displayName,authorImg:currentUser.photoURL,text,createdAt:serverTimestamp()}); batch.update(doc(db,'challenges',chId),{commentsCount:increment(1)}); await batch.commit(); commentInput.value=''; }catch(e){ console.error(e); toast('No se pudo comentar','error'); }
     });
 
-    // --- Crear reto: compresión + subida a Storage (data_url) ---
+    // --- Crear reto (Storage) ---
     const calcExpiresAt = ()=>{ const v=$("challenge-expiry")?.value; if(v==='24') return new Date(Date.now()+24*3600*1000); if(v==='48') return new Date(Date.now()+48*3600*1000); return null; };
     $("file-upload")?.addEventListener('change', async (e)=>{ const f=e.target.files?.[0]; if(!f){ $("file-name").textContent=''; $("goto-step-2").disabled=true; $("image-preview-container").classList.add('hidden'); return; } $("file-name").textContent=f.name; const dataUrl=await fileToCompressedDataURL(f); $("goto-step-2").dataset.fileUrl=dataUrl; $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); $("goto-step-2").disabled=false; });
     document.getElementById("open-camera-btn")?.addEventListener('click', async ()=>{ const dataUrl=await captureWithModal(); if(!dataUrl){ return; } $("image-preview").src=dataUrl; $("image-preview-container").classList.remove('hidden'); const btn=$("goto-step-2"); btn.dataset.fileUrl=dataUrl; btn.disabled=false; $("file-name").textContent=`Foto capturada - ${new Date().toLocaleTimeString()}.jpg`; });
@@ -612,6 +675,11 @@
           vis: 'public'
         });
         toast('¡Reto publicado!'); switchView('feed-view');
+        // reset UI creación
+        $("challenge-caption").value='';
+        $("image-preview-container").classList.add('hidden');
+        $("goto-step-2").dataset.fileUrl='';
+        showCreateStep('create-step-1');
       }catch(e){ console.error(e); const msg=(e?.code||e?.message||'').toString(); if(msg.includes('permission-denied')) toast('Permisos denegados','error'); else toast('No se pudo publicar','error'); }
     }
     document.getElementById("trivia-form")?.addEventListener('submit',(e)=>{ e.preventDefault(); publishChallenge({ type:'trivia', question:$("trivia-question").value, correctAnswer:$("correct-answer").value, wrongAnswers:[ $("wrong-answer-1").value, $("wrong-answer-2").value, $("wrong-answer-3").value ] }); });
@@ -645,7 +713,7 @@
     async function followUser(uid, uData=null){
       if(uid===currentUser.uid) return;
       try{
-        await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName:uData?.displayName||null, photoURL:uData?.photoURL||null});
+        await setDoc(doc(db,'users',currentUser.uid,'following',uid),{createdAt:serverTimestamp(), displayName=uData?.displayName||null, photoURL=uData?.photoURL||null});
         await setDoc(doc(db,'users',uid,'followers',currentUser.uid),{createdAt:serverTimestamp(), displayName:currentUser.displayName||null, photoURL:currentUser.photoURL||null});
         toast('Siguiendo ✔');
       }catch(e){ console.error(e); toast('No se pudo seguir','error'); }
@@ -687,9 +755,9 @@
     document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>setActiveTab(b.dataset.tab)));
 
     async function fetchUsersFor(ids){
-      const out=[]; const seen=new Set();
-      for(const uid of ids){
-        if(seen.has(uid)) continue; seen.add(uid);
+      const unique = [...new Set(ids)];
+      const out=[];
+      for(const uid of unique){
         const d=await getDoc(doc(db,'users',uid)).catch(()=>null);
         if(d?.exists()) out.push({uid, ...d.data()});
         else out.push({uid, displayName:'(Usuario)', photoURL:''});
@@ -706,19 +774,37 @@
           const qEmail=query(collection(db,'users'), where('emailLower','==',term), limit(25));
           (await getDocs(qEmail)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
         } else if(term){
-          const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50));
-          (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+          // Búsqueda por nombre. Si falta índice, fallback a un fetch limitado y filtrado en cliente
+          try{
+            const qName=query(collection(db,'users'), orderBy('displayNameLower'), startAt(term), endAt(term+'\uf8ff'), limit(50));
+            (await getDocs(qName)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+          }catch(e){
+            if(isIndexError(e)){
+              console.warn('Users name search index missing, fallback list.', e);
+              const qFew=query(collection(db,'users'), limit(120));
+              (await getDocs(qFew)).forEach(d=>{
+                const data=d.data()||{};
+                if((data.displayNameLower||'').startsWith(term)) results.set(d.id,{uid:d.id,...data});
+              });
+            } else { throw e; }
+          }
         } else {
           const qUsers=query(collection(db,'users'), orderBy('displayNameLower'), limit(40));
-          (await getDocs(qUsers)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+          try{
+            (await getDocs(qUsers)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+          }catch(e){
+            if(isIndexError(e)){
+              console.warn('Users default index missing, fallback list.', e);
+              const qFew=query(collection(db,'users'), limit(40));
+              (await getDocs(qFew)).forEach(d=>results.set(d.id,{uid:d.id,...d.data()}));
+            } else { throw e; }
+          }
         }
       }catch(e){ console.error('search users',e); }
 
       if(results.size===0){ friendsResults.innerHTML=`<p class="text-slate-500 text-center mt-4">No se encontraron usuarios.</p>`; return; }
 
-      const rendered = new Set();
       [...results.values()].forEach(u=>{
-        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3">
           <img class="w-10 h-10 rounded-full" src="${u.photoURL||''}">
@@ -726,7 +812,7 @@
         </div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
 
-        const isSelf = u.uid===currentUser.uid;
+        const isSelf = u.uid===currentUser?.uid;
         const isFriend = friendsSet.has(u.uid);
         const sent = sentReqSet.has(u.uid);
         const incoming = incomingReqSet.has(u.uid);
@@ -741,6 +827,7 @@
           btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
           btnFollow.onclick=()=> isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u);
           actions.appendChild(btnFollow);
+
           const btnUnfriend=document.createElement('button');
           btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
           btnUnfriend.textContent='Eliminar amigo';
@@ -767,23 +854,24 @@
       const el=document.getElementById("friends-list"); el.innerHTML='';
       if(friendsSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés amigos.</p>'; return; }
       const users = await fetchUsersFor([...friendsSet]);
-      const rendered = new Set();
       users.forEach(u=>{
-        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Sin nombre)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
         const isFollowing = followingSet.has(u.uid);
+
         const btnFollow=document.createElement('button');
         btnFollow.className='px-3 py-1 rounded-full text-sm '+(isFollowing?'bg-green-600 text-white':'bg-slate-200 text-slate-800');
         btnFollow.textContent=isFollowing?'Siguiendo':'Seguir';
         btnFollow.onclick=()=> isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u);
         actions.appendChild(btnFollow);
+
         const btnUnfriend=document.createElement('button');
         btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
         btnUnfriend.textContent='Eliminar amigo';
         btnUnfriend.onclick=()=> removeFriend(u.uid);
         actions.appendChild(btnUnfriend);
+
         row.appendChild(actions); el.appendChild(row);
       });
     }
@@ -792,9 +880,7 @@
       const el=document.getElementById("requests-list"); el.innerHTML='';
       if(incomingReqSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">No tenés solicitudes pendientes.</p>'; return; }
       const users = await fetchUsersFor([...incomingReqSet]);
-      const rendered = new Set();
       users.forEach(u=>{
-        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
@@ -809,9 +895,7 @@
       const el=document.getElementById("followers-list"); el.innerHTML='';
       if(followersSet.size===0){ el.innerHTML='<p class="text-slate-500 text-center mt-4">Aún no tenés seguidores.</p>'; return; }
       const users = await fetchUsersFor([...followersSet]);
-      const rendered = new Set();
       users.forEach(u=>{
-        if(rendered.has(u.uid)) return; rendered.add(u.uid);
         const row=document.createElement('div'); row.className='flex items-center justify-between p-2 rounded-lg hover:bg-slate-100';
         row.innerHTML=`<div class="flex items-center space-x-3"><img class="w-10 h-10 rounded-full" src="${u.photoURL||''}"><p class="font-semibold text-slate-700">${u.displayName||'(Usuario)'}</p></div>`;
         const actions=document.createElement('div'); actions.className='flex items-center gap-2';
@@ -825,6 +909,7 @@
       const activeBtn=document.querySelector('.tab-btn.active'); if(!activeBtn) return; setActiveTab(activeBtn.dataset.tab);
     }
 
+    // ---- Navegación + acciones post ----
     const views={'feed-view':document.getElementById("feed-view"),'friends-view':document.getElementById("friends-view"),'create-view':document.getElementById("create-view"),'profile-view':document.getElementById("profile-view")};
     function switchView(v){
       Object.values(views).forEach(x=>x.classList.add('hidden')); if(views[v]) views[v].classList.remove('hidden');
@@ -832,6 +917,7 @@
       if(v==='profile-view') refreshProfile();
       if(v==='friends-view') setActiveTab('buscar');
     }
+
     document.addEventListener('click',(e)=>{
       const navBtn=e.target.closest('.nav-button'); if(navBtn&&navBtn.dataset.view){ e.preventDefault(); switchView(navBtn.dataset.view); return; }
 
@@ -857,8 +943,20 @@
         } else { solvedSet.add(chId); saveSolved(currentUser.uid,solvedSet); paintLockState(card,true); }
       })();
     });
+
     document.addEventListener('click',(e)=>{ if(e.target.closest('.post-card')){ localStorage.setItem('tereto_tip_seen','1'); document.getElementById("feed-tip")?.classList.add('hidden'); } });
 
+    // ---- Cámara ----
+    let camStream=null, camResolve=null;
+    const camModal=document.getElementById("camera-modal"), camVideo=document.getElementById("cam-video"), camCanvas=document.getElementById("cam-canvas");
+    async function openCamera(){ try{ if(!navigator.mediaDevices?.getUserMedia) throw new Error('no camera'); if(camStream) camStream.getTracks().forEach(t=>t.stop()); camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); if(camVideo){ camVideo.srcObject=camStream; } camModal?.classList.remove('hidden'); }catch(e){ console.error(e); toast('No se pudo acceder a la cámara','error'); } }
+    function closeCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null;} camModal?.classList.add('hidden'); }
+    function capturePhoto(){ if(!camVideo?.videoWidth) return null; const w=camVideo.videoWidth,h=camVideo.videoHeight; camCanvas.width=w; camCanvas.height=h; camCanvas.getContext('2d').drawImage(camVideo,0,0,w,h); return camCanvas.toDataURL('image/jpeg',0.8); }
+    document.getElementById("cam-close")?.addEventListener('click', ()=>{ closeCamera(); if(camResolve) camResolve(null); camResolve=null; });
+    document.getElementById("cam-capture")?.addEventListener('click', ()=>{ const dataUrl=capturePhoto(); closeCamera(); if(camResolve) camResolve(dataUrl); camResolve=null; });
+    const captureWithModal = ()=> new Promise(async (res)=>{ camResolve=res; await openCamera(); });
+
+    // ---- Auth state ----
     onAuthStateChanged(auth, async (user)=>{
       clearSubs();
       if(!user){
@@ -871,7 +969,6 @@
       document.getElementById("login-screen").classList.add("hidden");
       document.getElementById("app-screen").classList.remove("hidden");
 
-      // upsert + aceptación TyC
       await upsertUserWithTerms(user);
 
       solvedSet=loadSolved(user.uid);
@@ -879,16 +976,6 @@
       restartFeed(); startMyChallenges(); refreshProfile();
       switchView('feed-view');
     });
-
-    // ---- Cámara ----
-    let camStream=null, camResolve=null;
-    const camModal=document.getElementById("camera-modal"), camVideo=document.getElementById("cam-video"), camCanvas=document.getElementById("cam-canvas");
-    async function openCamera(){ try{ if(!navigator.mediaDevices?.getUserMedia) throw new Error('no camera'); if(camStream) camStream.getTracks().forEach(t=>t.stop()); camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); if(camVideo){ camVideo.srcObject=camStream; } camModal?.classList.remove('hidden'); }catch(e){ console.error(e); toast('No se pudo acceder a la cámara','error'); } }
-    function closeCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null;} camModal?.classList.add('hidden'); }
-    function capturePhoto(){ if(!camVideo?.videoWidth) return null; const w=camVideo.videoWidth,h=camVideo.videoHeight; camCanvas.width=w; camCanvas.height=h; camCanvas.getContext('2d').drawImage(camVideo,0,0,w,h); return camCanvas.toDataURL('image/jpeg',0.8); }
-    document.getElementById("cam-close")?.addEventListener('click', ()=>{ closeCamera(); if(camResolve) camResolve(null); camResolve=null; });
-    document.getElementById("cam-capture")?.addEventListener('click', ()=>{ const dataUrl=capturePhoto(); closeCamera(); if(camResolve) camResolve(dataUrl); camResolve=null; });
-    const captureWithModal = ()=> new Promise(async (res)=>{ camResolve=res; await openCamera(); });
   </script>
 </body>
 </html>
