@@ -195,7 +195,7 @@
             <div class="relative mb-4">
               <input type="search" id="user-search-input" placeholder="Buscar por nombre o email..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <div class="absolute top-0 left-0 inline-flex items-center p-2 h-full">
-                <svg class="text-slate-4 00 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <svg class="text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </div>
             </div>
             <div id="friends-results" class="space-y-2"></div>
@@ -336,6 +336,7 @@
     import {
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+    import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
     // --- Firebase ---
     const firebaseConfig = {
@@ -347,6 +348,11 @@
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
     const app = initializeApp(firebaseConfig);
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider("6Lf-F_YrAAAAAIP3PEguICRDGBgmbtDGRIs7P0vW"),
+      isTokenAutoRefreshEnabled: true
+    });
+
     const auth = getAuth(app);
     const db = getFirestore(app);
 
@@ -705,7 +711,7 @@
       if(!f){
         const fn=$("file-name"); if(fn) fn.textContent='';
         const gs=$("goto-step-2"); if(gs){ gs.disabled=true; }
-        const ipc=$("image-preview-container"); if(ipc) ipc.classList.add('hidden');
+        const ipc=$("image-preview-container"); ifipc && ipc.classList.add('hidden');
         return;
       }
       const fn2=$("file-name"); if(fn2) fn2.textContent=f.name;
@@ -754,9 +760,9 @@
           vis:'public',
           // payload de tipo
           type: payload.type,
-          question: payload.question,
-          correctAnswer: payload.correctAnswer,
-          wrongAnswers: payload.wrongAnswers
+          question: payload.question ?? null,
+          correctAnswer: payload.correctAnswer ?? null,
+          wrongAnswers: payload.wrongAnswers ?? null
         });
         toastMsg('¡Reto publicado!','success');
         switchView('feed-view');
@@ -825,7 +831,7 @@
     }
     $("trivia-close")?.addEventListener('click', ()=>{ if(triviaModal) triviaModal.classList.add('hidden'); if(triviaOpts) triviaOpts.innerHTML=''; if(triviaFeedback) triviaFeedback.textContent=''; });
 
-    // --- Social: follow/amigos
+    // --- Social: follow/amigos ---
     async function followUser(uid, uData){
       if(!currentUser || uid===currentUser.uid) return;
       const displayNameVal = (uData && uData.displayName) ? uData.displayName : null;
