@@ -334,7 +334,7 @@
       startAt, endAt, deleteDoc, writeBatch, increment, getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
     import {
-      getStorage, ref, uploadString, getDownloadURL, setMaxUploadRetryTime, setMaxOperationRetryTime
+      getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
     // --- Firebase ---
@@ -360,8 +360,6 @@
     provider.setCustomParameters({ prompt: "select_account" });
     const db = getFirestore(app);
     const storage = getStorage(app);
-    // Retries más largos para redes inestables
-    try { setMaxUploadRetryTime(storage, 60000); setMaxOperationRetryTime(storage, 60000); } catch(_) {}
 
     // ---- Helpers ----
     function $(id){ return document.getElementById(id); }
@@ -392,7 +390,7 @@
 
     let unsubFriends=null, unsubFollowing=null, unsubFollowers=null, unsubIncomingReq=null, unsubSentReq=null;
     let feedUnsub=null, myChallengesUnsub=null, commentsUnsub=null;
-    let myChallengesUnsub2=null; // <-- Faltaba limpiar
+    let myChallengesUnsub2=null;
 
     // Control de feed para evitar “race”
     let feedGen = 0;
@@ -405,13 +403,13 @@
       const arr=[
         unsubFriends,unsubFollowing,unsubFollowers,
         unsubIncomingReq,unsubSentReq,
-        feedUnsub,myChallengesUnsub,myChallengesUnsub2, // <-- agregado
+        feedUnsub,myChallengesUnsub,myChallengesUnsub2,
         commentsUnsub
       ];
       for(let i=0;i<arr.length;i++){ if(typeof arr[i]==='function'){ try{arr[i]();}catch(_){ } } }
       unsubFriends=unsubFollowing=unsubFollowers=
       unsubIncomingReq=unsubSentReq=
-      feedUnsub=myChallengesUnsub=myChallengesUnsub2=commentsUnsub=null; // <-- agregado
+      feedUnsub=myChallengesUnsub=myChallengesUnsub2=commentsUnsub=null;
     }
 
     function solvedKey(uid){ return "tereto_solved_"+uid; }
@@ -630,7 +628,7 @@
     }
 
     // --- Perfil (mosaico)
-    let myChallenges=[], myChallengesUnsub2Local=null;
+    let myChallenges=[];
     function startMyChallenges(){
       if (myChallengesUnsub2) { try{myChallengesUnsub2();}catch(_){ } myChallengesUnsub2 = null; }
       if (!currentUser) return;
