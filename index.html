@@ -339,46 +339,37 @@
     import {
       getStorage, ref, uploadString, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-    // App Check desactivado de momento para que el login funcione sin 400:
-    // import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
+    import {
+      initializeAppCheck, ReCaptchaV3Provider, getToken as getAppCheckToken
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
     // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyCSdjAdY7ymmOwIN7zApP-XpXxTar_0pHk",
       authDomain: "tereto-prod.firebaseapp.com",
       projectId: "tereto-prod",
-      // IMPORTANTE: bucket real (nombre gs:// de la consola)
+      // Bucket REAL del proyecto (nombre gs:// es <project-id>.appspot.com)
       storageBucket: "tereto-prod.appspot.com",
       messagingSenderId: "914605096619",
       appId: "1:914605096619:web:88a9b78eac50c35cb181ee"
     };
     const app = initializeApp(firebaseConfig);
 
-    // --- App Check ---
-    // Cuando quieras activarlo:
-    // 1) En localhost, podés usar debug:
-    //    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-    // 2) Usá el site key que te da **Firebase App Check** (no el de hCaptcha/ReCAPTCHA suelto)
-    // 3) Agregá tus dominios en App Check y en Auth › Authorized domains
-    // initializeAppCheck(app, {
-    //   provider: new ReCaptchaV3Provider("TU_SITE_KEY_DE_APPCHECK"),
-    //   isTokenAutoRefreshEnabled: true
-    // });
+    // --- App Check (GRATIS con reCAPTCHA v3) ---
+    // Si necesitás debug en dispositivos donde falle el captcha, destapá esta línea y
+    // agregá el token en App Check › Debug tokens:
+    // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider("6Lf-F_YrAAAAAIP3PEguICRDGBgmbtDGRIs7P0vW"),
+      isTokenAutoRefreshEnabled: true
+    });
+    try { await getAppCheckToken(appCheck, false); } catch (e) { console.warn("AppCheck token falló:", e); }
 
     const auth = getAuth(app);
     const db = getFirestore(app);
-
-    // FORZAR BUCKET CORRECTO (evita CORS si estaba mal configurado)
-    const storage = getStorage(app, "gs://tereto-prod.firebasestorage.app");
-    console.log('bucket efectivo:', ref(storage, '').bucket);
-
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-
-    // --- Sesión: no persistente + forzar login cada vez ---
-    try { await setPersistence(auth, inMemoryPersistence); } catch(_) {}
-    try { await signOut(auth); } catch(_) {}
-    window.addEventListener("beforeunload", () => { try { signOut(auth); } catch(_) {} });
+    // Usar el bucket por defecto (coincide con storageBucket de config)
+    const storage = getStorage(app);
 
     // ---- Helpers ----
     function $(id){ return document.getElementById(id); }
@@ -447,9 +438,9 @@
       }
       $("loading-spinner")?.classList.remove("hidden");
       try{
-        try { await signInWithPopup(auth, provider); }
+        try { await signInWithPopup(auth, new GoogleAuthProvider()); }
         catch(e){
-          if (e && (e.code==="auth/popup-blocked" || e.code==="auth/cancelled-popup-request")) { await signInWithRedirect(auth, provider); }
+          if (e && (e.code==="auth/popup-blocked" || e.code==="auth/cancelled-popup-request")) { await signInWithRedirect(auth, new GoogleAuthProvider()); }
           else { throw e; }
         }
       }catch(err){
@@ -771,9 +762,9 @@
           vis:'public',
           // payload de tipo
           type: payload.type,
-          question: payload.question,
-          correctAnswer: payload.correctAnswer,
-          wrongAnswers: payload.wrongAnswers
+          question: payload.question || null,
+          correctAnswer: payload.correctAnswer || null,
+          wrongAnswers: payload.wrongAnswers || null
         });
         toastMsg('¡Reto publicado!','success');
         switchView('feed-view');
@@ -1040,7 +1031,7 @@
         btnFollow.onclick=function(){ isFollowing ? unfollowUser(u.uid) : followUser(u.uid, u); };
         actions.appendChild(btnFollow);
 
-        const btnUnfriend=document.createElement='button';
+        const btnUnfriend=document.createElement('button');
         btnUnfriend.className='px-3 py-1 rounded-full text-sm bg-red-100 text-red-700';
         btnUnfriend.textContent='Eliminar amigo';
         btnUnfriend.onclick=function(){ removeFriend(u.uid); };
